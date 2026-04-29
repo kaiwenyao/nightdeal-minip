@@ -1,40 +1,23 @@
 page {
-  background: #f7f8fa;
-}
-
-.page {
-  padding: 32rpx;
-  display: flex;
-  flex-direction: column;
-  gap: 24rpx;
+  background: var(--color-bg);
 }
 
 .hero {
-  padding: 16rpx 8rpx;
+  padding: var(--space-4) var(--space-2);
 }
 
 .title {
   display: block;
-  font-size: 40rpx;
+  font-size: var(--font-xl);
   font-weight: 600;
-  color: #111827;
+  color: var(--color-text-primary);
 }
 
 .subtitle {
-  margin-top: 8rpx;
+  margin-top: var(--space-2);
   display: block;
-  font-size: 26rpx;
-  color: #6b7280;
-}
-
-.card {
-  background: #ffffff;
-  border-radius: 20rpx;
-  padding: 24rpx;
-  display: flex;
-  flex-direction: column;
-  gap: 18rpx;
-  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.04);
+  font-size: var(--font-sm);
+  color: var(--color-text-secondary);
 }
 
 .avatar-wrapper {
@@ -53,48 +36,19 @@ page {
 
 .text-input {
   min-height: 78rpx;
-  border: 1px solid #e5e7eb;
-  border-radius: 12rpx;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
   padding: 0 20rpx;
-  font-size: 28rpx;
-  background: #ffffff;
-}
-
-.primary-btn {
-  background: #111827;
-  color: #ffffff;
-  border-radius: 12rpx;
-  font-size: 28rpx;
+  font-size: var(--font-base);
+  background: var(--color-surface);
 }
 
 .join-row {
   display: flex;
-  gap: 16rpx;
+  gap: var(--space-4);
+  align-items: center;
 }
 
 .code-input {
   flex: 1;
-}
-
-.secondary-btn {
-  min-width: 150rpx;
-  background: #ffffff;
-  color: #111827;
-  border: 1px solid #d1d5db;
-  border-radius: 12rpx;
-  font-size: 28rpx;
-}
-
-.state-tip {
-  text-align: center;
-  color: #4b5563;
-  font-size: 24rpx;
-}
-
-.error-tip {
-  background: #fee2e2;
-  color: #b91c1c;
-  border-radius: 12rpx;
-  padding: 16rpx;
-  font-size: 24rpx;
 }

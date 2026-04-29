@@ -1,11 +1,11 @@
 <navigation-bar title="NightDeal" back="{{false}}" color="black" background="#FFF"></navigation-bar>
-<view class="page">
+<view class="page-shell">
   <view class="hero">
     <text class="title">阿瓦隆房间助手</text>
     <text class="subtitle">登录后创建房间或加入好友房间</text>
   </view>
 
-  <view class="card">
+  <ui-card>
     <button class="avatar-wrapper" open-type="chooseAvatar" bind:chooseavatar="onChooseAvatar">
       <image class="avatar" src="{{userInfo.avatarUrl}}"></image>
     </button>
@@ -16,11 +16,11 @@
       value="{{userInfo.nickName}}"
       bindinput="onInputChange"
     />
-    <button class="primary-btn" bindtap="handleWechatLogin">微信登录</button>
-  </view>
+    <ui-button bind:tap="handleWechatLogin">微信登录</ui-button>
+  </ui-card>
 
-  <view class="card">
-    <button class="primary-btn" bindtap="handleCreateRoom">创建房间</button>
+  <ui-card>
+    <ui-button bind:tap="handleCreateRoom">创建房间</ui-button>
     <view class="join-row">
       <input
         class="text-input code-input"
@@ -29,12 +29,14 @@
         value="{{roomCodeInput}}"
         bindinput="onRoomCodeInput"
       />
-      <button class="secondary-btn" bindtap="handleJoinRoom">加入</button>
+      <ui-button variant="secondary" block="{{false}}" bind:tap="handleJoinRoom">加入</ui-button>
     </view>
-  </view>
+  </ui-card>
 
-  <view wx:if="{{pageState === 'loading' || pageState === 'authorizing' || pageState === 'loggingIn'}}" class="state-tip">
-    正在处理，请稍候...
-  </view>
-  <view wx:if="{{pageError}}" class="error-tip">{{pageError}}</view>
+  <ui-state-panel
+    wx:if="{{pageState === 'loading' || pageState === 'authorizing' || pageState === 'loggingIn'}}"
+    type="loading"
+    message="正在处理，请稍候..."
+  />
+  <ui-state-panel wx:if="{{pageError}}" type="error" message="{{pageError}}" />
 </view>

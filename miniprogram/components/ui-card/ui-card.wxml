@@ -1,0 +1,3 @@
+<view class="ui-card">
+  <slot></slot>
+</view>

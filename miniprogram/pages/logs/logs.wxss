@@ -1,16 +1,32 @@
 page {
   height: 100vh;
-  display: flex;
-  flex-direction: column;
 }
+
+.logs-page {
+  height: 100vh;
+  box-sizing: border-box;
+  padding-top: var(--space-6, 24rpx);
+}
+
+.log-card {
+  flex: 1;
+  min-height: 0;
+}
+
 .scrollarea {
   flex: 1;
-  overflow-y: hidden;
+  min-height: 0;
+  margin-top: var(--space-4, 16rpx);
 }
+
 .log-item {
-  margin-top: 20rpx;
-  text-align: center;
+  padding: var(--space-3, 12rpx) 0;
+  border-bottom: 1px solid #f3f4f6;
+  color: var(--color-text-primary, #111827);
+  font-size: var(--font-sm, 24rpx);
 }
+
 .log-item:last-child {
   padding-bottom: env(safe-area-inset-bottom);
+  border-bottom: none;
 }

@@ -1,4 +1,51 @@
-/**app.wxss**/
+/** app.wxss **/
+page {
+  --color-bg: #f5f6f8;
+  --color-surface: #ffffff;
+  --color-border: #e5e7eb;
+  --color-text-primary: #111827;
+  --color-text-secondary: #6b7280;
+  --color-accent: #111827;
+  --color-danger: #b91c1c;
+  --color-danger-bg: #fee2e2;
+  --color-success: #16a34a;
+  --color-info: #2563eb;
+
+  --space-2: 8rpx;
+  --space-3: 12rpx;
+  --space-4: 16rpx;
+  --space-5: 20rpx;
+  --space-6: 24rpx;
+  --space-8: 32rpx;
+
+  --font-xs: 22rpx;
+  --font-sm: 24rpx;
+  --font-base: 28rpx;
+  --font-lg: 32rpx;
+  --font-xl: 40rpx;
+
+  --radius-sm: 12rpx;
+  --radius-md: 16rpx;
+  --radius-lg: 20rpx;
+  --shadow-sm: 0 4rpx 18rpx rgba(17, 24, 39, 0.05);
+}
+
+.page-shell {
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: var(--space-8, 32rpx);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6, 24rpx);
+  background: var(--color-bg, #f5f6f8);
+}
+
+.section-title {
+  font-size: var(--font-base, 28rpx);
+  font-weight: 600;
+  color: var(--color-text-primary, #111827);
+}
+
 .container {
   height: 100%;
   display: flex;
@@ -7,4 +54,4 @@
   justify-content: space-between;
   padding: 200rpx 0;
   box-sizing: border-box;
-} 
+}

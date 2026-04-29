@@ -1,6 +1,5 @@
 import { getToken } from './auth'
-
-const BASE_URL = 'http://localhost:3000'
+import { config } from './config'
 
 interface ApiEnvelope<T> {
   code: number
@@ -24,7 +23,7 @@ export function request<
 
   return new Promise((resolve, reject) => {
     wx.request({
-      url: `${BASE_URL}${options.url}`,
+      url: `${config.baseUrl}${options.url}`,
       method: options.method || 'GET',
       data: options.data,
       timeout: 10000,

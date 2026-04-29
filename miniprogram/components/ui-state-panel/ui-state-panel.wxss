@@ -1,0 +1,30 @@
+.ui-state-panel {
+  border-radius: var(--radius-md, 16rpx);
+  padding: var(--space-4, 16rpx);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4, 16rpx);
+}
+
+.ui-state-panel--loading {
+  background: #eef2ff;
+}
+
+.ui-state-panel--error {
+  background: var(--color-danger-bg, #fee2e2);
+}
+
+.ui-state-panel--empty {
+  background: #f3f4f6;
+}
+
+.ui-state-text {
+  flex: 1;
+  color: var(--color-text-secondary, #6b7280);
+  font-size: var(--font-sm, 24rpx);
+}
+
+.ui-state-panel--error .ui-state-text {
+  color: var(--color-danger, #b91c1c);
+}

@@ -1,22 +1,22 @@
 <navigation-bar title="游戏中" back="{{true}}" color="black" background="#FFF"></navigation-bar>
-<view class="page">
-  <view wx:if="{{pageState === 'error'}}" class="error-tip">{{pageError}}</view>
-  <button wx:if="{{pageState === 'error'}}" class="secondary-btn" bindtap="handleRetryLoad">重试加载</button>
-  <view wx:if="{{pageState === 'loadingRole'}}" class="camp-text">身份加载中...</view>
+<view class="page-shell">
+  <ui-state-panel
+    wx:if="{{pageState === 'error'}}"
+    type="error"
+    message="{{pageError}}"
+    actionText="重试加载"
+    bind:action="handleRetryLoad"
+  />
+  <ui-state-panel wx:if="{{pageState === 'loadingRole'}}" type="loading" message="身份加载中..." />
 
-  <view class="card role-card {{roleHidden ? '' : 'revealed'}}">
-    <text class="label">你的身份</text>
-    <text class="role-text">{{roleHidden ? '点击翻牌查看身份' : myRole}}</text>
-    <text wx:if="{{!roleHidden}}" class="camp-text">{{myCamp === 'good' ? '好人阵营' : '坏人阵营'}}</text>
-    <button wx:if="{{roleHidden}}" class="primary-btn" bindtap="handleRevealRole">翻牌</button>
-  </view>
-
-  <view class="card">
-    <view class="section-title">玩家列表</view>
-    <view wx:for="{{players}}" wx:key="userId" class="player-row">
-      <text>{{index + 1}}. {{item.nickName}}</text>
+  <ui-card>
+    <view class="role-card {{roleHidden ? '' : 'revealed'}}">
+      <text class="label">你的身份</text>
+      <text class="role-text">{{roleHidden ? '点击翻牌查看身份' : myRole}}</text>
+      <text wx:if="{{!roleHidden}}" class="seat-text">座位号：#{{mySeatNo}}</text>
+      <ui-button wx:if="{{roleHidden}}" bind:tap="handleRevealRole">翻牌</ui-button>
     </view>
-  </view>
+  </ui-card>
 
-  <button class="secondary-btn" bindtap="handleBackRoom">返回房间</button>
+  <ui-button variant="secondary" bind:tap="handleBackRoom">返回房间</ui-button>
 </view>

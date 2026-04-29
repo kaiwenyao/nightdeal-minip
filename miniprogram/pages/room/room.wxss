@@ -1,79 +1,46 @@
-.page {
-  padding: 24rpx;
-  display: flex;
-  flex-direction: column;
-  gap: 20rpx;
-  background: #f7f8fa;
-  min-height: 100vh;
-  box-sizing: border-box;
-}
-
-.card {
-  background: #ffffff;
-  border-radius: 16rpx;
-  padding: 20rpx;
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
-}
-
 .header {
   display: flex;
   justify-content: space-between;
+  gap: var(--space-4);
+  align-items: center;
 }
 
 .room-code {
+  font-size: var(--font-base);
   font-weight: 600;
-  color: #111827;
+  color: var(--color-text-primary);
 }
 
 .status {
-  color: #4b5563;
-}
-
-.section-title {
-  font-weight: 600;
-  margin-bottom: 16rpx;
+  color: var(--color-text-secondary);
+  font-size: var(--font-sm);
 }
 
 .player-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12rpx 0;
+  padding: var(--space-3) 0;
   border-bottom: 1px solid #f3f4f6;
 }
 
 .player-meta {
   display: flex;
-  gap: 16rpx;
+  gap: var(--space-4);
+  align-items: center;
 }
 
 .seat {
-  color: #6b7280;
+  color: var(--color-text-secondary);
+  font-size: var(--font-sm);
 }
 
 .name {
-  color: #111827;
+  color: var(--color-text-primary);
+  font-size: var(--font-base);
 }
 
 .online {
-  color: #16a34a;
-}
-
-.danger-btn {
-  background: #fee2e2;
-  color: #b91c1c;
-  border: 0;
-}
-
-.primary-btn {
-  background: #111827;
-  color: #ffffff;
-  border-radius: 12rpx;
-}
-
-.error-tip {
-  background: #fee2e2;
-  color: #b91c1c;
-  border-radius: 12rpx;
-  padding: 16rpx;
+  color: var(--color-success);
+  font-size: var(--font-sm);
 }

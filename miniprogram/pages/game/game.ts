@@ -1,14 +1,8 @@
 import { request } from '../../utils/request'
 
-interface Player {
-  userId: string
-  nickName: string
-}
-
 interface MyRoleResponse {
   role: string
-  camp: 'good' | 'evil'
-  players: Player[]
+  seatNo: number
 }
 
 Page({
@@ -18,8 +12,7 @@ Page({
     pageError: '',
     roleHidden: true,
     myRole: '',
-    myCamp: 'good',
-    players: [] as Player[],
+    mySeatNo: 0,
   },
   onLoad(query: Record<string, string>) {
     this.setData({ roomCode: query.roomCode || '' })
@@ -33,8 +26,7 @@ Page({
       })
       this.setData({
         myRole: payload.role,
-        myCamp: payload.camp,
-        players: payload.players,
+        mySeatNo: payload.seatNo,
         pageState: 'ready',
       })
     } catch (error) {

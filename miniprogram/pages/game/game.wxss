@@ -1,74 +1,35 @@
-.page {
-  padding: 24rpx;
-  display: flex;
-  flex-direction: column;
-  gap: 20rpx;
-  background: #f7f8fa;
-  min-height: 100vh;
-  box-sizing: border-box;
-}
-
-.card {
-  background: #ffffff;
-  border-radius: 16rpx;
-  padding: 24rpx;
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
-}
-
 .role-card {
   text-align: center;
 }
 
 .label {
-  color: #6b7280;
-  font-size: 24rpx;
+  color: var(--color-text-secondary);
+  font-size: var(--font-sm);
 }
 
 .role-text {
-  margin-top: 16rpx;
+  margin-top: var(--space-4);
   display: block;
   font-size: 36rpx;
   font-weight: 700;
-  color: #111827;
+  color: var(--color-text-primary);
 }
 
 .camp-text {
-  margin-top: 8rpx;
+  margin-top: var(--space-2);
   display: block;
-  color: #2563eb;
+  color: var(--color-info);
 }
 
 .revealed {
-  border: 2rpx solid #111827;
-}
-
-.section-title {
-  font-weight: 600;
-  margin-bottom: 14rpx;
+  padding: var(--space-3);
+  border: 2rpx solid var(--color-text-primary);
+  border-radius: var(--radius-md);
 }
 
 .player-row {
-  padding: 10rpx 0;
+  padding: var(--space-3) 0;
   border-bottom: 1px solid #f3f4f6;
-}
-
-.primary-btn {
-  margin-top: 24rpx;
-  background: #111827;
-  color: #ffffff;
-  border-radius: 12rpx;
-}
-
-.secondary-btn {
-  background: #ffffff;
-  color: #111827;
-  border: 1px solid #d1d5db;
-  border-radius: 12rpx;
-}
-
-.error-tip {
-  background: #fee2e2;
-  color: #b91c1c;
-  border-radius: 12rpx;
-  padding: 16rpx;
+  color: var(--color-text-primary);
+  font-size: var(--font-base);
 }

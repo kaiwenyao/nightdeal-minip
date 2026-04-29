@@ -1,0 +1,12 @@
+<view class="ui-state-panel ui-state-panel--{{type}}">
+  <text class="ui-state-text">{{message || fallbackMessage}}</text>
+  <ui-button
+    wx:if="{{actionText}}"
+    variant="{{type === 'error' ? 'secondary' : 'primary'}}"
+    size="small"
+    block="{{false}}"
+    bind:tap="handleAction"
+  >
+    {{actionText}}
+  </ui-button>
+</view>

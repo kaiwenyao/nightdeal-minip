@@ -2,24 +2,40 @@ import { getUserProfile } from '../../utils/auth'
 import { request } from '../../utils/request'
 import { connectSocket, disconnectSocket, SocketLike } from '../../utils/socket'
 
-interface Player {
-  userId: string
+interface PlayerUser {
+  id: string
   nickName: string
   avatarUrl: string
+}
+
+interface Player {
+  id: string
   seatNo: number
-  online: boolean
+  user: PlayerUser
+  joinedAt: string
+}
+
+interface RoomHost {
+  id: string
+  nickName: string
+  avatarUrl: string
 }
 
 interface RoomSnapshot {
-  roomCode: string
-  hostUserId: string
+  id: string
+  code: string
+  status: string
+  roleConfig: unknown
+  maxPlayers: number
+  host: RoomHost | null
   players: Player[]
+  createdAt: string
 }
 
 Page({
   data: {
     roomCode: '',
-    hostUserId: '',
+    hostId: '',
     currentUserId: '',
     players: [] as Player[],
     pageState: 'loading',
@@ -52,8 +68,8 @@ Page({
       })
 
       this.setData({
-        roomCode: payload.roomCode,
-        hostUserId: payload.hostUserId,
+        roomCode: payload.code,
+        hostId: payload.host?.id || '',
         players: payload.players,
         pageState: 'ready',
       })
@@ -67,10 +83,81 @@ Page({
     const socket = connectSocket(false)
     this.socket = socket
     this.setData({ connectionStatus: 'connecting' })
-    socket.on('connect', () => this.setData({ connectionStatus: 'connected' }))
-    socket.on('disconnect', () => this.setData({ connectionStatus: 'reconnecting' }))
+
+    socket.on('connect', () => {
+      this.setData({ connectionStatus: 'connected' })
+      this.joinRoomViaSocket()
+    })
+
+    socket.on('disconnect', () => {
+      this.setData({ connectionStatus: 'reconnecting' })
+    })
+
+    socket.on('room:state', (data: unknown) => {
+      const state = data as { room: unknown; players: Player[] }
+      if (state.players) {
+        this.setData({ players: state.players })
+      }
+    })
+
+    socket.on('room:player-joined', (data: unknown) => {
+      const payload = data as { player: Player; playerCount: number }
+      if (payload.player) {
+        const players = [...this.data.players, payload.player]
+        this.setData({ players })
+      }
+    })
+
+    socket.on('room:player-left', (data: unknown) => {
+      const payload = data as { userId: string; playerCount: number }
+      if (payload.userId) {
+        const players = this.data.players.filter((p) => p.user.id !== payload.userId)
+        this.setData({ players })
+      }
+    })
+
+    socket.on('room:reconnected', (data: unknown) => {
+      const payload = data as { userId: string }
+      if (payload.userId) {
+        const players = this.data.players.map((p) => {
+          if (p.user.id === payload.userId) {
+            return { ...p, online: true }
+          }
+          return p
+        })
+        this.setData({ players })
+      }
+    })
+
+    socket.on('room:offline', (data: unknown) => {
+      const payload = data as { userId: string }
+      if (payload.userId) {
+        const players = this.data.players.map((p) => {
+          if (p.user.id === payload.userId) {
+            return { ...p, online: false }
+          }
+          return p
+        })
+        this.setData({ players })
+      }
+    })
+
+    socket.on('room:started', () => {
+      wx.navigateTo({
+        url: `/pages/game/game?roomCode=${this.data.roomCode}`,
+      })
+    })
+
+    socket.on('room:error', (data: unknown) => {
+      const payload = data as { message: string }
+      if (payload.message) {
+        wx.showToast({ title: payload.message, icon: 'none' })
+      }
+    })
+
     if (socket.connected) {
       this.setData({ connectionStatus: 'connected' })
+      this.joinRoomViaSocket()
       return
     }
     socket.connect()
@@ -108,7 +195,7 @@ Page({
         data: { userId },
       })
       this.setData({
-        players: this.data.players.filter((item) => item.userId !== userId),
+        players: this.data.players.filter((item) => item.user.id !== userId),
       })
     } catch (error) {
       const message = error instanceof Error ? error.message : '踢出失败，请重试'
@@ -117,5 +204,10 @@ Page({
   },
   handleRetryLoad() {
     this.loadRoomSnapshot()
+  },
+  joinRoomViaSocket() {
+    if (this.socket) {
+      this.socket.emit('room:join', { roomCode: this.data.roomCode })
+    }
   },
 })

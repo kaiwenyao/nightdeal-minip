@@ -1,33 +1,40 @@
 <navigation-bar title="房间中" back="{{true}}" color="black" background="#FFF"></navigation-bar>
-<view class="page">
-  <view class="header card">
-    <text class="room-code">房间码：{{roomCode}}</text>
-    <text class="status">连接状态：{{connectionStatus}}</text>
-  </view>
+<view class="page-shell">
+  <ui-card>
+    <view class="header">
+      <text class="room-code">房间码：{{roomCode}}</text>
+      <text class="status">连接状态：{{connectionStatus}}</text>
+    </view>
+  </ui-card>
 
-  <view wx:if="{{pageState === 'error'}}" class="error-tip">{{pageError}}</view>
-  <button wx:if="{{pageState === 'error'}}" class="secondary-btn" bindtap="handleRetryLoad">重试加载</button>
-  <view wx:if="{{pageState === 'loading'}}" class="status">房间加载中...</view>
+  <ui-state-panel
+    wx:if="{{pageState === 'error'}}"
+    type="error"
+    message="{{pageError}}"
+    actionText="重试加载"
+    bind:action="handleRetryLoad"
+  />
+  <ui-state-panel wx:if="{{pageState === 'loading'}}" type="loading" message="房间加载中..." />
 
-  <view class="card">
+  <ui-card>
     <view class="section-title">玩家列表</view>
-    <view wx:for="{{players}}" wx:key="userId" class="player-row">
+    <view wx:for="{{players}}" wx:key="id" class="player-row">
       <view class="player-meta">
         <text class="seat">#{{item.seatNo}}</text>
-        <text class="name">{{item.nickName}}</text>
-        <text class="online">{{item.online ? '在线' : '离线'}}</text>
+        <text class="name">{{item.user.nickName}}</text>
       </view>
-      <button
-        wx:if="{{isHost && item.userId !== currentUserId}}"
-        size="mini"
-        class="danger-btn"
-        data-user-id="{{item.userId}}"
-        bindtap="handleKickPlayer"
+      <ui-button
+        wx:if="{{isHost && item.user.id !== currentUserId}}"
+        variant="danger"
+        size="small"
+        block="{{false}}"
+        data-user-id="{{item.user.id}}"
+        bind:tap="handleKickPlayer"
       >
         踢出
-      </button>
+      </ui-button>
     </view>
-  </view>
+  </ui-card>
 
-  <button wx:if="{{isHost}}" class="primary-btn" bindtap="handleStartGame">开始游戏</button>
+  <ui-button wx:if="{{isHost}}" bind:tap="handleStartGame">开始游戏</ui-button>
 </view>
