@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+miniprogram_npm/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Private config (local dev settings)
+project.private.config.json
+
+# Compiled output
+miniprogram/**/*.js
+miniprogram/**/*.js.map
