@@ -10,6 +10,14 @@ interface LoginResponse {
   }
 }
 
+interface UpdateProfileResponse {
+  user: {
+    id: string
+    nickName?: string
+    avatarUrl?: string
+  }
+}
+
 interface CreateRoomResponse {
   roomCode: string
 }
@@ -63,6 +71,14 @@ Component({
     async handleWechatLogin() {
       this.setData({ pageState: 'authorizing', pageError: '' })
       try {
+        const profile = await new Promise<WechatMiniprogram.GetUserProfileSuccessCallbackResult>((resolve, reject) => {
+          wx.getUserProfile({
+            desc: '用于完善账号信息',
+            success: resolve,
+            fail: reject,
+          })
+        })
+
         const loginCode = await new Promise<string>((resolve, reject) => {
           wx.login({
             success: (res) => {
@@ -80,23 +96,30 @@ Component({
           url: '/api/auth/login',
           method: 'POST',
           data: { code: loginCode },
-        }).catch(() => {
-          return {
-            token: 'mock-token-local',
-            user: {
-              id: 'mock-user',
-              nickName: this.data.userInfo.nickName || '游客',
-              avatarUrl: this.data.userInfo.avatarUrl || defaultAvatarUrl,
-            },
-          } as LoginResponse
+        })
+
+        const loginUser = {
+          ...payload.user,
+          nickName: payload.user.nickName || profile.userInfo.nickName || this.data.userInfo.nickName || '游客',
+          avatarUrl: payload.user.avatarUrl || profile.userInfo.avatarUrl || this.data.userInfo.avatarUrl || defaultAvatarUrl,
+        }
+
+        await request<UpdateProfileResponse, { nickName: string; avatarUrl: string }>({
+          url: '/api/auth/update-profile',
+          method: 'POST',
+          data: {
+            nickName: loginUser.nickName,
+            avatarUrl: loginUser.avatarUrl,
+          },
         })
 
         setToken(payload.token)
-        setUserProfile(payload.user)
-        this.setData({ userInfo: payload.user, hasToken: true, pageState: 'ready' })
+        setUserProfile(loginUser)
+        this.setData({ userInfo: loginUser, hasToken: true, pageState: 'ready' })
         wx.showToast({ title: '登录成功', icon: 'success' })
-      } catch {
-        this.setData({ pageState: 'error', pageError: '登录失败，请重试' })
+      } catch (error) {
+        const message = error instanceof Error ? error.message : '微信授权成功，但登录服务不可用，请稍后重试'
+        this.setData({ pageState: 'error', pageError: message })
         wx.showToast({ title: '登录失败', icon: 'none' })
       }
     },
@@ -110,10 +133,11 @@ Component({
         const payload = await request<CreateRoomResponse>({
           url: '/api/rooms',
           method: 'POST',
-        }).catch(() => ({ roomCode: 'DEMO01' }))
+        })
         this.goRoomPage(payload.roomCode, true)
-      } catch {
-        this.setData({ pageState: 'error', pageError: '创建房间失败，请稍后再试' })
+      } catch (error) {
+        const message = error instanceof Error ? error.message : '创建房间失败，请稍后再试'
+        this.setData({ pageState: 'error', pageError: message })
       }
     },
     async handleJoinRoom() {
@@ -131,10 +155,11 @@ Component({
         const payload = await request<JoinRoomResponse>({
           url: `/api/rooms/${code}/join`,
           method: 'POST',
-        }).catch(() => ({ roomCode: code }))
+        })
         this.goRoomPage(payload.roomCode, false)
-      } catch {
-        this.setData({ pageState: 'error', pageError: '加入房间失败，请检查房间码' })
+      } catch (error) {
+        const message = error instanceof Error ? error.message : '加入房间失败，请检查房间码'
+        this.setData({ pageState: 'error', pageError: message })
       }
     },
     goRoomPage(roomCode: string, isHost: boolean) {

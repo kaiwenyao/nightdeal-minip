@@ -32,10 +32,11 @@ Page({
     const roomCode = query.roomCode || ''
     const isHost = query.isHost === '1'
     const user = getUserProfile()
+    const currentUserId = user && user.id ? user.id : 'mock-user'
     this.setData({
       roomCode,
       isHost,
-      currentUserId: user?.id || 'mock-user',
+      currentUserId,
       pageState: 'loading',
     })
     this.loadRoomSnapshot()
@@ -44,30 +45,10 @@ Page({
     disconnectSocket()
   },
   async loadRoomSnapshot() {
+    this.setData({ pageState: 'loading', pageError: '' })
     try {
       const payload = await request<RoomSnapshot>({
         url: `/api/rooms/${this.data.roomCode}`,
-      }).catch(() => {
-        const user = getUserProfile()
-        const current = {
-          userId: user?.id || 'mock-user',
-          nickName: user?.nickName || '游客',
-          avatarUrl: user?.avatarUrl || '',
-          seatNo: 1,
-          online: true,
-        }
-        const teammate = {
-          userId: 'mock-player-2',
-          nickName: '队友A',
-          avatarUrl: '',
-          seatNo: 2,
-          online: true,
-        }
-        return {
-          roomCode: this.data.roomCode,
-          hostUserId: this.data.isHost ? current.userId : teammate.userId,
-          players: this.data.isHost ? [current, teammate] : [teammate, current],
-        } as RoomSnapshot
       })
 
       this.setData({
@@ -77,8 +58,9 @@ Page({
         pageState: 'ready',
       })
       this.initSocket()
-    } catch {
-      this.setData({ pageState: 'error', pageError: '房间加载失败，请返回重试' })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '房间加载失败，请返回重试'
+      this.setData({ pageState: 'error', pageError: message })
     }
   },
   initSocket() {
@@ -102,12 +84,13 @@ Page({
       await request({
         url: `/api/rooms/${this.data.roomCode}/start`,
         method: 'POST',
-      }).catch(() => Promise.resolve())
+      })
       wx.navigateTo({
         url: `/pages/game/game?roomCode=${this.data.roomCode}`,
       })
-    } catch {
-      wx.showToast({ title: '开局失败，请重试', icon: 'none' })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '开局失败，请重试'
+      wx.showToast({ title: message, icon: 'none' })
     }
   },
   async handleKickPlayer(e: WechatMiniprogram.CustomEvent<{ userId: string }>) {
@@ -118,13 +101,21 @@ Page({
     if (!userId || userId === this.data.currentUserId) {
       return
     }
-    await request({
-      url: `/api/rooms/${this.data.roomCode}/kick`,
-      method: 'POST',
-      data: { userId },
-    }).catch(() => Promise.resolve())
-    this.setData({
-      players: this.data.players.filter((item) => item.userId !== userId),
-    })
+    try {
+      await request({
+        url: `/api/rooms/${this.data.roomCode}/kick`,
+        method: 'POST',
+        data: { userId },
+      })
+      this.setData({
+        players: this.data.players.filter((item) => item.userId !== userId),
+      })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '踢出失败，请重试'
+      wx.showToast({ title: message, icon: 'none' })
+    }
+  },
+  handleRetryLoad() {
+    this.loadRoomSnapshot()
   },
 })

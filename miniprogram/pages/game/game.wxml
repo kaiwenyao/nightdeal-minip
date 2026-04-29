@@ -1,6 +1,8 @@
 <navigation-bar title="游戏中" back="{{true}}" color="black" background="#FFF"></navigation-bar>
 <view class="page">
   <view wx:if="{{pageState === 'error'}}" class="error-tip">{{pageError}}</view>
+  <button wx:if="{{pageState === 'error'}}" class="secondary-btn" bindtap="handleRetryLoad">重试加载</button>
+  <view wx:if="{{pageState === 'loadingRole'}}" class="camp-text">身份加载中...</view>
 
   <view class="card role-card {{roleHidden ? '' : 'revealed'}}">
     <text class="label">你的身份</text>

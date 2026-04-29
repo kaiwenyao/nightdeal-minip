@@ -6,6 +6,8 @@
   </view>
 
   <view wx:if="{{pageState === 'error'}}" class="error-tip">{{pageError}}</view>
+  <button wx:if="{{pageState === 'error'}}" class="secondary-btn" bindtap="handleRetryLoad">重试加载</button>
+  <view wx:if="{{pageState === 'loading'}}" class="status">房间加载中...</view>
 
   <view class="card">
     <view class="section-title">玩家列表</view>

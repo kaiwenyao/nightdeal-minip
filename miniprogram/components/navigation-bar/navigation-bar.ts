@@ -60,17 +60,19 @@ Component({
   lifetimes: {
     attached() {
       const rect = wx.getMenuButtonBoundingClientRect()
-      wx.getSystemInfo({
-        success: (res) => {
-          const isAndroid = res.platform === 'android'
-          const isDevtools = res.platform === 'devtools'
-          this.setData({
-            ios: !isAndroid,
-            innerPaddingRight: `padding-right: ${res.windowWidth - rect.left}px`,
-            leftWidth: `width: ${res.windowWidth - rect.left }px`,
-            safeAreaTop: isDevtools || isAndroid ? `height: calc(var(--height) + ${res.safeArea.top}px); padding-top: ${res.safeArea.top}px` : ``
-          })
-        }
+      const systemInfo = wx.getSystemInfoSync()
+      const isAndroid = systemInfo.platform === 'android'
+      const isDevtools = systemInfo.platform === 'devtools'
+      const safeAreaTop =
+        systemInfo.safeArea && typeof systemInfo.safeArea.top === 'number'
+          ? systemInfo.safeArea.top
+          : 0
+
+      this.setData({
+        ios: !isAndroid,
+        innerPaddingRight: `padding-right: ${systemInfo.windowWidth - rect.left}px`,
+        leftWidth: `width: ${systemInfo.windowWidth - rect.left}px`,
+        safeAreaTop: isDevtools || isAndroid ? `height: calc(var(--height) + ${safeAreaTop}px); padding-top: ${safeAreaTop}px` : ''
       })
     },
   },
@@ -100,6 +102,11 @@ Component({
         })
       }
       this.triggerEvent('back', { delta: data.delta }, {})
+    },
+    home() {
+      wx.reLaunch({
+        url: '/pages/index/index'
+      })
     }
   },
 })

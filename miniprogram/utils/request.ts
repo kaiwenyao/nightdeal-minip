@@ -2,6 +2,12 @@ import { getToken } from './auth'
 
 const BASE_URL = 'http://localhost:3000'
 
+interface ApiEnvelope<T> {
+  code: number
+  message: string
+  data: T
+}
+
 interface RequestOptions<TBody extends WechatMiniprogram.IAnyObject | string | ArrayBuffer> {
   url: string
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE'
@@ -28,13 +34,24 @@ export function request<
       },
       success: (res) => {
         if (res.statusCode >= 200 && res.statusCode < 300) {
-          resolve(res.data as TResponse)
+          const payload = res.data as ApiEnvelope<TResponse> | TResponse
+          if (payload && typeof payload === 'object' && 'code' in payload && 'data' in payload) {
+            const envelope = payload as ApiEnvelope<TResponse>
+            if (envelope.code === 0) {
+              resolve(envelope.data)
+              return
+            }
+            reject(new Error(envelope.message || '请求失败'))
+            return
+          }
+          resolve(payload as TResponse)
           return
         }
-        reject(new Error(`Request failed with status ${res.statusCode}`))
+        const payload = res.data as { message?: string } | undefined
+        reject(new Error(payload?.message || `Request failed with status ${res.statusCode}`))
       },
-      fail: () => {
-        reject(new Error('Network error'))
+      fail: (error) => {
+        reject(new Error(error.errMsg || 'Network error'))
       },
     })
   })
