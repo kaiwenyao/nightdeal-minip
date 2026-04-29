@@ -1,0 +1,20 @@
+<navigation-bar title="游戏中" back="{{true}}" color="black" background="#FFF"></navigation-bar>
+<view class="page">
+  <view wx:if="{{pageState === 'error'}}" class="error-tip">{{pageError}}</view>
+
+  <view class="card role-card {{roleHidden ? '' : 'revealed'}}">
+    <text class="label">你的身份</text>
+    <text class="role-text">{{roleHidden ? '点击翻牌查看身份' : myRole}}</text>
+    <text wx:if="{{!roleHidden}}" class="camp-text">{{myCamp === 'good' ? '好人阵营' : '坏人阵营'}}</text>
+    <button wx:if="{{roleHidden}}" class="primary-btn" bindtap="handleRevealRole">翻牌</button>
+  </view>
+
+  <view class="card">
+    <view class="section-title">玩家列表</view>
+    <view wx:for="{{players}}" wx:key="userId" class="player-row">
+      <text>{{index + 1}}. {{item.nickName}}</text>
+    </view>
+  </view>
+
+  <button class="secondary-btn" bindtap="handleBackRoom">返回房间</button>
+</view>

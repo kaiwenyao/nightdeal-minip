@@ -1,6 +1,8 @@
 {
   "pages": [
     "pages/index/index",
+    "pages/room/room",
+    "pages/game/game",
     "pages/logs/logs"
   ],
   "window": {

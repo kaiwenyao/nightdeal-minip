@@ -1,0 +1,31 @@
+<navigation-bar title="房间中" back="{{true}}" color="black" background="#FFF"></navigation-bar>
+<view class="page">
+  <view class="header card">
+    <text class="room-code">房间码：{{roomCode}}</text>
+    <text class="status">连接状态：{{connectionStatus}}</text>
+  </view>
+
+  <view wx:if="{{pageState === 'error'}}" class="error-tip">{{pageError}}</view>
+
+  <view class="card">
+    <view class="section-title">玩家列表</view>
+    <view wx:for="{{players}}" wx:key="userId" class="player-row">
+      <view class="player-meta">
+        <text class="seat">#{{item.seatNo}}</text>
+        <text class="name">{{item.nickName}}</text>
+        <text class="online">{{item.online ? '在线' : '离线'}}</text>
+      </view>
+      <button
+        wx:if="{{isHost && item.userId !== currentUserId}}"
+        size="mini"
+        class="danger-btn"
+        data-user-id="{{item.userId}}"
+        bindtap="handleKickPlayer"
+      >
+        踢出
+      </button>
+    </view>
+  </view>
+
+  <button wx:if="{{isHost}}" class="primary-btn" bindtap="handleStartGame">开始游戏</button>
+</view>

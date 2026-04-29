@@ -1,63 +1,100 @@
-/**index.wxss**/
 page {
-  height: 100vh;
+  background: #f7f8fa;
+}
+
+.page {
+  padding: 32rpx;
   display: flex;
   flex-direction: column;
+  gap: 24rpx;
 }
 
-.scrollarea {
-  flex: 1;
-  overflow-y: hidden;
+.hero {
+  padding: 16rpx 8rpx;
 }
 
-.userinfo {
+.title {
+  display: block;
+  font-size: 40rpx;
+  font-weight: 600;
+  color: #111827;
+}
+
+.subtitle {
+  margin-top: 8rpx;
+  display: block;
+  font-size: 26rpx;
+  color: #6b7280;
+}
+
+.card {
+  background: #ffffff;
+  border-radius: 20rpx;
+  padding: 24rpx;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  color: #aaa;
-  width: 80%;
-}
-
-.userinfo-avatar {
-  overflow: hidden;
-  width: 128rpx;
-  height: 128rpx;
-  margin: 20rpx;
-  border-radius: 50%;
-}
-
-.usermotto {
-  margin-top: 200px;
+  gap: 18rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.04);
 }
 
 .avatar-wrapper {
+  width: 120rpx !important;
+  height: 120rpx;
+  border-radius: 60rpx;
   padding: 0;
-  width: 56px !important;
-  border-radius: 8px;
-  margin-top: 40px;
-  margin-bottom: 40px;
+  align-self: center;
 }
 
 .avatar {
-  display: block;
-  width: 56px;
-  height: 56px;
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 60rpx;
 }
 
-.nickname-wrapper {
+.text-input {
+  min-height: 78rpx;
+  border: 1px solid #e5e7eb;
+  border-radius: 12rpx;
+  padding: 0 20rpx;
+  font-size: 28rpx;
+  background: #ffffff;
+}
+
+.primary-btn {
+  background: #111827;
+  color: #ffffff;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+}
+
+.join-row {
   display: flex;
-  width: 100%;
-  padding: 16px;
-  box-sizing: border-box;
-  border-top: .5px solid rgba(0, 0, 0, 0.1);
-  border-bottom: .5px solid rgba(0, 0, 0, 0.1);
-  color: black;
+  gap: 16rpx;
 }
 
-.nickname-label {
-  width: 105px;
-}
-
-.nickname-input {
+.code-input {
   flex: 1;
+}
+
+.secondary-btn {
+  min-width: 150rpx;
+  background: #ffffff;
+  color: #111827;
+  border: 1px solid #d1d5db;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+}
+
+.state-tip {
+  text-align: center;
+  color: #4b5563;
+  font-size: 24rpx;
+}
+
+.error-tip {
+  background: #fee2e2;
+  color: #b91c1c;
+  border-radius: 12rpx;
+  padding: 16rpx;
+  font-size: 24rpx;
 }

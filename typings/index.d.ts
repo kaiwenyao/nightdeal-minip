@@ -1,6 +1,6 @@
 /// <reference path="./types/index.d.ts" />
 
-interface IAppOption {
+interface IAppOption extends WechatMiniprogram.IAnyObject {
   globalData: {
     userInfo?: WechatMiniprogram.UserInfo,
   }
