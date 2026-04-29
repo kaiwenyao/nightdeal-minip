@@ -114,6 +114,8 @@ Component({
           avatarUrl: payload.user.avatarUrl || this.data.userInfo.avatarUrl || defaultAvatarUrl,
         }
 
+        setToken(payload.token)
+
         await request<UpdateProfileResponse, { nickName: string; avatarUrl: string }>({
           url: '/api/auth/update-profile',
           method: 'POST',
@@ -122,8 +124,6 @@ Component({
             avatarUrl: loginUser.avatarUrl,
           },
         })
-
-        setToken(payload.token)
         setUserProfile(loginUser)
         this.setData({ userInfo: loginUser, hasToken: true, pageState: 'ready' })
         wx.showToast({ title: '登录成功', icon: 'success' })
