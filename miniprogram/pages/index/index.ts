@@ -1,5 +1,6 @@
 import { getToken, getUserProfile, setToken, setUserProfile, UserProfile } from '../../utils/auth'
 import { request } from '../../utils/request'
+import { config } from '../../utils/config'
 
 interface LoginResponse {
   token: string
@@ -95,6 +96,52 @@ Component({
       const { avatarUrl } = e.detail
       this.setData({
         'userInfo.avatarUrl': avatarUrl,
+      })
+      this.uploadAvatar(avatarUrl)
+    },
+    uploadAvatar(filePath: string) {
+      const token = getToken()
+      if (!token) {
+        return
+      }
+
+      wx.showLoading({ title: '上传头像中...' })
+      const uploadTask = wx.uploadFile({
+        url: `${config.baseUrl}/api/upload/avatar`,
+        filePath: filePath,
+        name: 'avatar',
+        header: {
+          Authorization: `Bearer ${token}`,
+        },
+        success: (res) => {
+          if (res.statusCode >= 200 && res.statusCode < 300) {
+            try {
+              const response = JSON.parse(res.data)
+              const avatarUrl = response.data?.url || response.url
+              if (avatarUrl) {
+                this.setData({
+                  'userInfo.avatarUrl': avatarUrl,
+                })
+              }
+            } catch {
+              wx.showToast({ title: '上传响应解析失败', icon: 'none' })
+            }
+          } else {
+            wx.showToast({ title: '头像上传失败', icon: 'none' })
+          }
+        },
+        fail: () => {
+          wx.showToast({ title: '头像上传失败', icon: 'none' })
+        },
+        complete: () => {
+          wx.hideLoading()
+        },
+      })
+
+      uploadTask.onProgressUpdate((res) => {
+        if (res.progress < 100) {
+          wx.showLoading({ title: `上传中 ${res.progress}%` })
+        }
       })
     },
     async handleWechatLogin() {
