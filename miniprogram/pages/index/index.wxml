@@ -32,7 +32,7 @@
 
     <ui-button
       loading="{{actionState === 'authorizing' || actionState === 'loggingIn' || actionState === 'updatingProfile'}}"
-      disabled="{{actionState !== 'idle' || isNavigatingToRoom || isUploadingAvatar}}"
+      disabled="{{actionState !== 'idle' || isNavigatingToRoom}}"
       bind:tap="handleButtonTap"
     >
       {{hasToken ? '更新资料' : '微信登录'}}
