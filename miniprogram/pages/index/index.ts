@@ -58,6 +58,7 @@ Component({
     hasToken: false,
     isNavigatingToRoom: false,
     isUploadingAvatar: false,
+    pendingAvatarPath: '',
   },
   lifetimes: {
     attached() {
@@ -103,10 +104,12 @@ Component({
     uploadAvatar(filePath: string) {
       const token = getToken()
       if (!token) {
+        // No token yet — save path for upload after login
+        this.setData({ pendingAvatarPath: filePath })
         return
       }
 
-      this.setData({ isUploadingAvatar: true })
+      this.setData({ isUploadingAvatar: true, pendingAvatarPath: '' })
       wx.showLoading({ title: '上传头像中...' })
       const uploadTask = wx.uploadFile({
         url: `${config.baseUrl}/api/upload/avatar`,
@@ -147,6 +150,61 @@ Component({
         }
       })
     },
+    /** Upload pending avatar after login; returns the real URL or null */
+    uploadPendingAvatar(): Promise<string | null> {
+      const filePath = this.data.pendingAvatarPath
+      if (!filePath) {
+        return Promise.resolve(null)
+      }
+
+      const token = getToken()
+      if (!token) {
+        return Promise.resolve(null)
+      }
+
+      this.setData({ isUploadingAvatar: true, pendingAvatarPath: '' })
+
+      return new Promise((resolve) => {
+        wx.showLoading({ title: '上传头像中...' })
+        const uploadTask = wx.uploadFile({
+          url: `${config.baseUrl}/api/upload/avatar`,
+          filePath: filePath,
+          name: 'avatar',
+          header: {
+            Authorization: `Bearer ${token}`,
+          },
+          success: (res) => {
+            if (res.statusCode >= 200 && res.statusCode < 300) {
+              try {
+                const response = JSON.parse(res.data)
+                const avatarUrl = response.data?.url || response.url
+                if (avatarUrl) {
+                  this.setData({ 'userInfo.avatarUrl': avatarUrl })
+                  resolve(avatarUrl)
+                  return
+                }
+              } catch {
+                // fall through
+              }
+            }
+            resolve(null)
+          },
+          fail: () => {
+            resolve(null)
+          },
+          complete: () => {
+            wx.hideLoading()
+            this.setData({ isUploadingAvatar: false })
+          },
+        })
+
+        uploadTask.onProgressUpdate((res) => {
+          if (res.progress < 100) {
+            wx.showLoading({ title: `上传中 ${res.progress}%` })
+          }
+        })
+      })
+    },
     async handleWechatLogin() {
       if (this.isBusy()) {
         return
@@ -177,12 +235,24 @@ Component({
 
         setToken(payload.token)
 
+        // If user chose an avatar before login, upload it now that we have a token
+        let finalAvatarUrl = this.data.userInfo.avatarUrl
+        if (this.data.pendingAvatarPath || (finalAvatarUrl !== defaultAvatarUrl && finalAvatarUrl.startsWith('http://tmp'))) {
+          const uploadedUrl = await this.uploadPendingAvatar()
+          if (uploadedUrl) {
+            finalAvatarUrl = uploadedUrl
+          } else if (finalAvatarUrl.startsWith('http://tmp')) {
+            // Upload failed and we only have a temp URL — fall back to server default
+            finalAvatarUrl = payload.user.avatarUrl || defaultAvatarUrl
+          }
+        }
+
         // Merge: local user input takes priority over server data
         const loginUser: UserProfile = {
           id: payload.user.id,
           nickName: this.data.userInfo.nickName || payload.user.nickName || '游客',
-          avatarUrl: this.data.userInfo.avatarUrl !== defaultAvatarUrl
-            ? this.data.userInfo.avatarUrl
+          avatarUrl: finalAvatarUrl !== defaultAvatarUrl
+            ? finalAvatarUrl
             : payload.user.avatarUrl || defaultAvatarUrl,
         }
 
