@@ -1,5 +1,5 @@
-import { getToken, getUserProfile, setToken, setUserProfile, UserProfile } from '../../utils/auth'
-import { request } from '../../utils/request'
+import { getToken, getUserProfile, setToken, setUserProfile, clearToken, clearUserProfile, UserProfile } from '../../utils/auth'
+import { request, UnauthorizedError } from '../../utils/request'
 
 interface LoginResponse {
   token: string
@@ -188,6 +188,13 @@ Component({
         this.setData({ userInfo: updatedUser, actionState: 'idle' })
         wx.showToast({ title: '资料已更新', icon: 'success' })
       } catch (error) {
+        if (error instanceof UnauthorizedError) {
+          clearToken()
+          clearUserProfile()
+          this.setData({ hasToken: false, actionState: 'idle' })
+          await this.handleWechatLogin()
+          return
+        }
         const message = error instanceof Error ? error.message : '更新失败，请稍后重试'
         this.setActionState('idle', message)
         wx.showToast({ title: message, icon: 'none' })

@@ -1,6 +1,13 @@
 import { getToken } from './auth'
 import { config } from './config'
 
+export class UnauthorizedError extends Error {
+  constructor(message = '登录态失效') {
+    super(message)
+    this.name = 'UnauthorizedError'
+  }
+}
+
 interface ApiEnvelope<T> {
   code: number
   message: string
@@ -49,6 +56,10 @@ export function request<
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       success: (res) => {
+        if (res.statusCode === 401) {
+          reject(new UnauthorizedError())
+          return
+        }
         if (res.statusCode >= 200 && res.statusCode < 300) {
           const payload = res.data as ApiEnvelope<TResponse> | TResponse
           if (payload && typeof payload === 'object' && 'code' in payload && 'data' in payload) {
