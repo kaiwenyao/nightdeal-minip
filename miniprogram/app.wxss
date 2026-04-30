@@ -1,35 +1,88 @@
-/** app.wxss **/
-page {
-  --color-bg: #f5f6f8;
-  --color-surface: #ffffff;
-  --color-border: #e5e7eb;
-  --color-text-primary: #111827;
-  --color-text-secondary: #6b7280;
-  --color-accent: #111827;
-  --color-danger: #b91c1c;
-  --color-danger-bg: #fee2e2;
-  --color-success: #16a34a;
-  --color-info: #2563eb;
+/** app.wxss — NightDeal Design Tokens **/
 
+page {
+  /* ── Color Palette ── */
+  /* Primary: deep ink with warm undertone */
+  --color-bg: #f7f5f0;
+  --color-bg-warm: #f0ede6;
+  --color-surface: #ffffff;
+  --color-surface-raised: #faf9f6;
+  --color-border: #e8e4dc;
+  --color-border-strong: #d5d0c7;
+
+  --color-text-primary: #1a1a2e;
+  --color-text-secondary: #6b6b7b;
+  --color-text-muted: #9a95a0;
+
+  /* Accent: amber gold — medieval / Avalon feel */
+  --color-accent: #c9a96e;
+  --color-accent-light: #e8d5a3;
+  --color-accent-dark: #a0854a;
+  --color-accent-bg: #faf5e9;
+
+  /* Secondary: deep teal — lake / forest */
+  --color-teal: #0f4c4b;
+  --color-teal-light: #e6f2f1;
+  --color-teal-muted: #3d7a78;
+
+  /* Semantic */
+  --color-danger: #b83a3a;
+  --color-danger-bg: #fceeee;
+  --color-success: #2d7a5f;
+  --color-success-bg: #eaf6f1;
+  --color-info: #3b6e9e;
+  --color-info-bg: #edf4fb;
+
+  /* ── Spacing Scale (4rpx base) ── */
+  --space-1: 4rpx;
   --space-2: 8rpx;
   --space-3: 12rpx;
   --space-4: 16rpx;
   --space-5: 20rpx;
   --space-6: 24rpx;
   --space-8: 32rpx;
+  --space-10: 40rpx;
+  --space-12: 48rpx;
+  --space-16: 64rpx;
 
+  /* ── Typography ── */
   --font-xs: 22rpx;
   --font-sm: 24rpx;
   --font-base: 28rpx;
   --font-lg: 32rpx;
   --font-xl: 40rpx;
+  --font-2xl: 48rpx;
+  --font-3xl: 56rpx;
 
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+
+  /* ── Radius ── */
+  --radius-xs: 8rpx;
   --radius-sm: 12rpx;
   --radius-md: 16rpx;
   --radius-lg: 20rpx;
-  --shadow-sm: 0 4rpx 18rpx rgba(17, 24, 39, 0.05);
+  --radius-xl: 28rpx;
+  --radius-full: 9999rpx;
+
+  /* ── Shadows (layered) ── */
+  --shadow-xs: 0 2rpx 8rpx rgba(26, 26, 46, 0.04);
+  --shadow-sm: 0 4rpx 20rpx rgba(26, 26, 46, 0.06);
+  --shadow-md: 0 8rpx 30rpx rgba(26, 26, 46, 0.08);
+  --shadow-lg: 0 12rpx 40rpx rgba(26, 26, 46, 0.12);
+  --shadow-gold: 0 4rpx 20rpx rgba(201, 169, 110, 0.2);
+
+  /* ── Transitions ── */
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+  --transition-slow: 400ms ease;
+
+  background: var(--color-bg);
 }
 
+/* ── Global Layout Classes ── */
 .page-shell {
   min-height: 100vh;
   box-sizing: border-box;
@@ -37,21 +90,24 @@ page {
   display: flex;
   flex-direction: column;
   gap: var(--space-6, 24rpx);
-  background: var(--color-bg, #f5f6f8);
+  background: var(--color-bg, #f7f5f0);
 }
 
 .section-title {
   font-size: var(--font-base, 28rpx);
-  font-weight: 600;
-  color: var(--color-text-primary, #111827);
+  font-weight: var(--font-semibold, 600);
+  color: var(--color-text-primary, #1a1a2e);
+  letter-spacing: 0.02em;
 }
 
-.container {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
-  padding: 200rpx 0;
-  box-sizing: border-box;
+/* Utility: horizontal divider */
+.divider {
+  height: 1px;
+  background: var(--color-border, #e8e4dc);
+  margin: var(--space-4, 16rpx) 0;
+}
+
+/* Utility: safe area spacing for custom nav */
+.safe-top {
+  padding-top: env(safe-area-inset-top);
 }

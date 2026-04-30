@@ -2,53 +2,174 @@ page {
   background: var(--color-bg);
 }
 
+.home-shell {
+  gap: var(--space-6);
+  background:
+    radial-gradient(ellipse 120% 60% at 50% 0%, rgba(201, 169, 110, 0.12), transparent 60%),
+    radial-gradient(ellipse 80% 40% at 80% 10%, rgba(15, 76, 75, 0.06), transparent 50%),
+    var(--color-bg);
+}
+
+/* ── Hero ── */
 .hero {
-  padding: var(--space-4) var(--space-2);
+  padding: var(--space-6) 4rpx var(--space-4);
 }
 
 .title {
   display: block;
-  font-size: var(--font-xl);
-  font-weight: 600;
+  font-size: var(--font-3xl);
+  font-weight: var(--font-bold);
   color: var(--color-text-primary);
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+}
+
+.title::after {
+  content: '';
+  display: block;
+  width: 60rpx;
+  height: 4rpx;
+  background: var(--color-accent);
+  border-radius: var(--radius-full);
+  margin-top: var(--space-4);
 }
 
 .subtitle {
-  margin-top: var(--space-2);
+  margin-top: var(--space-4);
   display: block;
-  font-size: var(--font-sm);
+  font-size: var(--font-base);
   color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+/* ── Card Headers ── */
+.card-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.card-title {
+  display: block;
+  font-size: var(--font-lg);
+  font-weight: var(--font-bold);
+  color: var(--color-text-primary);
+  letter-spacing: 0.02em;
+}
+
+.card-note {
+  font-size: var(--font-sm);
+  color: var(--color-teal-muted);
+  font-weight: var(--font-medium);
+  line-height: 1.4;
+  background: var(--color-teal-light);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+}
+
+/* ── Login Status ── */
+.login-status {
+  margin-top: var(--space-2);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.status-dot {
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 50%;
+  background: #d4a853;
+  border: 2rpx solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 0 0 2rpx rgba(212, 168, 83, 0.25);
+}
+
+.status-dot--ok {
+  background: var(--color-success);
+  box-shadow: 0 0 0 2rpx rgba(45, 122, 95, 0.25);
+}
+
+.status-text {
+  color: var(--color-text-secondary);
+  font-size: var(--font-sm);
+  font-weight: var(--font-medium);
+}
+
+/* ── Profile Row ── */
+.profile-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  padding: var(--space-2) 0;
 }
 
 .avatar-wrapper {
-  width: 120rpx !important;
-  height: 120rpx;
-  border-radius: 60rpx;
+  width: 128rpx !important;
+  height: 128rpx;
+  border-radius: var(--radius-full);
   padding: 0;
-  align-self: center;
+  flex: none;
+  background: transparent;
+  position: relative;
+}
+
+.avatar-wrapper::after {
+  border: none;
+}
+
+/* Gold ring around avatar */
+.avatar-wrapper::before {
+  content: '';
+  position: absolute;
+  top: -4rpx;
+  left: -4rpx;
+  right: -4rpx;
+  bottom: -4rpx;
+  border-radius: var(--radius-full);
+  border: 3rpx solid var(--color-accent-light);
+  pointer-events: none;
 }
 
 .avatar {
-  width: 120rpx;
-  height: 120rpx;
-  border-radius: 60rpx;
+  width: 128rpx;
+  height: 128rpx;
+  border-radius: var(--radius-full);
+  background: var(--color-bg-warm);
 }
 
+/* ── Inputs ── */
 .text-input {
-  min-height: 78rpx;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  padding: 0 20rpx;
+  min-height: 88rpx;
+  border: 2rpx solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 0 var(--space-5);
   font-size: var(--font-base);
   background: var(--color-surface);
+  color: var(--color-text-primary);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
-.join-row {
+.name-input {
+  flex: 1;
+}
+
+/* ── Join Section ── */
+.join-stack {
   display: flex;
+  flex-direction: column;
   gap: var(--space-4);
-  align-items: center;
 }
 
 .code-input {
-  flex: 1;
+  height: 100rpx;
+  font-size: var(--font-xl);
+  letter-spacing: 0.1em;
+  text-align: center;
+  font-weight: var(--font-bold);
+  color: var(--color-text-primary);
+  border: 2rpx solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
 }
+

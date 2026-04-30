@@ -11,6 +11,8 @@
 
   <ui-card>
     <view class="role-card {{roleHidden ? '' : 'revealed'}}">
+      <view class="ornament-tl"></view>
+      <view class="ornament-br"></view>
       <text class="label">你的身份</text>
       <text class="role-text">{{roleHidden ? '点击翻牌查看身份' : myRole}}</text>
       <text wx:if="{{!roleHidden}}" class="seat-text">座位号：#{{mySeatNo}}</text>

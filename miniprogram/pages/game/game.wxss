@@ -1,35 +1,158 @@
+page {
+  background: var(--color-bg);
+}
+
+/* ── Role Card: the centerpiece ── */
 .role-card {
   text-align: center;
+  padding: var(--space-12) var(--space-8);
+  border-radius: var(--radius-xl);
+  background: linear-gradient(145deg, #2a2a40, #1a1a2e);
+  border: 3rpx solid var(--color-accent-light);
+  box-shadow:
+    0 8rpx 40rpx rgba(26, 26, 46, 0.3),
+    0 0 60rpx rgba(201, 169, 110, 0.08);
+  position: relative;
+  overflow: hidden;
+  transition: all var(--transition-slow);
+}
+
+/* Decorative corner ornaments */
+.role-card::before,
+.role-card::after {
+  content: '';
+  position: absolute;
+  width: 40rpx;
+  height: 40rpx;
+  border: 3rpx solid var(--color-accent-light);
+}
+
+.role-card::before {
+  top: 16rpx;
+  left: 16rpx;
+  border-right: none;
+  border-bottom: none;
+}
+
+.role-card::after {
+  bottom: 16rpx;
+  right: 16rpx;
+  border-left: none;
+  border-top: none;
+}
+
+/* Inner corner ornaments via wxml elements */
+.ornament-tl,
+.ornament-br {
+  position: absolute;
+  width: 40rpx;
+  height: 40rpx;
+  border: 3rpx solid var(--color-accent-light);
+}
+
+.ornament-tl {
+  top: 16rpx;
+  right: 16rpx;
+  border-left: none;
+  border-bottom: none;
+}
+
+.ornament-br {
+  bottom: 16rpx;
+  left: 16rpx;
+  border-right: none;
+  border-top: none;
+}
+
+/* Hidden state: card back pattern */
+.role-card:not(.revealed) {
+  background:
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 10rpx,
+      rgba(201, 169, 110, 0.03) 10rpx,
+      rgba(201, 169, 110, 0.03) 20rpx
+    ),
+    linear-gradient(145deg, #2a2a40, #1a1a2e);
+}
+
+/* Revealed state: glow effect */
+.role-card.revealed {
+  background: linear-gradient(145deg, #1a1a2e, #0f0f1e);
+  box-shadow:
+    0 8rpx 40rpx rgba(26, 26, 46, 0.35),
+    0 0 80rpx rgba(201, 169, 110, 0.12),
+    inset 0 1rpx 0 rgba(255, 255, 255, 0.05);
 }
 
 .label {
-  color: var(--color-text-secondary);
+  display: block;
+  color: var(--color-accent);
   font-size: var(--font-sm);
+  font-weight: var(--font-medium);
+  letter-spacing: 0.12em;
 }
 
 .role-text {
-  margin-top: var(--space-4);
+  margin-top: var(--space-6);
   display: block;
-  font-size: 36rpx;
-  font-weight: 700;
-  color: var(--color-text-primary);
+  font-size: var(--font-2xl);
+  font-weight: var(--font-bold);
+  color: var(--color-accent-light);
+  letter-spacing: 0.06em;
+  text-shadow: 0 2rpx 20rpx rgba(201, 169, 110, 0.2);
+}
+
+/* Hidden prompt text */
+.role-card:not(.revealed) .role-text {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: var(--font-lg);
+  font-weight: var(--font-medium);
+  text-shadow: none;
+  letter-spacing: 0.02em;
 }
 
 .camp-text {
-  margin-top: var(--space-2);
+  margin-top: var(--space-3);
   display: block;
-  color: var(--color-info);
+  color: var(--color-accent);
+  font-size: var(--font-base);
+  font-weight: var(--font-medium);
+  letter-spacing: 0.04em;
 }
 
-.revealed {
-  padding: var(--space-3);
-  border: 2rpx solid var(--color-text-primary);
-  border-radius: var(--radius-md);
+.seat-text {
+  margin-top: var(--space-5);
+  display: block;
+  color: var(--color-text-muted);
+  font-size: var(--font-sm);
+  font-weight: var(--font-medium);
+  background: rgba(255, 255, 255, 0.05);
+  padding: var(--space-2) var(--space-5);
+  border-radius: var(--radius-full);
+  display: inline-block;
 }
 
+/* ── Camp-specific colors ── */
+.role-card.revealed[data-camp="good"] {
+  border-color: rgba(45, 122, 95, 0.5);
+  box-shadow:
+    0 8rpx 40rpx rgba(26, 26, 46, 0.3),
+    0 0 60rpx rgba(45, 122, 95, 0.1);
+}
+
+.role-card.revealed[data-camp="evil"] {
+  border-color: rgba(184, 58, 58, 0.5);
+  box-shadow:
+    0 8rpx 40rpx rgba(26, 26, 46, 0.3),
+    0 0 60rpx rgba(184, 58, 58, 0.1);
+}
+
+/* ── Player list (for potential future use) ── */
 .player-row {
   padding: var(--space-3) 0;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1rpx solid var(--color-border);
   color: var(--color-text-primary);
   font-size: var(--font-base);
 }

@@ -1,42 +1,83 @@
 <navigation-bar title="NightDeal" back="{{false}}" color="black" background="#FFF"></navigation-bar>
-<view class="page-shell">
+<view class="page-shell home-shell">
   <view class="hero">
     <text class="title">阿瓦隆房间助手</text>
-    <text class="subtitle">登录后创建房间或加入好友房间</text>
+    <text class="subtitle">登录后创建房间，或输入房间码加入。</text>
   </view>
 
   <ui-card>
-    <button class="avatar-wrapper" open-type="chooseAvatar" bind:chooseavatar="onChooseAvatar">
-      <image class="avatar" src="{{userInfo.avatarUrl}}"></image>
-    </button>
-    <input
-      class="text-input"
-      type="nickname"
-      placeholder="请输入昵称"
-      value="{{userInfo.nickName}}"
-      bindinput="onInputChange"
-    />
-    <ui-button bind:tap="handleWechatLogin">微信登录</ui-button>
+    <view class="card-heading">
+      <view>
+        <text class="card-title">玩家资料</text>
+        <view class="login-status">
+          <view class="status-dot {{hasToken ? 'status-dot--ok' : ''}}"></view>
+          <text class="status-text">{{hasToken ? '已登录' : '未登录'}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="profile-row">
+      <button class="avatar-wrapper" open-type="chooseAvatar" bind:chooseavatar="onChooseAvatar">
+        <image class="avatar" src="{{userInfo.avatarUrl}}"></image>
+      </button>
+      <input
+        class="text-input name-input"
+        type="nickname"
+        placeholder="请输入昵称"
+        value="{{userInfo.nickName}}"
+        disabled="{{actionState === 'authorizing' || actionState === 'loggingIn' || isNavigatingToRoom}}"
+        bindinput="onInputChange"
+      />
+    </view>
+
+    <ui-button
+      loading="{{actionState === 'authorizing' || actionState === 'loggingIn'}}"
+      disabled="{{actionState !== 'idle' || isNavigatingToRoom}}"
+      bind:tap="handleWechatLogin"
+    >
+      {{hasToken ? '更新资料' : '微信登录'}}
+    </ui-button>
   </ui-card>
 
   <ui-card>
-    <ui-button bind:tap="handleCreateRoom">创建房间</ui-button>
-    <view class="join-row">
+    <view class="card-heading">
+      <text class="card-title">创建房间</text>
+      <text class="card-note">房主入口</text>
+    </view>
+    <ui-button
+      loading="{{actionState === 'creatingRoom' || isNavigatingToRoom}}"
+      disabled="{{actionState !== 'idle' || isNavigatingToRoom}}"
+      bind:tap="handleCreateRoom"
+    >
+      创建房间
+    </ui-button>
+  </ui-card>
+
+  <ui-card>
+    <view class="card-heading">
+      <text class="card-title">加入房间</text>
+      <text class="card-note">房间码</text>
+    </view>
+    <view class="join-stack">
       <input
         class="text-input code-input"
         maxlength="6"
         placeholder="输入房间码"
         value="{{roomCodeInput}}"
+        disabled="{{actionState !== 'idle' || isNavigatingToRoom}}"
         bindinput="onRoomCodeInput"
+        bindconfirm="handleJoinRoom"
       />
-      <ui-button variant="secondary" block="{{false}}" bind:tap="handleJoinRoom">加入</ui-button>
+      <ui-button
+        variant="secondary"
+        loading="{{actionState === 'joiningRoom' || isNavigatingToRoom}}"
+        disabled="{{actionState !== 'idle' || isNavigatingToRoom}}"
+        bind:tap="handleJoinRoom"
+      >
+        加入房间
+      </ui-button>
     </view>
   </ui-card>
 
-  <ui-state-panel
-    wx:if="{{pageState === 'loading' || pageState === 'authorizing' || pageState === 'loggingIn'}}"
-    type="loading"
-    message="正在处理，请稍候..."
-  />
   <ui-state-panel wx:if="{{pageError}}" type="error" message="{{pageError}}" />
 </view>

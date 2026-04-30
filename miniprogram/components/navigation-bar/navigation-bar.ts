@@ -1,3 +1,19 @@
+interface DeviceInfo {
+  platform: string
+}
+
+interface WindowInfo {
+  windowWidth: number
+  safeArea?: {
+    top?: number
+  }
+}
+
+interface WxSystemApis {
+  getDeviceInfo(): DeviceInfo
+  getWindowInfo(): WindowInfo
+}
+
 Component({
   options: {
     multipleSlots: true // 在组件定义时的选项中启用多slot支持
@@ -60,18 +76,20 @@ Component({
   lifetimes: {
     attached() {
       const rect = wx.getMenuButtonBoundingClientRect()
-      const systemInfo = wx.getSystemInfoSync()
-      const isAndroid = systemInfo.platform === 'android'
-      const isDevtools = systemInfo.platform === 'devtools'
+      const systemApis = wx as unknown as WxSystemApis
+      const deviceInfo = systemApis.getDeviceInfo()
+      const windowInfo = systemApis.getWindowInfo()
+      const isAndroid = deviceInfo.platform === 'android'
+      const isDevtools = deviceInfo.platform === 'devtools'
       const safeAreaTop =
-        systemInfo.safeArea && typeof systemInfo.safeArea.top === 'number'
-          ? systemInfo.safeArea.top
+        windowInfo.safeArea && typeof windowInfo.safeArea.top === 'number'
+          ? windowInfo.safeArea.top
           : 0
 
       this.setData({
         ios: !isAndroid,
-        innerPaddingRight: `padding-right: ${systemInfo.windowWidth - rect.left}px`,
-        leftWidth: `width: ${systemInfo.windowWidth - rect.left}px`,
+        innerPaddingRight: `padding-right: ${windowInfo.windowWidth - rect.left}px`,
+        leftWidth: `width: ${windowInfo.windowWidth - rect.left}px`,
         safeAreaTop: isDevtools || isAndroid ? `height: calc(var(--height) + ${safeAreaTop}px); padding-top: ${safeAreaTop}px` : ''
       })
     },
@@ -94,14 +112,21 @@ Component({
         displayStyle
       })
     },
-    back() {
+    handleBack() {
       const data = this.data
-      if (data.delta) {
+      const delta = data.delta || 1
+      const pages = getCurrentPages()
+
+      if (pages.length > delta) {
         wx.navigateBack({
-          delta: data.delta
+          delta
+        })
+      } else {
+        wx.reLaunch({
+          url: '/pages/index/index'
         })
       }
-      this.triggerEvent('back', { delta: data.delta }, {})
+      this.triggerEvent('back', { delta }, {})
     },
     home() {
       wx.reLaunch({

@@ -1,5 +1,5 @@
 <button
-  class="ui-button ui-button--{{variant}} ui-button--{{size}} {{block ? 'ui-button--block' : ''}}"
+  class="ui-button ui-button--{{variant}} ui-button--{{size}} {{block ? 'ui-button--block' : ''}} {{disabled || loading ? 'ui-button--disabled' : ''}}"
   disabled="{{disabled || loading}}"
   loading="{{loading}}"
   bindtap="handleTap"

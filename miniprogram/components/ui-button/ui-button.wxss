@@ -1,40 +1,69 @@
 .ui-button {
-  border-radius: var(--radius-sm, 12rpx);
+  position: relative;
+  border-radius: var(--radius-md, 16rpx);
   font-size: var(--font-base, 28rpx);
+  font-weight: var(--font-semibold, 600);
+  letter-spacing: 0.02em;
+  transition: transform var(--transition-fast, 150ms ease),
+    box-shadow var(--transition-fast, 150ms ease),
+    opacity var(--transition-fast, 150ms ease);
 }
 
 .ui-button::after {
   border: none;
 }
 
+/* Block modifier */
 .ui-button--block {
   width: 100%;
 }
 
+/* ── Primary: dark ink with gold accent ── */
 .ui-button--primary {
-  background: var(--color-accent, #111827);
-  color: #ffffff;
+  background: var(--color-text-primary, #1a1a2e);
+  color: var(--color-surface, #ffffff);
+  box-shadow: 0 4rpx 16rpx rgba(26, 26, 46, 0.2);
 }
 
+/* ── Secondary: outlined ── */
 .ui-button--secondary {
   background: var(--color-surface, #ffffff);
-  color: var(--color-text-primary, #111827);
-  border: 1px solid var(--color-border, #e5e7eb);
+  color: var(--color-text-primary, #1a1a2e);
+  border: 2rpx solid var(--color-border-strong, #d5d0c7);
 }
 
+/* ── Accent: gold ── */
+.ui-button--accent {
+  background: var(--color-accent, #c9a96e);
+  color: #ffffff;
+  box-shadow: 0 4rpx 16rpx rgba(201, 169, 110, 0.3);
+}
+
+/* ── Danger ── */
 .ui-button--danger {
-  background: var(--color-danger-bg, #fee2e2);
-  color: var(--color-danger, #b91c1c);
+  background: var(--color-danger-bg, #fceeee);
+  color: var(--color-danger, #b83a3a);
+  border: 2rpx solid rgba(184, 58, 58, 0.15);
 }
 
+/* ── Sizes ── */
 .ui-button--small {
   min-height: 56rpx;
   line-height: 56rpx;
   font-size: var(--font-sm, 24rpx);
-  padding: 0 var(--space-4, 16rpx);
+  padding: 0 var(--space-5, 20rpx);
+  border-radius: var(--radius-sm, 12rpx);
 }
 
 .ui-button--normal {
-  min-height: 78rpx;
-  line-height: 78rpx;
+  min-height: 88rpx;
+  line-height: 88rpx;
+  padding: 0 var(--space-8, 32rpx);
+}
+
+/* ── Disabled state ── */
+.ui-button--disabled {
+  opacity: 0.45;
+  transform: none !important;
+  box-shadow: none !important;
 }

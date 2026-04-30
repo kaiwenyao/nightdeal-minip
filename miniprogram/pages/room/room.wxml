@@ -1,9 +1,15 @@
 <navigation-bar title="房间中" back="{{true}}" color="black" background="#FFF"></navigation-bar>
 <view class="page-shell">
   <ui-card>
-    <view class="header">
-      <text class="room-code">房间码：{{roomCode}}</text>
-      <text class="status">连接状态：{{connectionStatus}}</text>
+    <view class="room-summary">
+      <view>
+        <text class="summary-label">房间码</text>
+        <text class="room-code">{{roomCode}}</text>
+      </view>
+      <view class="connection-status">
+        <view class="connection-dot connection-dot--{{connectionStatus}}"></view>
+        <text class="status">{{connectionStatusText}}</text>
+      </view>
     </view>
   </ui-card>
 
@@ -17,7 +23,11 @@
   <ui-state-panel wx:if="{{pageState === 'loading'}}" type="loading" message="房间加载中..." />
 
   <ui-card>
-    <view class="section-title">玩家列表</view>
+    <view class="players-heading">
+      <text class="section-title">玩家列表</text>
+      <text class="players-count">{{players.length}} / {{maxPlayers}}</text>
+    </view>
+    <ui-state-panel wx:if="{{players.length === 0 && pageState !== 'loading'}}" type="empty" message="暂无玩家" />
     <view wx:for="{{players}}" wx:key="id" class="player-row">
       <view class="player-meta">
         <text class="seat">#{{item.seatNo}}</text>
@@ -36,5 +46,10 @@
     </view>
   </ui-card>
 
-  <ui-button wx:if="{{isHost}}" bind:tap="handleStartGame">开始游戏</ui-button>
+  <ui-card wx:if="{{isHost}}" class="host-actions">
+    <view class="card-heading">
+      <text class="section-title">房主操作</text>
+    </view>
+    <ui-button loading="{{startingGame}}" disabled="{{startingGame}}" bind:tap="handleStartGame">开始游戏</ui-button>
+  </ui-card>
 </view>

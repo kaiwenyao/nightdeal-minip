@@ -32,18 +32,41 @@ interface RoomSnapshot {
   createdAt: string
 }
 
+function getSocketErrorMessage(error: unknown): string {
+  if (error && typeof error === 'object' && 'message' in error) {
+    const message = String((error as { message?: unknown }).message || '')
+    if (message) {
+      return message
+    }
+  }
+
+  if (error && typeof error === 'object' && 'errMsg' in error) {
+    const errMsg = String((error as { errMsg?: unknown }).errMsg || '')
+    if (/timeout/i.test(errMsg)) {
+      return '房间连接超时，正在重连'
+    }
+    return errMsg.replace(/^socket:fail\s*/, '') || '房间连接异常，正在重连'
+  }
+
+  return '房间连接异常，正在重连'
+}
+
 Page({
   data: {
     roomCode: '',
     hostId: '',
+    maxPlayers: 0,
     currentUserId: '',
     players: [] as Player[],
     pageState: 'loading',
     pageError: '',
     connectionStatus: 'idle',
+    connectionStatusText: '未连接',
     isHost: false,
+    startingGame: false,
   },
   socket: null as SocketLike | null,
+  navigatingToGame: false,
   onLoad(query: Record<string, string>) {
     const roomCode = query.roomCode || ''
     const isHost = query.isHost === '1'
@@ -54,8 +77,14 @@ Page({
       isHost,
       currentUserId,
       pageState: 'loading',
+      connectionStatus: 'idle',
+      connectionStatusText: '未连接',
     })
     this.loadRoomSnapshot()
+  },
+  onShow() {
+    this.navigatingToGame = false
+    this.setData({ startingGame: false })
   },
   onUnload() {
     disconnectSocket()
@@ -70,6 +99,7 @@ Page({
       this.setData({
         roomCode: payload.code,
         hostId: payload.host?.id || '',
+        maxPlayers: payload.maxPlayers,
         players: payload.players,
         pageState: 'ready',
       })
@@ -82,15 +112,20 @@ Page({
   initSocket() {
     const socket = connectSocket(false)
     this.socket = socket
-    this.setData({ connectionStatus: 'connecting' })
+    this.setConnectionStatus('connecting')
 
     socket.on('connect', () => {
-      this.setData({ connectionStatus: 'connected' })
+      this.setConnectionStatus('connected')
       this.joinRoomViaSocket()
     })
 
     socket.on('disconnect', () => {
-      this.setData({ connectionStatus: 'reconnecting' })
+      this.setConnectionStatus('reconnecting')
+    })
+
+    socket.on('connect_error', (error: unknown) => {
+      this.setConnectionStatus('reconnecting')
+      wx.showToast({ title: getSocketErrorMessage(error), icon: 'none' })
     })
 
     socket.on('room:state', (data: unknown) => {
@@ -143,9 +178,7 @@ Page({
     })
 
     socket.on('room:started', () => {
-      wx.navigateTo({
-        url: `/pages/game/game?roomCode=${this.data.roomCode}`,
-      })
+      this.navigateToGame()
     })
 
     socket.on('room:error', (data: unknown) => {
@@ -156,29 +189,63 @@ Page({
     })
 
     if (socket.connected) {
-      this.setData({ connectionStatus: 'connected' })
+      this.setConnectionStatus('connected')
       this.joinRoomViaSocket()
       return
     }
     socket.connect()
+  },
+  setConnectionStatus(status: string) {
+    const textMap: Record<string, string> = {
+      idle: '未连接',
+      connecting: '连接中',
+      connected: '已连接',
+      reconnecting: '重连中',
+    }
+
+    this.setData({
+      connectionStatus: status,
+      connectionStatusText: textMap[status] || status,
+    })
   },
   async handleStartGame() {
     if (!this.data.isHost) {
       wx.showToast({ title: '仅房主可开始', icon: 'none' })
       return
     }
+    if (this.data.startingGame || this.navigatingToGame) {
+      return
+    }
+    this.setData({ startingGame: true })
     try {
       await request({
         url: `/api/rooms/${this.data.roomCode}/start`,
         method: 'POST',
       })
-      wx.navigateTo({
-        url: `/pages/game/game?roomCode=${this.data.roomCode}`,
-      })
+      this.navigateToGame()
     } catch (error) {
       const message = error instanceof Error ? error.message : '开局失败，请重试'
+      this.setData({ startingGame: false })
       wx.showToast({ title: message, icon: 'none' })
     }
+  },
+  navigateToGame() {
+    if (this.navigatingToGame) {
+      return
+    }
+
+    this.navigatingToGame = true
+    this.setData({ startingGame: true })
+
+    wx.navigateTo({
+      url: `/pages/game/game?roomCode=${this.data.roomCode}`,
+      fail: (error) => {
+        this.navigatingToGame = false
+        this.setData({ startingGame: false })
+        const message = error.errMsg.includes('already exist webviewId') ? '正在进入游戏' : '进入游戏失败'
+        wx.showToast({ title: message, icon: 'none' })
+      },
+    })
   },
   async handleKickPlayer(e: WechatMiniprogram.CustomEvent<{ userId: string }>) {
     if (!this.data.isHost) {

@@ -73,4 +73,4 @@ npm install
 - `miniprogram/pages/game`：身份展示与翻牌
 - `miniprogram/utils/auth.ts`：登录态本地存储
 - `miniprogram/utils/request.ts`：HTTP 请求封装
-- `miniprogram/utils/socket.ts`：Socket 管理（当前为 mock 实现）
+- `miniprogram/utils/socket.ts`：Socket 管理（基于 `wx.connectSocket` 的 Socket.IO 连接封装）

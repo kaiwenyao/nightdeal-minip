@@ -11,6 +11,23 @@ interface RequestOptions<TBody extends WechatMiniprogram.IAnyObject | string | A
   url: string
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE'
   data?: TBody
+  timeout?: number
+}
+
+const DEFAULT_REQUEST_TIMEOUT_MS = 20000
+
+function getRequestFailMessage(errMsg?: string): string {
+  const message = errMsg || ''
+
+  if (/timeout/i.test(message)) {
+    return '请求超时，请检查网络后重试'
+  }
+
+  if (message.startsWith('request:fail')) {
+    return message.replace(/^request:fail\s*/, '') || '网络请求失败'
+  }
+
+  return message || '网络请求失败'
 }
 
 export function request<
@@ -26,7 +43,7 @@ export function request<
       url: `${config.baseUrl}${options.url}`,
       method: options.method || 'GET',
       data: options.data,
-      timeout: 10000,
+      timeout: options.timeout || DEFAULT_REQUEST_TIMEOUT_MS,
       header: {
         'content-type': 'application/json',
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -50,7 +67,7 @@ export function request<
         reject(new Error(payload?.message || `Request failed with status ${res.statusCode}`))
       },
       fail: (error) => {
-        reject(new Error(error.errMsg || 'Network error'))
+        reject(new Error(getRequestFailMessage(error.errMsg)))
       },
     })
   })

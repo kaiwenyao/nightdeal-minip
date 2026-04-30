@@ -4,13 +4,13 @@ interface Config {
 }
 
 const devConfig: Config = {
-  baseUrl: 'http://localhost:3000',
-  socketUrl: 'ws://localhost:3000/room',
+  baseUrl: 'https://nightdeal.kaiwen.dev',
+  socketUrl: 'wss://nightdeal.kaiwen.dev/room',
 }
 
 const prodConfig: Config = {
-  baseUrl: 'https://your-production-domain.com',
-  socketUrl: 'wss://your-production-domain.com/room',
+  baseUrl: 'https://nightdeal.kaiwen.dev',
+  socketUrl: 'wss://nightdeal.kaiwen.dev/room',
 }
 
 declare const __wxConfig: {

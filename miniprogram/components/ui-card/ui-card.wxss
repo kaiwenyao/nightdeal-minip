@@ -2,8 +2,21 @@
   background: var(--color-surface, #ffffff);
   border-radius: var(--radius-lg, 20rpx);
   padding: var(--space-6, 24rpx);
-  box-shadow: var(--shadow-sm, 0 4rpx 18rpx rgba(17, 24, 39, 0.05));
+  box-shadow: var(--shadow-sm, 0 4rpx 20rpx rgba(26, 26, 46, 0.06));
   display: flex;
   flex-direction: column;
   gap: var(--space-4, 16rpx);
+  border: 1rpx solid var(--color-border, #e8e4dc);
+  transition: box-shadow var(--transition-normal, 250ms ease);
+}
+
+/* Variant: elevated (more shadow) */
+.ui-card--elevated {
+  box-shadow: var(--shadow-md, 0 8rpx 30rpx rgba(26, 26, 46, 0.08));
+}
+
+/* Variant: accent border */
+.ui-card--accent {
+  border-color: var(--color-accent-light, #e8d5a3);
+  box-shadow: var(--shadow-gold, 0 4rpx 20rpx rgba(201, 169, 110, 0.2));
 }
