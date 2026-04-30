@@ -57,6 +57,7 @@ Component({
     pageError: '',
     hasToken: false,
     isNavigatingToRoom: false,
+    isUploadingAvatar: false,
   },
   lifetimes: {
     attached() {
@@ -77,7 +78,7 @@ Component({
   },
   methods: {
     isBusy() {
-      return this.data.actionState !== 'idle' || this.data.isNavigatingToRoom
+      return this.data.actionState !== 'idle' || this.data.isNavigatingToRoom || this.data.isUploadingAvatar
     },
     setActionState(actionState: ActionState, pageError = '') {
       this.setData({ actionState, pageError })
@@ -105,6 +106,7 @@ Component({
         return
       }
 
+      this.setData({ isUploadingAvatar: true })
       wx.showLoading({ title: '上传头像中...' })
       const uploadTask = wx.uploadFile({
         url: `${config.baseUrl}/api/upload/avatar`,
@@ -135,6 +137,7 @@ Component({
         },
         complete: () => {
           wx.hideLoading()
+          this.setData({ isUploadingAvatar: false })
         },
       })
 
