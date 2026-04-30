@@ -1,4 +1,4 @@
-import { getToken, getUserProfile, setToken, setUserProfile } from '../../utils/auth'
+import { getToken, getUserProfile, setToken, setUserProfile, UserProfile } from '../../utils/auth'
 import { request } from '../../utils/request'
 
 interface LoginResponse {
@@ -38,7 +38,7 @@ interface JoinRoomResponse {
   createdAt: string
 }
 
-type ActionState = 'idle' | 'authorizing' | 'loggingIn' | 'creatingRoom' | 'joiningRoom'
+type ActionState = 'idle' | 'authorizing' | 'loggingIn' | 'updatingProfile' | 'creatingRoom' | 'joiningRoom'
 
 const ROOM_CODE_LENGTH = 6
 const LOGIN_REQUEST_TIMEOUT_MS = 12000
@@ -101,10 +101,6 @@ Component({
       if (this.isBusy()) {
         return
       }
-      if (!this.data.userInfo.nickName) {
-        wx.showToast({ title: '请先输入昵称', icon: 'none' })
-        return
-      }
 
       this.setActionState('authorizing')
       try {
@@ -129,30 +125,83 @@ Component({
           timeout: LOGIN_REQUEST_TIMEOUT_MS,
         })
 
-        const loginUser = {
-          ...payload.user,
-          nickName: payload.user.nickName || this.data.userInfo.nickName || '游客',
-          avatarUrl: payload.user.avatarUrl || this.data.userInfo.avatarUrl || defaultAvatarUrl,
-        }
-
         setToken(payload.token)
 
-        await request<UpdateProfileResponse, { nickName: string; avatarUrl: string }>({
-          url: '/api/auth/update-profile',
-          method: 'POST',
-          data: {
-            nickName: loginUser.nickName,
-            avatarUrl: loginUser.avatarUrl,
-          },
-          timeout: LOGIN_REQUEST_TIMEOUT_MS,
-        })
+        // Merge: local user input takes priority over server data
+        const loginUser: UserProfile = {
+          id: payload.user.id,
+          nickName: this.data.userInfo.nickName || payload.user.nickName || '游客',
+          avatarUrl: this.data.userInfo.avatarUrl !== defaultAvatarUrl
+            ? this.data.userInfo.avatarUrl
+            : payload.user.avatarUrl || defaultAvatarUrl,
+        }
+
         setUserProfile(loginUser)
         this.setData({ userInfo: loginUser, hasToken: true, actionState: 'idle' })
+
+        // Best-effort push to backend (client → server direction)
+        try {
+          await request<UpdateProfileResponse, { nickName: string; avatarUrl: string }>({
+            url: '/api/auth/update-profile',
+            method: 'POST',
+            data: {
+              nickName: loginUser.nickName,
+              avatarUrl: loginUser.avatarUrl,
+            },
+            timeout: LOGIN_REQUEST_TIMEOUT_MS,
+          })
+        } catch {
+          // Non-fatal: profile saved locally, will sync on next "更新资料" tap
+        }
+
         wx.showToast({ title: '登录成功', icon: 'success' })
       } catch (error) {
         const message = error instanceof Error ? error.message : '登录服务不可用，请稍后重试'
         this.setActionState('idle', message)
         wx.showToast({ title: message.includes('超时') ? '登录超时，请重试' : '登录失败', icon: 'none' })
+      }
+    },
+    async handleUpdateProfile() {
+      if (this.isBusy()) {
+        return
+      }
+
+      this.setActionState('updatingProfile')
+      try {
+        const response = await request<UpdateProfileResponse, { nickName: string; avatarUrl: string }>({
+          url: '/api/auth/update-profile',
+          method: 'POST',
+          data: {
+            nickName: this.data.userInfo.nickName,
+            avatarUrl: this.data.userInfo.avatarUrl,
+          },
+          timeout: LOGIN_REQUEST_TIMEOUT_MS,
+        })
+
+        const updatedUser: UserProfile = {
+          id: response.user.id || this.data.userInfo.id,
+          nickName: response.user.nickName ?? this.data.userInfo.nickName,
+          avatarUrl: response.user.avatarUrl || this.data.userInfo.avatarUrl || defaultAvatarUrl,
+        }
+
+        setUserProfile(updatedUser)
+        this.setData({ userInfo: updatedUser, actionState: 'idle' })
+        wx.showToast({ title: '资料已更新', icon: 'success' })
+      } catch (error) {
+        const message = error instanceof Error ? error.message : '更新失败，请稍后重试'
+        this.setActionState('idle', message)
+        wx.showToast({ title: message, icon: 'none' })
+      }
+    },
+    async handleButtonTap() {
+      if (this.isBusy()) {
+        return
+      }
+
+      if (!this.data.hasToken) {
+        await this.handleWechatLogin()
+      } else {
+        await this.handleUpdateProfile()
       }
     },
     async handleCreateRoom() {
