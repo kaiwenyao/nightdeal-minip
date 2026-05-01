@@ -155,6 +155,23 @@ Component({
         })
       })
     },
+    async tryUploadAvatar(): Promise<string | null> {
+      if (!this.data.rawAvatarPath || this.data.rawAvatarPath === defaultAvatarUrl) {
+        return null
+      }
+      try {
+        const ossUrl = await this.uploadAvatarToServer()
+        if (ossUrl) {
+          this.setData({
+            'userInfo.avatarUrl': ossUrl,
+            rawAvatarPath: '',
+          })
+        }
+        return ossUrl
+      } catch {
+        return null
+      }
+    },
     async handleWechatLogin() {
       if (this.isBusy()) {
         return
@@ -185,30 +202,16 @@ Component({
 
         setToken(payload.token)
 
-        // 如果有新头像，先上传到OSS
-        let avatarUrl = this.data.userInfo.avatarUrl
-        if (this.data.rawAvatarPath && this.data.rawAvatarPath !== defaultAvatarUrl) {
-          try {
-            const ossUrl = await this.uploadAvatarToServer()
-            if (ossUrl) {
-              avatarUrl = ossUrl
-              this.setData({
-                'userInfo.avatarUrl': ossUrl,
-                rawAvatarPath: '',
-              })
-            }
-          } catch {
-            // 头像上传非致命，继续使用原来的 avatarUrl
-          }
-        }
+        const uploadedOssUrl = await this.tryUploadAvatar()
 
-        // Merge: local user input takes priority over server data
+        const fallbackAvatar = this.data.userInfo.avatarUrl !== defaultAvatarUrl
+          ? this.data.userInfo.avatarUrl
+          : (payload.user.avatarUrl || defaultAvatarUrl)
+
         const loginUser: UserProfile = {
           id: payload.user.id,
           nickName: this.data.userInfo.nickName || payload.user.nickName || '游客',
-          avatarUrl: avatarUrl !== defaultAvatarUrl
-            ? avatarUrl
-            : payload.user.avatarUrl || defaultAvatarUrl,
+          avatarUrl: uploadedOssUrl || fallbackAvatar,
         }
 
         setUserProfile(loginUser)
