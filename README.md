@@ -31,11 +31,12 @@ npm install
 
 ## 4. 后端联调配置
 
-默认请求地址在 `miniprogram/utils/request.ts`：
+默认请求与 Socket 地址在 `miniprogram/utils/config.ts`：
 
-- `BASE_URL = 'http://localhost:3000'`
+- `baseUrl: 'https://nightdeal.kaiwen.dev'`（HTTP）
+- `socketUrl: 'wss://nightdeal.kaiwen.dev/room'`（Socket.IO 命名空间 `/room`）
 
-如果你的后端地址不同，请按实际环境修改该值。
+`utils/config.ts` 根据 `__wxConfig.envVersion` 在 `develop` / `trial` 与生产配置之间切换；如需指向本地后端（例如 `http://localhost:3000`、`ws://localhost:3000/room`），请直接修改 `devConfig` 内两个字段，并在微信开发者工具勾选「不校验合法域名」。`utils/request.ts` 只负责 HTTP 调用与 Bearer 注入，不再独立维护 `BASE_URL`。
 
 微信小程序联调时需注意：
 

@@ -59,7 +59,9 @@
 | 配置 | `miniprogram/utils/config.ts` | ✅ baseUrl |
 | TypeScript | `project.config.json` | ✅ 已开启 |
 
-> **关键缺口**：当前 `handleWechatLogin` 把 `wxfile://tmp/...` 直接当作 `avatarUrl` 发给 `/api/auth/update-profile`。后端按计划加上白名单后，此路径会被拒（400）。所以**4.1 + 4.2 必须与后端 `/auth/avatar/credential` 同步上线**。
+> **当前实现路径**：`pages/index/index.ts → uploadAvatarToServer` 通过 `wx.uploadFile` 把临时文件以 `multipart/form-data`（字段名 `avatar`）发到 **`POST /api/auth/avatar/upload`**，由后端 `sharp` 压缩并写入 OSS，响应返回 `{ avatarUrl }`，再带入 `/api/auth/update-profile`。
+>
+> 这与本文档早期版本中描述的「前端直传 OSS（PostObject）」方案不同——直传方案对应的 `/api/auth/avatar/credential` 端点后端仍在线，仅作为未来切换的备选。当前小程序未集成该路径，也未新增独立的 `utils/avatarUpload.ts` 工具文件；§4.1 / §4.2 中关于 `utils/avatarUpload.ts` 与 OSS 表单签名的描述属于备选方案，不代表代码现状。
 
 ---
 

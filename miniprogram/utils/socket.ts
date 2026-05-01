@@ -24,8 +24,9 @@ export interface SocketLike {
 }
 
 const SOCKET_IO_PATH = '/socket.io'
-const MAX_RECONNECT_ATTEMPTS = 5
 const RECONNECT_DELAY_MS = 1000
+const RECONNECT_DELAY_MAX_MS = 5000
+const MAX_RECONNECT_ATTEMPTS = 10
 const SOCKET_CONNECT_TIMEOUT_MS = 15000
 
 function parseSocketUrl(rawUrl: string, token: string): ParsedSocketUrl {
@@ -303,10 +304,11 @@ class WeappSocket implements SocketLike {
     }
 
     this.reconnectAttempts += 1
+    const delay = Math.min(RECONNECT_DELAY_MS * this.reconnectAttempts, RECONNECT_DELAY_MAX_MS)
     this.reconnectTimer = setTimeout(() => {
       this.reconnectTimer = null
       this.connect()
-    }, RECONNECT_DELAY_MS * this.reconnectAttempts)
+    }, delay)
   }
 
   private schedulePingTimeout(): void {

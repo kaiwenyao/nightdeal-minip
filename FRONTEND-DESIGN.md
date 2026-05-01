@@ -20,9 +20,13 @@
 
 ### 2.1 当前已实现
 - 应用壳配置：`miniprogram/app.json`。
-- 示例首页：`miniprogram/pages/index/index`（模板化昵称/头像采集与跳转）。
-- 示例日志页：`miniprogram/pages/logs/logs`。
+- 首页：`miniprogram/pages/index/index`（微信登录、头像/昵称采集、创建/加入房间入口）。
+- 房间页：`miniprogram/pages/room/room`（玩家列表、房主开始/踢人、Socket 实时同步）。
+- 游戏页：`miniprogram/pages/game/game`（翻牌查看身份）。
+- 日志页（保留示例）：`miniprogram/pages/logs/logs`。
 - 可复用导航栏：`miniprogram/components/navigation-bar`。
+- 业务/UI 组件：`components/ui-button`、`components/ui-card`、`components/ui-state-panel`。
+- 工具层：`utils/auth.ts`（token/profile）、`utils/request.ts`（Bearer 注入 + 401 抛 `UnauthorizedError`）、`utils/socket.ts`（基于 `wx.connectSocket` 的 Socket.IO 连接封装）、`utils/config.ts`（`baseUrl`/`socketUrl` 环境路由）。
 
 ### 2.2 目标能力（来自 `DEVELOPMENT.md`）
 - 首页：微信登录、创建房间、输入/扫码加入房间。
@@ -32,9 +36,9 @@
 - 安全边界：`session_key` 禁止下发客户端，WebSocket 必须携带有效 JWT。
 
 ### 2.3 差距结论
-- 业务流程尚未在小程序端实现，当前属于“脚手架阶段”。
-- 可直接复用：导航栏组件、项目基础配置。
-- 需新增：业务页面、状态管理层、网络封装、Socket 管理、异常与重连体验。
+- 主流程已基本落地（登录 → 首页 → 房间 → 游戏），剩余工作集中在“健壮性与体验”：异常文案、断线重连提示、埋点、视觉精修。
+- 复用层（导航栏、UI 组件、网络/Socket 工具）已存在，新增功能应在此基础上扩展，避免重复造轮子。
+- 待补充：弱网/重连体验细节、`player:updated` 事件的本地合并策略、首屏骨架与空态、埋点上报。
 
 ## 3. 信息架构与路由设计
 
@@ -203,12 +207,18 @@ flowchart TD
 - 获取我的角色：用于游戏开始后及断线重连恢复。
 
 ### 7.3 Socket 事件契约原则
-- 入站事件（Server -> Client）按三类处理：
-  - 连接态：`connect/disconnect/connect_error`
-  - 房间态：玩家加入、离开、重连、房主变更
-  - 游戏态：开始游戏、角色下发、阶段变更
-- 出站事件（Client -> Server）按操作意图命名：
-  - `room:create` / `room:join` / `room:start-game` / `room:kick-player`
+- 入站事件（Server -> Client，与后端 `DEVELOPMENT.md §4.2 / §16.4` 对齐）：
+  - 连接态：`connect` / `disconnect` / `connect_error`
+  - 房间态：`room:state`（完整快照，加入即推）、`room:player-joined`、`room:player-left`、`room:offline`、`room:reconnected`、`player:updated`（玩家昵称/头像变更）
+  - 游戏态：`room:started`（单播自己的角色）
+  - 错误：`room:error`（`{ message }`）
+- 出站事件（Client -> Server）使用后端定义的真实事件名，**不要使用 `room:create` / `room:start-game` / `room:kick-player`**：
+  - `room:join` — payload `{ roomCode }`
+  - `room:leave` — payload `{ roomCode }`
+  - `room:start` — payload `{ roomCode }`，仅房主有效
+  - `room:kick` — payload `{ roomCode, targetUserId }`，仅房主有效
+  - `player:update` — payload `{ nickName?, avatarUrl? }`
+- 房间“创建”不是 Socket 事件，而是 REST：`POST /api/rooms`；创建后再通过 `room:join` 加入对应房间号。
 - 事件 payload 必须最小化，客户端只保存展示必要字段。
 
 ## 8. 可用性、性能与安全规范
@@ -243,18 +253,25 @@ flowchart TD
 - M4（P0/P2）：游戏页 + 翻牌 + 角色信息恢复。
 - M5（P1/P2）：联调、异常处理、样式优化、埋点补齐。
 
-## 10. 文件落地建议（实施参考）
-- 新增页面：
+## 10. 文件落地清单（与现状对齐）
+- 已落地页面：
+  - `miniprogram/pages/index/index.{json,wxml,wxss,ts}`
   - `miniprogram/pages/room/room.{json,wxml,wxss,ts}`
   - `miniprogram/pages/game/game.{json,wxml,wxss,ts}`
-- 新增工具：
+- 已落地工具：
+  - `miniprogram/utils/auth.ts`
   - `miniprogram/utils/request.ts`
   - `miniprogram/utils/socket.ts`
-  - `miniprogram/utils/auth.ts`
-- 新增业务组件（按需）：
-  - `miniprogram/components/player-list/*`
-  - `miniprogram/components/role-card/*`
-  - `miniprogram/components/state-panel/*`
+  - `miniprogram/utils/config.ts`
+- 已落地组件：
+  - `miniprogram/components/navigation-bar/*`
+  - `miniprogram/components/ui-button/*`
+  - `miniprogram/components/ui-card/*`
+  - `miniprogram/components/ui-state-panel/*`
+- 仍可考虑抽象（按需新增，存在重复展示模式时再做）：
+  - `components/player-list/*`：玩家列表组件
+  - `components/role-card/*`：角色翻牌组件
+  - `utils/avatarUpload.ts`：若未来回切换为 OSS 直传 PostObject 方案，可抽出此工具（当前小程序端通过 `POST /api/auth/avatar/upload` 由服务端压缩并上传，未提取独立 util）。
 
 ## 11. 验收清单
 - 页面与流程：用户可从登录进入并完成“创建/加入 -> 房间 -> 游戏翻牌”。

@@ -177,6 +177,25 @@ Page({
       }
     })
 
+    // NEW: handle real-time player updates (nickName/avatar changes)
+    socket.on('player:updated', (data: unknown) => {
+      const payload = data as { userId: string; nickName?: string; avatarUrl?: string }
+      if (payload && payload.userId) {
+        const players = this.data.players.map((p) => {
+          if (p.user.id === payload.userId) {
+            const updatedUser = {
+              ...p.user,
+              nickName: payload.nickName ?? p.user.nickName,
+              avatarUrl: payload.avatarUrl ?? p.user.avatarUrl,
+            }
+            return { ...p, user: updatedUser }
+          }
+          return p
+        })
+        this.setData({ players })
+      }
+    })
+
     socket.on('room:started', () => {
       this.navigateToGame()
     })
