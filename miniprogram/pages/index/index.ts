@@ -131,8 +131,12 @@ Component({
           success: (res) => {
             if (res.statusCode >= 200 && res.statusCode < 300) {
               try {
-                const data = JSON.parse(res.data) as AvatarUploadResponse
-                resolve(data.avatarUrl)
+                const response = JSON.parse(res.data) as { code: number; data: AvatarUploadResponse }
+                if (response.code === 0 && response.data?.avatarUrl) {
+                  resolve(response.data.avatarUrl)
+                } else {
+                  reject(new Error('头像上传响应缺少 avatarUrl'))
+                }
               } catch {
                 reject(new Error('头像上传响应解析失败'))
               }
