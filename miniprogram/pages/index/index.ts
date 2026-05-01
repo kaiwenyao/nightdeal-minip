@@ -1,5 +1,6 @@
 import { getToken, getUserProfile, setToken, setUserProfile, clearToken, clearUserProfile, UserProfile } from '../../utils/auth'
 import { request, UnauthorizedError } from '../../utils/request'
+import { config } from '../../utils/config'
 
 interface LoginResponse {
   token: string
@@ -16,6 +17,10 @@ interface UpdateProfileResponse {
     nickName?: string
     avatarUrl?: string
   }
+}
+
+interface AvatarUploadResponse {
+  avatarUrl: string
 }
 
 interface CreateRoomResponse {
@@ -42,6 +47,7 @@ type ActionState = 'idle' | 'authorizing' | 'loggingIn' | 'updatingProfile' | 'c
 
 const ROOM_CODE_LENGTH = 6
 const LOGIN_REQUEST_TIMEOUT_MS = 12000
+const AVATAR_UPLOAD_TIMEOUT_MS = 30000
 const defaultAvatarUrl =
   'https://mmbiz.qpic.cn/mmbiz/icTdbqWNOwNRna42FI242Lcia07jQodd2FJGIYQfG0LAJGFxM4FbnQP6yfMxBgJ0F3YRqJCJ1aPAK2dQagdusBZg/0'
 
@@ -51,6 +57,7 @@ Component({
       avatarUrl: defaultAvatarUrl,
       nickName: '',
     },
+    rawAvatarPath: '', // 微信临时头像文件路径，用于上传
     roomCodeInput: '',
     actionState: 'idle' as ActionState,
     pageError: '',
@@ -95,6 +102,57 @@ Component({
       const { avatarUrl } = e.detail
       this.setData({
         'userInfo.avatarUrl': avatarUrl,
+        rawAvatarPath: avatarUrl,
+      })
+    },
+    /**
+     * 将本地头像文件上传到后端，后端压缩后上传到OSS
+     */
+    async uploadAvatarToServer(): Promise<string | null> {
+      const { rawAvatarPath } = this.data
+      if (!rawAvatarPath || rawAvatarPath === defaultAvatarUrl) {
+        return null // 没有新头像需要上传
+      }
+
+      const token = getToken()
+      if (!token) {
+        throw new Error('未登录，无法上传头像')
+      }
+
+      return new Promise((resolve, reject) => {
+        wx.uploadFile({
+          url: `${config.baseUrl}/api/auth/avatar/upload`,
+          filePath: rawAvatarPath,
+          name: 'avatar',
+          header: {
+            Authorization: `Bearer ${token}`,
+          },
+          timeout: AVATAR_UPLOAD_TIMEOUT_MS,
+          success: (res) => {
+            if (res.statusCode >= 200 && res.statusCode < 300) {
+              try {
+                const data = JSON.parse(res.data) as AvatarUploadResponse
+                resolve(data.avatarUrl)
+              } catch {
+                reject(new Error('头像上传响应解析失败'))
+              }
+              return
+            }
+            if (res.statusCode === 401) {
+              reject(new UnauthorizedError())
+              return
+            }
+            try {
+              const data = JSON.parse(res.data) as { message?: string }
+              reject(new Error(data.message || `头像上传失败 (${res.statusCode})`))
+            } catch {
+              reject(new Error(`头像上传失败 (${res.statusCode})`))
+            }
+          },
+          fail: (error) => {
+            reject(new Error(error.errMsg || '头像上传网络请求失败'))
+          },
+        })
       })
     },
     async handleWechatLogin() {
@@ -127,12 +185,29 @@ Component({
 
         setToken(payload.token)
 
+        // 如果有新头像，先上传到OSS
+        let avatarUrl = this.data.userInfo.avatarUrl
+        if (this.data.rawAvatarPath && this.data.rawAvatarPath !== defaultAvatarUrl) {
+          try {
+            const ossUrl = await this.uploadAvatarToServer()
+            if (ossUrl) {
+              avatarUrl = ossUrl
+              this.setData({
+                'userInfo.avatarUrl': ossUrl,
+                rawAvatarPath: '',
+              })
+            }
+          } catch {
+            // 头像上传非致命，继续使用原来的 avatarUrl
+          }
+        }
+
         // Merge: local user input takes priority over server data
         const loginUser: UserProfile = {
           id: payload.user.id,
           nickName: this.data.userInfo.nickName || payload.user.nickName || '游客',
-          avatarUrl: this.data.userInfo.avatarUrl !== defaultAvatarUrl
-            ? this.data.userInfo.avatarUrl
+          avatarUrl: avatarUrl !== defaultAvatarUrl
+            ? avatarUrl
             : payload.user.avatarUrl || defaultAvatarUrl,
         }
 
@@ -168,12 +243,25 @@ Component({
 
       this.setActionState('updatingProfile')
       try {
+        // 如果有新头像，先上传到OSS
+        let avatarUrl = this.data.userInfo.avatarUrl
+        if (this.data.rawAvatarPath && this.data.rawAvatarPath !== defaultAvatarUrl) {
+          const ossUrl = await this.uploadAvatarToServer()
+          if (ossUrl) {
+            avatarUrl = ossUrl
+            this.setData({
+              'userInfo.avatarUrl': ossUrl,
+              rawAvatarPath: '',
+            })
+          }
+        }
+
         const response = await request<UpdateProfileResponse, { nickName: string; avatarUrl: string }>({
           url: '/api/auth/update-profile',
           method: 'POST',
           data: {
             nickName: this.data.userInfo.nickName,
-            avatarUrl: this.data.userInfo.avatarUrl,
+            avatarUrl,
           },
           timeout: LOGIN_REQUEST_TIMEOUT_MS,
         })
@@ -181,7 +269,7 @@ Component({
         const updatedUser: UserProfile = {
           id: response.user.id || this.data.userInfo.id,
           nickName: response.user.nickName ?? this.data.userInfo.nickName,
-          avatarUrl: response.user.avatarUrl || this.data.userInfo.avatarUrl || defaultAvatarUrl,
+          avatarUrl: response.user.avatarUrl || avatarUrl || defaultAvatarUrl,
         }
 
         setUserProfile(updatedUser)
