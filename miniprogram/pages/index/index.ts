@@ -169,6 +169,7 @@ Component({
         }
         return ossUrl
       } catch {
+        this.setData({ rawAvatarPath: '' })
         return null
       }
     },
@@ -204,9 +205,7 @@ Component({
 
         const uploadedOssUrl = await this.tryUploadAvatar()
 
-        const fallbackAvatar = this.data.userInfo.avatarUrl !== defaultAvatarUrl
-          ? this.data.userInfo.avatarUrl
-          : (payload.user.avatarUrl || defaultAvatarUrl)
+        const fallbackAvatar = payload.user.avatarUrl || defaultAvatarUrl
 
         const loginUser: UserProfile = {
           id: payload.user.id,
