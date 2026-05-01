@@ -1,6 +1,7 @@
 import { getUserProfile } from '../../utils/auth'
 import { request } from '../../utils/request'
 import { connectSocket, disconnectSocket, SocketLike } from '../../utils/socket'
+import { formatRoleSummary } from '../../utils/role-config'
 
 interface PlayerUser {
   id: string
@@ -64,6 +65,8 @@ Page({
     connectionStatusText: '未连接',
     isHost: false,
     startingGame: false,
+    roleConfigSummary: '',
+    roleConfig: null as unknown,
   },
   socket: null as SocketLike | null,
   navigatingToGame: false,
@@ -101,8 +104,10 @@ Page({
         hostId: payload.host?.id || '',
         maxPlayers: payload.maxPlayers,
         players: payload.players,
+        roleConfig: payload.roleConfig,
         pageState: 'ready',
       })
+      this.updateRoleConfigSummary()
       this.initSocket()
     } catch (error) {
       const message = error instanceof Error ? error.message : '房间加载失败，请返回重试'
@@ -196,6 +201,17 @@ Page({
       }
     })
 
+    socket.on('room:settings-updated', (data: unknown) => {
+      const payload = data as { maxPlayers?: number; roleConfig?: unknown }
+      if (typeof payload.maxPlayers === 'number') {
+        this.setData({ maxPlayers: payload.maxPlayers })
+      }
+      if (payload.roleConfig) {
+        this.setData({ roleConfig: payload.roleConfig })
+        this.updateRoleConfigSummary()
+      }
+    })
+
     socket.on('room:started', () => {
       this.navigateToGame()
     })
@@ -266,6 +282,25 @@ Page({
       },
     })
   },
+  updateRoleConfigSummary() {
+    const rc = this.data.roleConfig
+    if (rc && typeof rc === 'object') {
+      const summary = formatRoleSummary(rc as Record<string, unknown>)
+      this.setData({ roleConfigSummary: summary })
+    } else {
+      this.setData({ roleConfigSummary: '' })
+    }
+  },
+
+  handleOpenSettings() {
+    if (!this.data.isHost) {
+      return
+    }
+    wx.navigateTo({
+      url: `/pages/room-settings/room-settings?roomCode=${this.data.roomCode}`,
+    })
+  },
+
   async handleKickPlayer(e: WechatMiniprogram.CustomEvent<{ userId: string }>) {
     if (!this.data.isHost) {
       return

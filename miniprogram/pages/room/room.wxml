@@ -27,6 +27,10 @@
       <text class="section-title">玩家列表</text>
       <text class="players-count">{{players.length}} / {{maxPlayers}}</text>
     </view>
+    <view class="role-summary" wx:if="{{roleConfigSummary}}">
+      <text class="summary-label">角色配置</text>
+      <text class="summary-text">{{roleConfigSummary}}</text>
+    </view>
     <ui-state-panel wx:if="{{players.length === 0 && pageState !== 'loading'}}" type="empty" message="暂无玩家" />
     <view wx:for="{{players}}" wx:key="id" class="player-row">
       <view class="player-meta">
@@ -50,6 +54,7 @@
     <view class="card-heading">
       <text class="section-title">房主操作</text>
     </view>
+    <ui-button variant="secondary" size="small" block="{{false}}" bind:tap="handleOpenSettings" class="settings-btn">房间设置</ui-button>
     <ui-button loading="{{startingGame}}" disabled="{{startingGame}}" bind:tap="handleStartGame">开始游戏</ui-button>
   </ui-card>
 </view>
