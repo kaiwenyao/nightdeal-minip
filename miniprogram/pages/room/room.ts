@@ -1,7 +1,7 @@
 import { getUserProfile } from '../../utils/auth'
 import { request } from '../../utils/request'
-import { connectSocket, disconnectSocket, SocketLike } from '../../utils/socket'
-import { formatRoleSummary } from '../../utils/role-config'
+import { connectSocket, disconnectSocket, isSocketDomainListError, SocketLike } from '../../utils/socket'
+import { formatRoleSummary, RoleConfig } from '../../utils/role-config'
 
 interface PlayerUser {
   id: string
@@ -12,6 +12,7 @@ interface PlayerUser {
 interface Player {
   id: string
   seatNo: number
+  isOnline?: boolean
   user: PlayerUser
   joinedAt: string
 }
@@ -31,6 +32,17 @@ interface RoomSnapshot {
   host: RoomHost | null
   players: Player[]
   createdAt: string
+}
+
+interface RoomStatePayload {
+  room?: {
+    code?: string
+    hostId?: string
+    maxPlayers?: number
+    roleConfig?: unknown
+    status?: string
+  }
+  players?: Player[]
 }
 
 function getSocketErrorMessage(error: unknown): string {
@@ -90,6 +102,12 @@ Page({
     this.setData({ startingGame: false })
   },
   onUnload() {
+    if (!this.navigatingToGame) {
+      this.leaveRoomViaSocket()
+      this.leaveRoomViaRequest()
+      setTimeout(() => disconnectSocket(), 200)
+      return
+    }
     disconnectSocket()
   },
   async loadRoomSnapshot() {
@@ -129,26 +147,35 @@ Page({
     })
 
     socket.on('connect_error', (error: unknown) => {
+      if (isSocketDomainListError(error)) {
+        this.setConnectionStatus('unavailable')
+        wx.showToast({
+          title: '实时连接不可用：WebSocket域名未配置。请在微信公众平台后台将 nightdeal.kaiwen.dev 添加到socket合法域名列表。',
+          icon: 'none',
+          duration: 6000,
+        })
+        console.error('Socket domain list error:', getSocketErrorMessage(error))
+        return
+      }
       this.setConnectionStatus('reconnecting')
       wx.showToast({ title: getSocketErrorMessage(error), icon: 'none' })
     })
 
     socket.on('room:state', (data: unknown) => {
-      const state = data as { room: unknown; players: Player[] }
-      if (state.players) {
-        this.setData({ players: state.players })
-      }
+      console.log('Received room:state:', JSON.stringify(data));
+      this.applyRoomState(data as RoomStatePayload)
     })
 
     socket.on('room:player-joined', (data: unknown) => {
+      console.log('Received room:player-joined:', JSON.stringify(data));
       const payload = data as { player: Player; playerCount: number }
       if (payload.player) {
-        const players = [...this.data.players, payload.player]
-        this.setData({ players })
+        this.upsertPlayer(payload.player)
       }
     })
 
     socket.on('room:player-left', (data: unknown) => {
+      console.log('Received room:player-left:', JSON.stringify(data));
       const payload = data as { userId: string; playerCount: number }
       if (payload.userId) {
         const players = this.data.players.filter((p) => p.user.id !== payload.userId)
@@ -161,7 +188,7 @@ Page({
       if (payload.userId) {
         const players = this.data.players.map((p) => {
           if (p.user.id === payload.userId) {
-            return { ...p, online: true }
+            return { ...p, isOnline: true }
           }
           return p
         })
@@ -174,7 +201,7 @@ Page({
       if (payload.userId) {
         const players = this.data.players.map((p) => {
           if (p.user.id === payload.userId) {
-            return { ...p, online: false }
+            return { ...p, isOnline: false }
           }
           return p
         })
@@ -220,6 +247,15 @@ Page({
       const payload = data as { message: string }
       if (payload.message) {
         wx.showToast({ title: payload.message, icon: 'none' })
+        if (payload.message === '你已被房主踢出房间') {
+          setTimeout(() => {
+            wx.navigateBack({
+              fail: () => {
+                wx.reLaunch({ url: '/pages/index/index' })
+              },
+            })
+          }, 1500)
+        }
       }
     })
 
@@ -236,6 +272,7 @@ Page({
       connecting: '连接中',
       connected: '已连接',
       reconnecting: '重连中',
+      unavailable: '实时连接不可用',
     }
 
     this.setData({
@@ -285,7 +322,7 @@ Page({
   updateRoleConfigSummary() {
     const rc = this.data.roleConfig
     if (rc && typeof rc === 'object') {
-      const summary = formatRoleSummary(rc as Record<string, unknown>)
+      const summary = formatRoleSummary(rc as RoleConfig)
       this.setData({ roleConfigSummary: summary })
     } else {
       this.setData({ roleConfigSummary: '' })
@@ -326,9 +363,53 @@ Page({
   handleRetryLoad() {
     this.loadRoomSnapshot()
   },
+  applyRoomState(state: RoomStatePayload) {
+    const updates: Record<string, unknown> = {}
+
+    if (state.room) {
+      if (state.room.code) updates.roomCode = state.room.code
+      if (state.room.hostId) updates.hostId = state.room.hostId
+      if (typeof state.room.maxPlayers === 'number') updates.maxPlayers = state.room.maxPlayers
+      if (typeof state.room.roleConfig !== 'undefined') updates.roleConfig = state.room.roleConfig
+    }
+    if (state.players) {
+      updates.players = state.players
+    }
+
+    if (Object.keys(updates).length > 0) {
+      this.setData(updates)
+      if (typeof updates.roleConfig !== 'undefined') {
+        this.updateRoleConfigSummary()
+      }
+    }
+  },
+  upsertPlayer(player: Player) {
+    const players = this.data.players
+      .filter((item) => item.user.id !== player.user.id)
+      .concat(player)
+      .sort((a, b) => a.seatNo - b.seatNo)
+    this.setData({ players })
+  },
   joinRoomViaSocket() {
     if (this.socket) {
       this.socket.emit('room:join', { roomCode: this.data.roomCode })
     }
+  },
+  leaveRoomViaSocket() {
+    if (this.socket?.connected && this.data.roomCode) {
+      this.socket.emit('room:leave', { roomCode: this.data.roomCode })
+    }
+  },
+  leaveRoomViaRequest() {
+    const roomCode = this.data.roomCode
+    if (!roomCode) {
+      return
+    }
+    void request({
+      url: `/api/rooms/${roomCode}/leave`,
+      method: 'POST',
+    }).catch(() => {
+      // Leaving the page should not surface a stale network error to the next page.
+    })
   },
 })
