@@ -1,0 +1,53 @@
+<navigation-bar title="房间设置" back="{{true}}" color="black" background="#FFF"></navigation-bar>
+<view class="page-shell">
+
+  <ui-card>
+    <view class="card-heading">
+      <text class="section-title">房间人数</text>
+      <text class="players-count">{{playerCount}} / {{maxPlayers}}</text>
+    </view>
+    <view class="stepper-row">
+      <ui-button size="small" bind:tap="decreaseMax" disabled="{{maxPlayers <= 5}}">-</ui-button>
+      <text class="stepper-value">{{maxPlayers}}</text>
+      <ui-button size="small" bind:tap="increaseMax" disabled="{{maxPlayers >= 10}}">+</ui-button>
+    </view>
+    <text class="hint-text">范围: 5-10人</text>
+  </ui-card>
+
+  <ui-card>
+    <view class="card-heading">
+      <text class="section-title">角色配置</text>
+      <text class="reset-link" bind:tap="handleResetToDefault">恢复默认</text>
+    </view>
+
+    <view class="role-group-label">特殊角色</view>
+    <view wx:for="{{specialRoleItems}}" wx:key="key" class="role-row">
+      <text class="role-name">{{item.label}}</text>
+      <switch checked="{{item.enabled}}" data-role="{{item.key}}" bind:change="handleToggleRole" color="#c9a96e" />
+    </view>
+
+    <view class="role-group-label">基础角色</view>
+    <view wx:for="{{baseRoleItems}}" wx:key="key" class="role-row">
+      <text class="role-name">{{item.label}}</text>
+      <view class="stepper-row">
+        <ui-button size="small" bind:tap="decreaseBaseRole" data-role="{{item.key}}" disabled="{{item.count <= 0}}">-</ui-button>
+        <text class="stepper-value">{{item.count}}</text>
+        <ui-button size="small" bind:tap="increaseBaseRole" data-role="{{item.key}}" disabled="{{item.count >= 4}}">+</ui-button>
+      </view>
+    </view>
+
+    <view class="role-status {{roleMismatch ? 'warning' : 'ok'}}">
+      <text>角色总计: {{totalRoles}} / 当前玩家: {{playerCount}}</text>
+      <text wx:if="{{roleMismatch}}" class="status-hint">(人数不匹配，开始游戏时会校验)</text>
+    </view>
+  </ui-card>
+
+  <ui-button
+    variant="primary"
+    loading="{{saving}}"
+    disabled="{{saveBlocked || saving}}"
+    bind:tap="handleSave"
+  >
+    {{saveBlocked ? blockReason : '保存设置'}}
+  </ui-button>
+</view>
