@@ -463,8 +463,10 @@ Page({
       this.navigateToGame()
     } catch (error) {
       const message = error instanceof Error ? error.message : '重开失败，请重试'
-      this.setData({ restartingGame: false })
       wx.showToast({ title: message, icon: 'none' })
+    } finally {
+      // room 页仍在栈上，game 页 back 后必须复位，否则按钮永久 loading
+      this.setData({ restartingGame: false })
     }
   },
   navigateToGame() {

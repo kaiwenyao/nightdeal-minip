@@ -1,5 +1,5 @@
 import { request } from '../../utils/request'
-import { connectSocket, disconnectSocket, SocketLike } from '../../utils/socket'
+import { connectSocket, SocketLike } from '../../utils/socket'
 
 interface MyRoleResponse {
   role: string
@@ -27,21 +27,10 @@ Page({
     this.initSocket()
   },
   onUnload() {
+    // 房间生命周期由 room 页持有：game→room（navigateBack）时不应 leave/disconnect，
+    // 否则会把仍在房间页面栈上的用户从房间踢出，且 room 页只跑 onShow，不会重连。
     this.detachGameSocketListeners()
-    if (this.socket?.connected && this.data.roomCode) {
-      this.socket.emit('room:leave', { roomCode: this.data.roomCode })
-    }
-    const roomCode = this.data.roomCode
-    if (roomCode) {
-      void request({
-        url: `/api/rooms/${roomCode}/leave`,
-        method: 'POST',
-      }).catch(() => {})
-    }
-    setTimeout(() => {
-      disconnectSocket()
-      this.socket = null
-    }, 200)
+    this.socket = null
   },
   detachGameSocketListeners() {
     const sock = this.socket
