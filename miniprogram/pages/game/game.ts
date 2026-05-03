@@ -167,10 +167,19 @@ Page({
       })
     }
   },
-  handleRevealRole() {
-    this.setData({ roleHidden: false })
+  handleToggleRole() {
+    if (this.data.pageState !== 'ready') {
+      return
+    }
+    this.setData({ roleHidden: !this.data.roleHidden })
   },
   handleBackRoom() {
+    const pages = getCurrentPages()
+    const prev = pages.length >= 2 ? pages[pages.length - 2] : null
+    const prevRoute = prev && typeof (prev as { route?: string }).route === 'string' ? (prev as { route: string }).route : ''
+    if (prevRoute === 'pages/room/room' && prev) {
+      ;(prev as { _skipNextRoomStartedNav?: boolean })._skipNextRoomStartedNav = true
+    }
     wx.navigateBack()
   },
   handleRetryLoad() {

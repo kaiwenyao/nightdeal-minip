@@ -193,6 +193,8 @@ Page({
   socket: null as SocketLike | null,
   roomSocketBindings: [] as Array<{ event: string; listener: (...args: unknown[]) => void }>,
   navigatingToGame: false,
+  /** 从身份页返回房间后，忽略下一次服务端因 room:join 重放而发来的 room:started，避免立刻再跳进游戏页。 */
+  _skipNextRoomStartedNav: false,
   onLoad(query: Record<string, string>) {
     const user = getUserProfile()
     const token = getToken()
@@ -417,6 +419,10 @@ Page({
     })
 
     this.bindRoomSocketEvent('room:started', () => {
+      if (this._skipNextRoomStartedNav) {
+        this._skipNextRoomStartedNav = false
+        return
+      }
       this.navigateToGame()
     })
 
