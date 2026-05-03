@@ -1,9 +1,60 @@
 import {
-  RoleConfig, BaseRole, SgsRoleConfig,
-  getTotalRoles, getDefaultConfig, getSgsDefaultConfig, getSgsTotalRoles,
-  ROLE_LABELS, SPECIAL_ROLES, BASE_ROLES, SGS_ROLES,
+  RoleConfig,
+  BaseRole,
+  SgsRoleConfig,
+  getTotalRoles,
+  getDefaultConfig,
+  getSgsDefaultConfig,
+  getSgsTotalRoles,
+  ROLE_LABELS,
+  SPECIAL_ROLES,
+  BASE_ROLES,
+  SGS_ROLES,
+  AVALON_MIN_PLAYERS,
+  SGS_MIN_PLAYERS,
+  ROOM_MAX_PLAYERS,
 } from '../../utils/role-config'
 import { request } from '../../utils/request'
+
+function isRecord(v: unknown): v is Record<string, unknown> {
+  return typeof v === 'object' && v !== null && !Array.isArray(v)
+}
+
+function parseAvalonRoleConfig(raw: unknown, maxPlayers: number): RoleConfig {
+  const base = getDefaultConfig(maxPlayers)
+  if (!isRecord(raw)) {
+    return base
+  }
+  const out: RoleConfig = { ...base }
+  for (const role of SPECIAL_ROLES) {
+    const v = raw[role]
+    if (typeof v === 'boolean') {
+      out[role] = v
+    }
+  }
+  if (typeof raw.loyalServants === 'number' && Number.isFinite(raw.loyalServants) && raw.loyalServants >= 0) {
+    out.loyalServants = Math.floor(raw.loyalServants)
+  }
+  if (typeof raw.minions === 'number' && Number.isFinite(raw.minions) && raw.minions >= 0) {
+    out.minions = Math.floor(raw.minions)
+  }
+  return out
+}
+
+function parseSgsRoleConfig(raw: unknown, maxPlayers: number): SgsRoleConfig {
+  const base = getSgsDefaultConfig(maxPlayers)
+  if (!isRecord(raw)) {
+    return base
+  }
+  const out: SgsRoleConfig = { ...base }
+  for (const role of SGS_ROLES) {
+    const v = raw[role]
+    if (typeof v === 'number' && Number.isFinite(v) && v >= 0) {
+      out[role] = Math.floor(v)
+    }
+  }
+  return out
+}
 
 interface RoleItem {
   key: string
@@ -28,8 +79,10 @@ Page({
     roomCode: '',
     gameType: 'AVALON' as string,
     maxPlayers: 5,
+    minRoomPlayers: AVALON_MIN_PLAYERS,
+    maxRoomPlayers: ROOM_MAX_PLAYERS,
     playerCount: 0,
-    roleConfig: getDefaultConfig(5) as RoleConfig | SgsRoleConfig,
+    roleConfig: getDefaultConfig(AVALON_MIN_PLAYERS) as RoleConfig | SgsRoleConfig,
     saving: false,
     saveBlocked: false,
     roleMismatch: false,
@@ -43,7 +96,8 @@ Page({
   onLoad(query: Record<string, string>) {
     const roomCode = query.roomCode || ''
     const gameType = query.gameType || 'AVALON'
-    this.setData({ roomCode, gameType })
+    const minRoomPlayers = gameType === 'SGS' ? SGS_MIN_PLAYERS : AVALON_MIN_PLAYERS
+    this.setData({ roomCode, gameType, minRoomPlayers, maxRoomPlayers: ROOM_MAX_PLAYERS })
     if (roomCode) {
       this.loadRoomData(roomCode)
     }
@@ -51,26 +105,32 @@ Page({
 
   async loadRoomData(roomCode: string) {
     try {
-      const room = await request<{
-        code: string
-        maxPlayers: number
-        players: Array<unknown>
-        roleConfig: unknown
-        gameType: string
-      }>({
+      const room = await request<Record<string, unknown>>({
         url: `/api/rooms/${roomCode}`,
       })
 
-      const maxPlayers = room.maxPlayers || 5
-      const players = room.players || []
-      const gameType = room.gameType || 'AVALON'
+      if (
+        !isRecord(room)
+        || typeof room.code !== 'string'
+        || typeof room.maxPlayers !== 'number'
+        || !Array.isArray(room.players)
+      ) {
+        throw new Error('invalid room response')
+      }
+
+      const maxPlayers = room.maxPlayers
+      const players = room.players
+      const gameType = typeof room.gameType === 'string' ? room.gameType : 'AVALON'
       const isSgs = gameType === 'SGS'
+      const minRoomPlayers = isSgs ? SGS_MIN_PLAYERS : AVALON_MIN_PLAYERS
       const roleConfig = isSgs
-        ? (room.roleConfig as SgsRoleConfig) || getSgsDefaultConfig(maxPlayers)
-        : (room.roleConfig as RoleConfig) || getDefaultConfig(maxPlayers)
+        ? parseSgsRoleConfig(room.roleConfig, maxPlayers)
+        : parseAvalonRoleConfig(room.roleConfig, maxPlayers)
 
       this.setData({
         maxPlayers,
+        minRoomPlayers,
+        maxRoomPlayers: ROOM_MAX_PLAYERS,
         playerCount: players.length,
         gameType,
         roleConfig,
@@ -87,27 +147,27 @@ Page({
   },
 
   updateRoleItemsFromConfig() {
-    const rc = this.data.roleConfig as unknown as RoleConfig
+    const rc = this.data.roleConfig as RoleConfig
     const specialRoleItems = SPECIAL_ROLES.map((key) => ({
       key,
       label: ROLE_LABELS[key],
-      enabled: !!(rc as any)[key],
+      enabled: !!rc[key],
     }))
     const baseRoleItems = BASE_ROLES.map((key) => ({
       key,
       label: ROLE_LABELS[key],
-      count: (rc as any)[key] || 0,
+      count: rc[key] || 0,
     }))
     const totalRoles = getTotalRoles(rc)
     this.setData({ specialRoleItems, baseRoleItems, totalRoles })
   },
 
   updateSgsRoleItemsFromConfig() {
-    const rc = this.data.roleConfig as unknown as SgsRoleConfig
+    const rc = this.data.roleConfig as SgsRoleConfig
     const sgsRoleItems = SGS_ROLES.map((key) => ({
       key,
       label: ROLE_LABELS[key],
-      count: (rc as any)[key] || 0,
+      count: rc[key] || 0,
     }))
     const totalRoles = getSgsTotalRoles(rc)
     this.setData({ sgsRoleItems, totalRoles })
@@ -158,6 +218,18 @@ Page({
         currentConfig.minions = baseCount - 1
       }
 
+      currentConfig.loyalServants = Math.max(0, currentConfig.loyalServants)
+      currentConfig.minions = Math.max(0, currentConfig.minions)
+      const baseSum = currentConfig.loyalServants + currentConfig.minions
+      if (
+        baseSum !== baseCount
+        || currentConfig.loyalServants < 1
+        || currentConfig.minions < 1
+      ) {
+        this.setData({ roleConfig: getDefaultConfig(targetCount) as unknown as RoleConfig | SgsRoleConfig })
+        return
+      }
+
       this.setData({ roleConfig: currentConfig as unknown as RoleConfig | SgsRoleConfig })
     } else {
       // Too many special roles for this player count — fall back to balanced default
@@ -166,7 +238,7 @@ Page({
   },
 
   decreaseMax() {
-    const minPlayers = this.data.gameType === 'SGS' ? 2 : 5
+    const minPlayers = this.data.minRoomPlayers
     if (this.data.maxPlayers <= minPlayers) return
     const max = this.data.maxPlayers - 1
     if (max < this.data.playerCount) {
@@ -184,7 +256,7 @@ Page({
   },
 
   increaseMax() {
-    if (this.data.maxPlayers >= 10) return
+    if (this.data.maxPlayers >= this.data.maxRoomPlayers) return
     const max = this.data.maxPlayers + 1
     this.setData({ maxPlayers: max })
     this.syncRoleConfigWithMaxPlayers()
@@ -201,7 +273,7 @@ Page({
     const role = (e.currentTarget.dataset as Record<string, string>).role
     if (!role) return
     const value = e.detail.value
-    const updated = { ...this.data.roleConfig as RoleConfig, [role]: value }
+    const updated: RoleConfig = { ...(this.data.roleConfig as RoleConfig), [role]: value }
     this.setData({ roleConfig: updated as unknown as RoleConfig | SgsRoleConfig })
     this.updateRoleItemsFromConfig()
     this.updateValidationState()
@@ -211,11 +283,11 @@ Page({
     if (this.data.gameType === 'SGS') return
     const role = (e.currentTarget.dataset as Record<string, string>).role as BaseRole
     if (!role || !BASE_ROLES.includes(role)) return
-    const updated = { ...this.data.roleConfig as RoleConfig }
-    let val = (updated as any)[role] || 0
+    const updated: RoleConfig = { ...(this.data.roleConfig as RoleConfig) }
+    let val = updated[role] || 0
     val -= 1
     if (val < 0) val = 0
-    ;(updated as any)[role] = val
+    updated[role] = val
     this.setData({ roleConfig: updated as unknown as RoleConfig | SgsRoleConfig })
     this.updateRoleItemsFromConfig()
     this.updateValidationState()
@@ -225,15 +297,15 @@ Page({
     if (this.data.gameType === 'SGS') return
     const role = (e.currentTarget.dataset as Record<string, string>).role as BaseRole
     if (!role || !BASE_ROLES.includes(role)) return
-    const currentTotal = getTotalRoles(this.data.roleConfig as unknown as RoleConfig)
+    const currentTotal = getTotalRoles(this.data.roleConfig as RoleConfig)
     if (currentTotal >= this.data.maxPlayers) {
       wx.showToast({ title: '角色总数已达房间人数上限', icon: 'none' })
       return
     }
-    const updated = { ...this.data.roleConfig as RoleConfig }
-    let val = (updated as any)[role] || 0
+    const updated: RoleConfig = { ...(this.data.roleConfig as RoleConfig) }
+    let val = updated[role] || 0
     val += 1
-    ;(updated as any)[role] = val
+    updated[role] = val
     this.setData({ roleConfig: updated as unknown as RoleConfig | SgsRoleConfig })
     this.updateRoleItemsFromConfig()
     this.updateValidationState()
@@ -268,6 +340,7 @@ Page({
           roleConfig: this.data.roleConfig,
         },
       })
+      this.setData({ saving: false })
       wx.navigateBack()
     } catch (err) {
       const msg = err instanceof Error ? err.message : '保存失败'

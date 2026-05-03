@@ -1,4 +1,4 @@
-import { getUserProfile } from '../../utils/auth'
+import { getToken, getUserProfile } from '../../utils/auth'
 import { request } from '../../utils/request'
 import { connectSocket, disconnectSocket, isSocketDomainListError, SocketLike } from '../../utils/socket'
 import { formatRoleSummary, formatSgsRoleSummary, RoleConfig, SgsRoleConfig } from '../../utils/role-config'
@@ -45,6 +45,107 @@ interface RoomStatePayload {
   players?: Player[]
 }
 
+/** 与后端 `room:error` 踢人文案保持一致；优先使用 payload.code === 'KICKED'。 */
+const ROOM_ERROR_KICKED_MESSAGE = '你已被房主踢出房间'
+
+function isRecord(v: unknown): v is Record<string, unknown> {
+  return typeof v === 'object' && v !== null && !Array.isArray(v)
+}
+
+function parsePlayerUser(u: unknown): PlayerUser | null {
+  if (!isRecord(u)) {
+    return null
+  }
+  if (typeof u.id !== 'string' || typeof u.nickName !== 'string' || typeof u.avatarUrl !== 'string') {
+    return null
+  }
+  return { id: u.id, nickName: u.nickName, avatarUrl: u.avatarUrl }
+}
+
+function parsePlayer(p: unknown): Player | null {
+  if (!isRecord(p)) {
+    return null
+  }
+  const user = parsePlayerUser(p.user)
+  if (!user) {
+    return null
+  }
+  if (typeof p.id !== 'string' || typeof p.seatNo !== 'number' || typeof p.joinedAt !== 'string') {
+    return null
+  }
+  const isOnline = typeof p.isOnline === 'boolean' ? p.isOnline : undefined
+  return { id: p.id, seatNo: p.seatNo, isOnline, user, joinedAt: p.joinedAt }
+}
+
+function parseRoomStatePayload(data: unknown): RoomStatePayload {
+  if (!isRecord(data)) {
+    return {}
+  }
+  const out: RoomStatePayload = {}
+  if (isRecord(data.room)) {
+    const r = data.room
+    out.room = {}
+    if (typeof r.code === 'string') {
+      out.room.code = r.code
+    }
+    if (typeof r.hostId === 'string') {
+      out.room.hostId = r.hostId
+    }
+    if (typeof r.maxPlayers === 'number') {
+      out.room.maxPlayers = r.maxPlayers
+    }
+    if ('roleConfig' in r) {
+      out.room.roleConfig = r.roleConfig
+    }
+    if (typeof r.status === 'string') {
+      out.room.status = r.status
+    }
+  }
+  if (Array.isArray(data.players)) {
+    out.players = data.players.map(parsePlayer).filter((x): x is Player => x !== null)
+  }
+  return out
+}
+
+function parsePlayerJoinedPayload(data: unknown): { player: Player } | null {
+  if (!isRecord(data)) {
+    return null
+  }
+  const player = parsePlayer(data.player)
+  if (!player) {
+    return null
+  }
+  return { player }
+}
+
+function parseUserIdPayload(data: unknown): { userId: string } | null {
+  if (!isRecord(data) || typeof data.userId !== 'string' || !data.userId) {
+    return null
+  }
+  return { userId: data.userId }
+}
+
+function parsePlayerUpdatedPayload(data: unknown): { userId: string; nickName?: string; avatarUrl?: string } | null {
+  if (!isRecord(data) || typeof data.userId !== 'string' || !data.userId) {
+    return null
+  }
+  const nickName = typeof data.nickName === 'string' ? data.nickName : undefined
+  const avatarUrl = typeof data.avatarUrl === 'string' ? data.avatarUrl : undefined
+  return { userId: data.userId, nickName, avatarUrl }
+}
+
+function parseRoomSettingsUpdatedPayload(data: unknown): { maxPlayers?: number; roleConfig?: unknown } | null {
+  if (!isRecord(data)) {
+    return null
+  }
+  const maxPlayers = typeof data.maxPlayers === 'number' ? data.maxPlayers : undefined
+  const roleConfig = 'roleConfig' in data ? data.roleConfig : undefined
+  if (maxPlayers === undefined && roleConfig === undefined) {
+    return null
+  }
+  return { maxPlayers, roleConfig }
+}
+
 function getSocketErrorMessage(error: unknown): string {
   if (error && typeof error === 'object' && 'message' in error) {
     const message = String((error as { message?: unknown }).message || '')
@@ -84,13 +185,23 @@ Page({
     gameTitle: '阿瓦隆' as string,
   },
   socket: null as SocketLike | null,
+  roomSocketBindings: [] as Array<{ event: string; listener: (...args: unknown[]) => void }>,
   navigatingToGame: false,
   onLoad(query: Record<string, string>) {
+    const user = getUserProfile()
+    const token = getToken()
+    if (!user?.id || !token) {
+      wx.showToast({ title: '请先登录', icon: 'none' })
+      setTimeout(() => {
+        wx.reLaunch({ url: '/pages/index/index' })
+      }, 400)
+      return
+    }
+
     const roomCode = query.roomCode || ''
     const isHost = query.isHost === '1'
     const gameType = query.gameType || 'AVALON'
-    const user = getUserProfile()
-    const currentUserId = user && user.id ? user.id : 'mock-user'
+    const currentUserId = user.id
     const gameTitle = gameType === 'SGS' ? '三国杀' : '阿瓦隆'
     this.setData({
       roomCode,
@@ -109,6 +220,7 @@ Page({
     this.setData({ startingGame: false })
   },
   onUnload() {
+    this.detachRoomSocketListeners()
     if (!this.navigatingToGame) {
       this.leaveRoomViaSocket()
       this.leaveRoomViaRequest()
@@ -139,21 +251,43 @@ Page({
       this.setData({ pageState: 'error', pageError: message })
     }
   },
+  detachRoomSocketListeners() {
+    const sock = this.socket
+    if (!sock) {
+      this.roomSocketBindings = []
+      return
+    }
+    for (const { event, listener } of this.roomSocketBindings) {
+      sock.off(event, listener)
+    }
+    this.roomSocketBindings = []
+  },
+
+  bindRoomSocketEvent(event: string, listener: (...args: unknown[]) => void) {
+    const sock = this.socket
+    if (!sock) {
+      return
+    }
+    sock.on(event, listener)
+    this.roomSocketBindings.push({ event, listener })
+  },
+
   initSocket() {
+    this.detachRoomSocketListeners()
     const socket = connectSocket(false)
     this.socket = socket
     this.setConnectionStatus('connecting')
 
-    socket.on('connect', () => {
+    this.bindRoomSocketEvent('connect', () => {
       this.setConnectionStatus('connected')
       this.joinRoomViaSocket()
     })
 
-    socket.on('disconnect', () => {
+    this.bindRoomSocketEvent('disconnect', () => {
       this.setConnectionStatus('reconnecting')
     })
 
-    socket.on('connect_error', (error: unknown) => {
+    this.bindRoomSocketEvent('connect_error', (error: unknown) => {
       if (isSocketDomainListError(error)) {
         this.setConnectionStatus('unavailable')
         wx.showToast({
@@ -168,31 +302,28 @@ Page({
       wx.showToast({ title: getSocketErrorMessage(error), icon: 'none' })
     })
 
-    socket.on('room:state', (data: unknown) => {
-      console.log('Received room:state:', JSON.stringify(data));
-      this.applyRoomState(data as RoomStatePayload)
+    this.bindRoomSocketEvent('room:state', (data: unknown) => {
+      this.applyRoomState(parseRoomStatePayload(data))
     })
 
-    socket.on('room:player-joined', (data: unknown) => {
-      console.log('Received room:player-joined:', JSON.stringify(data));
-      const payload = data as { player: Player; playerCount: number }
-      if (payload.player) {
+    this.bindRoomSocketEvent('room:player-joined', (data: unknown) => {
+      const payload = parsePlayerJoinedPayload(data)
+      if (payload) {
         this.upsertPlayer(payload.player)
       }
     })
 
-    socket.on('room:player-left', (data: unknown) => {
-      console.log('Received room:player-left:', JSON.stringify(data));
-      const payload = data as { userId: string; playerCount: number }
-      if (payload.userId) {
+    this.bindRoomSocketEvent('room:player-left', (data: unknown) => {
+      const payload = parseUserIdPayload(data)
+      if (payload) {
         const players = this.data.players.filter((p) => p.user.id !== payload.userId)
         this.setData({ players })
       }
     })
 
-    socket.on('room:reconnected', (data: unknown) => {
-      const payload = data as { userId: string }
-      if (payload.userId) {
+    this.bindRoomSocketEvent('room:reconnected', (data: unknown) => {
+      const payload = parseUserIdPayload(data)
+      if (payload) {
         const players = this.data.players.map((p) => {
           if (p.user.id === payload.userId) {
             return { ...p, isOnline: true }
@@ -203,9 +334,9 @@ Page({
       }
     })
 
-    socket.on('room:offline', (data: unknown) => {
-      const payload = data as { userId: string }
-      if (payload.userId) {
+    this.bindRoomSocketEvent('room:offline', (data: unknown) => {
+      const payload = parseUserIdPayload(data)
+      if (payload) {
         const players = this.data.players.map((p) => {
           if (p.user.id === payload.userId) {
             return { ...p, isOnline: false }
@@ -216,10 +347,9 @@ Page({
       }
     })
 
-    // NEW: handle real-time player updates (nickName/avatar changes)
-    socket.on('player:updated', (data: unknown) => {
-      const payload = data as { userId: string; nickName?: string; avatarUrl?: string }
-      if (payload && payload.userId) {
+    this.bindRoomSocketEvent('player:updated', (data: unknown) => {
+      const payload = parsePlayerUpdatedPayload(data)
+      if (payload) {
         const players = this.data.players.map((p) => {
           if (p.user.id === payload.userId) {
             const updatedUser = {
@@ -235,38 +365,42 @@ Page({
       }
     })
 
-    socket.on('room:settings-updated', (data: unknown) => {
-      const payload = data as { maxPlayers?: number; roleConfig?: unknown }
+    this.bindRoomSocketEvent('room:settings-updated', (data: unknown) => {
+      const payload = parseRoomSettingsUpdatedPayload(data)
+      if (!payload) {
+        return
+      }
       if (typeof payload.maxPlayers === 'number') {
         this.setData({ maxPlayers: payload.maxPlayers })
       }
-      if (payload.roleConfig) {
+      if (payload.roleConfig !== undefined && payload.roleConfig !== null) {
         this.setData({ roleConfig: payload.roleConfig })
         this.updateRoleConfigSummary()
       }
     })
 
-    socket.on('room:started', () => {
+    this.bindRoomSocketEvent('room:started', () => {
       this.navigateToGame()
     })
 
-    socket.on('room:restarted', () => {
+    this.bindRoomSocketEvent('room:restarted', () => {
       this.navigateToGame()
     })
 
-    socket.on('room:error', (data: unknown) => {
-      const payload = data as { message: string }
-      if (payload.message) {
-        wx.showToast({ title: payload.message, icon: 'none' })
-        if (payload.message === '你已被房主踢出房间') {
-          setTimeout(() => {
-            wx.navigateBack({
-              fail: () => {
-                wx.reLaunch({ url: '/pages/index/index' })
-              },
-            })
-          }, 1500)
-        }
+    this.bindRoomSocketEvent('room:error', (data: unknown) => {
+      if (!isRecord(data) || typeof data.message !== 'string' || !data.message) {
+        return
+      }
+      wx.showToast({ title: data.message, icon: 'none' })
+      const kicked = data.code === 'KICKED' || data.message === ROOM_ERROR_KICKED_MESSAGE
+      if (kicked) {
+        setTimeout(() => {
+          wx.navigateBack({
+            fail: () => {
+              wx.reLaunch({ url: '/pages/index/index' })
+            },
+          })
+        }, 1500)
       }
     })
 
@@ -338,6 +472,7 @@ Page({
       return
     }
 
+    this.detachRoomSocketListeners()
     this.navigatingToGame = true
     this.setData({ startingGame: true })
 

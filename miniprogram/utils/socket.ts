@@ -44,7 +44,25 @@ export function isSocketDomainListError(error: unknown): boolean {
   return /url not in domain list|domain list|不在域名列表|域名校验失败/i.test(msg)
 }
 
-function parseSocketUrl(rawUrl: string, token: string): ParsedSocketUrl {
+function hostnameFromUrl(raw: string): string {
+  const match = raw.match(/^https?:\/\/([^/?#]+)/i) || raw.match(/^wss?:\/\/([^/?#]+)/i)
+  return match ? match[1] : ''
+}
+
+function getAllowedSocketHosts(): Set<string> {
+  const hosts = new Set<string>()
+  const h1 = hostnameFromUrl(config.baseUrl)
+  const h2 = hostnameFromUrl(config.socketUrl)
+  if (h1) {
+    hosts.add(h1)
+  }
+  if (h2) {
+    hosts.add(h2)
+  }
+  return hosts
+}
+
+function parseSocketUrl(rawUrl: string): ParsedSocketUrl {
   const match = rawUrl.match(/^(https?|wss?):\/\/([^/?#]+)(\/[^?#]*)?/)
   if (!match) {
     throw new Error(`Invalid socket url: ${rawUrl}`)
@@ -52,12 +70,12 @@ function parseSocketUrl(rawUrl: string, token: string): ParsedSocketUrl {
 
   const protocol = match[1] === 'https' || match[1] === 'wss' ? 'wss' : 'ws'
   const host = match[2]
+  const allowed = getAllowedSocketHosts()
+  if (allowed.size > 0 && !allowed.has(host)) {
+    throw new Error(`Socket host not allowed: ${host}`)
+  }
   const namespace = normalizeNamespace(match[3] || '/')
   const query = [`EIO=4`, `transport=websocket`]
-
-  if (token) {
-    query.push(`token=${encodeURIComponent(token)}`)
-  }
 
   return {
     url: `${protocol}://${host}${SOCKET_IO_PATH}/?${query.join('&')}`,
@@ -134,8 +152,7 @@ class WeappSocket implements SocketLike {
   }
 
   connect(): void {
-    const token = getToken()
-    const parsed = parseSocketUrl(config.socketUrl, token)
+    const parsed = parseSocketUrl(config.socketUrl)
 
     this.clearReconnectTimer()
     this.clearConnectTimeoutTimer()

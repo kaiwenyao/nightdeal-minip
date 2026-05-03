@@ -8,20 +8,20 @@
     </view>
     <view class="stepper-row">
       <button
-        class="stepper-button {{maxPlayers <= (gameType === 'SGS' ? 2 : 5) ? 'stepper-button--disabled' : ''}}"
-        disabled="{{maxPlayers <= (gameType === 'SGS' ? 2 : 5)}}"
+        class="stepper-button {{maxPlayers <= minRoomPlayers ? 'stepper-button--disabled' : ''}}"
+        disabled="{{maxPlayers <= minRoomPlayers}}"
         hover-class="stepper-button--pressed"
         bindtap="decreaseMax"
       >-</button>
       <text class="stepper-value">{{maxPlayers}}</text>
       <button
-        class="stepper-button {{maxPlayers >= 10 ? 'stepper-button--disabled' : ''}}"
-        disabled="{{maxPlayers >= 10}}"
+        class="stepper-button {{maxPlayers >= maxRoomPlayers ? 'stepper-button--disabled' : ''}}"
+        disabled="{{maxPlayers >= maxRoomPlayers}}"
         hover-class="stepper-button--pressed"
         bindtap="increaseMax"
       >+</button>
     </view>
-    <text class="hint-text">范围: {{gameType === 'SGS' ? '2' : '5'}}-10人</text>
+    <text class="hint-text">范围: {{minRoomPlayers}}-{{maxRoomPlayers}}人</text>
   </ui-card>
 
   <ui-card>

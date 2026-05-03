@@ -18,6 +18,7 @@ Page({
     gameTitle: '阿瓦隆' as string,
   },
   socket: null as SocketLike | null,
+  gameSocketBindings: [] as Array<{ event: string; listener: (...args: unknown[]) => void }>,
   onLoad(query: Record<string, string>) {
     const gameType = query.gameType || 'AVALON'
     const gameTitle = gameType === 'SGS' ? '三国杀' : '阿瓦隆'
@@ -26,26 +27,56 @@ Page({
     this.initSocket()
   },
   onUnload() {
-    if (this.socket) {
+    this.detachGameSocketListeners()
+    if (this.socket?.connected && this.data.roomCode) {
       this.socket.emit('room:leave', { roomCode: this.data.roomCode })
+    }
+    const roomCode = this.data.roomCode
+    if (roomCode) {
+      void request({
+        url: `/api/rooms/${roomCode}/leave`,
+        method: 'POST',
+      }).catch(() => {})
+    }
+    setTimeout(() => {
       disconnectSocket()
       this.socket = null
+    }, 200)
+  },
+  detachGameSocketListeners() {
+    const sock = this.socket
+    if (!sock) {
+      this.gameSocketBindings = []
+      return
     }
+    for (const { event, listener } of this.gameSocketBindings) {
+      sock.off(event, listener)
+    }
+    this.gameSocketBindings = []
+  },
+  bindGameSocketEvent(event: string, listener: (...args: unknown[]) => void) {
+    const sock = this.socket
+    if (!sock) {
+      return
+    }
+    sock.on(event, listener)
+    this.gameSocketBindings.push({ event, listener })
   },
   initSocket() {
+    this.detachGameSocketListeners()
     const socket = connectSocket(false)
     this.socket = socket
 
-    socket.on('connect', () => {
+    this.bindGameSocketEvent('connect', () => {
       socket.emit('room:join', { roomCode: this.data.roomCode })
     })
 
-    socket.on('room:restarted', () => {
+    this.bindGameSocketEvent('room:restarted', () => {
       this.setData({ roleHidden: true })
       this.loadMyRole()
     })
 
-    socket.on('room:started', () => {
+    this.bindGameSocketEvent('room:started', () => {
       this.setData({ roleHidden: true })
       this.loadMyRole()
     })

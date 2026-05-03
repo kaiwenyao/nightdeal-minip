@@ -16,6 +16,13 @@ export interface SgsRoleConfig {
   traitor: number
 }
 
+/** 阿瓦隆房间人数下限（与默认板子一致）。 */
+export const AVALON_MIN_PLAYERS = 5
+/** 三国杀房间人数下限。 */
+export const SGS_MIN_PLAYERS = 2
+/** 通用房间人数上限。 */
+export const ROOM_MAX_PLAYERS = 10
+
 /** 标准局预设；7 人默认奥伯伦（也可用房间设置关奥伯伦、增加爪牙）。 */
 export const DEFAULT_ROLE_CONFIGS: Record<number, RoleConfig> = {
   5: { merlin: true, percival: true, mordred: false, morgana: true, oberon: false, assassin: true, loyalServants: 1, minions: 0 },
@@ -54,11 +61,11 @@ export function getSgsTotalRoles(config: SgsRoleConfig): number {
 }
 
 export function getDefaultConfig(playerCount: number): RoleConfig {
-  return DEFAULT_ROLE_CONFIGS[playerCount] ?? DEFAULT_ROLE_CONFIGS[5]
+  return DEFAULT_ROLE_CONFIGS[playerCount] ?? DEFAULT_ROLE_CONFIGS[AVALON_MIN_PLAYERS]
 }
 
 export function getSgsDefaultConfig(playerCount: number): SgsRoleConfig {
-  return SGS_DEFAULT_CONFIGS[playerCount] ?? SGS_DEFAULT_CONFIGS[5]
+  return SGS_DEFAULT_CONFIGS[playerCount] ?? SGS_DEFAULT_CONFIGS[SGS_MIN_PLAYERS]
 }
 
 export const ROLE_LABELS: Record<string, string> = {
@@ -88,7 +95,7 @@ export function formatRoleSummary(config: RoleConfig): string {
 
   // enabled special roles in defined order
   for (const role of SPECIAL_ROLES) {
-    const enabled = (config as any)[role]
+    const enabled = config[role]
     if (enabled) {
       const label = ROLE_LABELS[role]
       if (typeof label === 'string') parts.push(label)
@@ -107,7 +114,7 @@ export function formatRoleSummary(config: RoleConfig): string {
 export function formatSgsRoleSummary(config: SgsRoleConfig): string {
   const parts: string[] = []
   for (const role of SGS_ROLES) {
-    const count = (config as any)[role] || 0
+    const count = config[role] || 0
     if (count > 0) {
       parts.push(`${ROLE_LABELS[role]}×${count}`)
     }
