@@ -1,4 +1,4 @@
-<navigation-bar title="选择游戏" back="{{false}}" color="black" background="#FFF"></navigation-bar>
+<navigation-bar title="选择游戏" back="{{true}}" color="black" background="#FFF"></navigation-bar>
 <view class="page-shell home-shell">
   <view class="hero">
     <text class="title">选择游戏</text>

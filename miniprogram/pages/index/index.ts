@@ -66,6 +66,7 @@ Component({
     hasToken: false,
     isNavigatingToRoom: false,
     gameType: 'AVALON' as string,
+    pageTitle: '阿瓦隆房间助手',
   },
   lifetimes: {
     attached() {
@@ -83,7 +84,8 @@ Component({
     show() {
       const page = getCurrentPages().pop()
       const gameType = page?.options?.gameType || 'AVALON'
-      this.setData({ isNavigatingToRoom: false, actionState: 'idle', gameType })
+      const pageTitle = gameType === 'SGS' ? '三国杀房间助手' : '阿瓦隆房间助手'
+      this.setData({ isNavigatingToRoom: false, actionState: 'idle', gameType, pageTitle })
     },
   },
   methods: {
