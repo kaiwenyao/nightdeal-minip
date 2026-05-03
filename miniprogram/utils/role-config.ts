@@ -27,6 +27,9 @@ export const DEFAULT_ROLE_CONFIGS: Record<number, RoleConfig> = {
 }
 
 export const SGS_DEFAULT_CONFIGS: Record<number, SgsRoleConfig> = {
+  2: { monarch: 1, loyalist: 0, rebel: 1, traitor: 0 },
+  3: { monarch: 1, loyalist: 2, rebel: 0, traitor: 0 },
+  4: { monarch: 0, loyalist: 2, rebel: 2, traitor: 0 },
   5: { monarch: 1, loyalist: 1, rebel: 2, traitor: 1 },
   6: { monarch: 1, loyalist: 1, rebel: 3, traitor: 1 },
   7: { monarch: 1, loyalist: 2, rebel: 3, traitor: 1 },

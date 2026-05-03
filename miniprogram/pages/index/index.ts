@@ -322,7 +322,7 @@ Component({
       }
       this.setActionState('creatingRoom')
       try {
-        const defaultMaxPlayers = 5
+        const defaultMaxPlayers = this.data.gameType === 'SGS' ? 2 : 5
         const payload = await request<CreateRoomResponse>({
           url: '/api/rooms',
           method: 'POST',

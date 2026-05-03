@@ -8,8 +8,8 @@
     </view>
     <view class="stepper-row">
       <button
-        class="stepper-button {{maxPlayers <= 5 ? 'stepper-button--disabled' : ''}}"
-        disabled="{{maxPlayers <= 5}}"
+        class="stepper-button {{maxPlayers <= (gameType === 'SGS' ? 2 : 5) ? 'stepper-button--disabled' : ''}}"
+        disabled="{{maxPlayers <= (gameType === 'SGS' ? 2 : 5)}}"
         hover-class="stepper-button--pressed"
         bindtap="decreaseMax"
       >-</button>
@@ -21,7 +21,7 @@
         bindtap="increaseMax"
       >+</button>
     </view>
-    <text class="hint-text">范围: 5-10人</text>
+    <text class="hint-text">范围: {{gameType === 'SGS' ? '2' : '5'}}-10人</text>
   </ui-card>
 
   <ui-card>

@@ -166,7 +166,8 @@ Page({
   },
 
   decreaseMax() {
-    if (this.data.maxPlayers <= 5) return
+    const minPlayers = this.data.gameType === 'SGS' ? 2 : 5
+    if (this.data.maxPlayers <= minPlayers) return
     const max = this.data.maxPlayers - 1
     if (max < this.data.playerCount) {
       wx.showToast({ title: '房间人数不能少于当前玩家数', icon: 'none' })
