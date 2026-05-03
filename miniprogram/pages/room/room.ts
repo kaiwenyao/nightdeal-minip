@@ -184,11 +184,13 @@ Page({
     connectionStatusText: '未连接',
     isHost: false,
     startingGame: false,
-    restartingGame: false,
+    endingGame: false,
     roleConfigSummary: '',
     roleConfig: null as unknown,
     gameType: 'AVALON' as string,
     gameTitle: '阿瓦隆' as string,
+    status: 'WAITING' as string,
+    statusText: '',
   },
   socket: null as SocketLike | null,
   roomSocketBindings: [] as Array<{ event: string; listener: (...args: unknown[]) => void }>,
@@ -225,7 +227,7 @@ Page({
   },
   onShow() {
     this.navigatingToGame = false
-    this.setData({ startingGame: false })
+    this.setData({ startingGame: false, endingGame: false })
     if (
       this.data.roomCode
       && this.data.pageState === 'ready'
@@ -282,9 +284,11 @@ Page({
         roleConfig: payload.roleConfig,
         gameType,
         gameTitle,
+        status: payload.status || 'WAITING',
         pageState: 'ready',
       })
       this.updateRoleConfigSummary()
+      this.updateStatusText()
       this.initSocket()
     } catch (error) {
       const message = error instanceof Error ? error.message : '房间加载失败，请返回重试'
@@ -357,6 +361,7 @@ Page({
       if (payload) {
         const players = this.data.players.filter((p) => p.user.id !== payload.userId)
         this.setData({ players })
+        this.updateStatusText()
       }
     })
 
@@ -426,8 +431,8 @@ Page({
       this.navigateToGame()
     })
 
-    this.bindRoomSocketEvent('room:restarted', () => {
-      this.navigateToGame()
+    this.bindRoomSocketEvent('room:ended', () => {
+      wx.showToast({ title: '游戏已结束', icon: 'none' })
     })
 
     this.bindRoomSocketEvent('room:error', (data: unknown) => {
@@ -489,27 +494,25 @@ Page({
       wx.showToast({ title: message, icon: 'none' })
     }
   },
-  async handleRestartGame() {
+  async handleEndGame() {
     if (!this.data.isHost) {
-      wx.showToast({ title: '仅房主可重开', icon: 'none' })
+      wx.showToast({ title: '仅房主可结束', icon: 'none' })
       return
     }
-    if (this.data.restartingGame) {
+    if (this.data.endingGame) {
       return
     }
-    this.setData({ restartingGame: true })
+    this.setData({ endingGame: true })
     try {
       await request({
-        url: `/api/rooms/${this.data.roomCode}/restart`,
+        url: `/api/rooms/${this.data.roomCode}/end`,
         method: 'POST',
       })
-      this.navigateToGame()
     } catch (error) {
-      const message = error instanceof Error ? error.message : '重开失败，请重试'
+      const message = error instanceof Error ? error.message : '结束失败，请重试'
       wx.showToast({ title: message, icon: 'none' })
     } finally {
-      // room 页仍在栈上，game 页 back 后必须复位，否则按钮永久 loading
-      this.setData({ restartingGame: false })
+      this.setData({ endingGame: false })
     }
   },
   navigateToGame() {
@@ -533,6 +536,28 @@ Page({
         }
       },
     })
+  },
+  updateStatusText() {
+    const { status, players, maxPlayers } = this.data
+    let statusText = ''
+    if (status === 'PLAYING') {
+      statusText = '游戏中'
+    } else if (status === 'FINISHED') {
+      statusText = '已结束'
+    } else if (maxPlayers > 0 && players.length < maxPlayers) {
+      statusText = `人数不全 (${players.length}/${maxPlayers})`
+    } else {
+      statusText = '可以开始'
+    }
+    if (statusText !== this.data.statusText) {
+      this.setData({ statusText })
+    }
+  },
+  handleViewIdentity() {
+    if (this.data.status !== 'PLAYING') {
+      return
+    }
+    this.navigateToGame()
   },
   updateRoleConfigSummary() {
     const rc = this.data.roleConfig
@@ -575,6 +600,7 @@ Page({
       this.setData({
         players: this.data.players.filter((item) => item.user.id !== userId),
       })
+      this.updateStatusText()
     } catch (error) {
       const message = error instanceof Error ? error.message : '踢出失败，请重试'
       wx.showToast({ title: message, icon: 'none' })
@@ -591,6 +617,9 @@ Page({
       if (state.room.hostId) updates.hostId = state.room.hostId
       if (typeof state.room.maxPlayers === 'number') updates.maxPlayers = state.room.maxPlayers
       if (typeof state.room.roleConfig !== 'undefined') updates.roleConfig = state.room.roleConfig
+      if (typeof state.room.status === 'string' && state.room.status) {
+        updates.status = state.room.status
+      }
       if (typeof state.room.gameType === 'string' && state.room.gameType) {
         updates.gameType = state.room.gameType
         updates.gameTitle = state.room.gameType === 'SGS'
@@ -609,6 +638,13 @@ Page({
       if (typeof updates.roleConfig !== 'undefined' || typeof updates.gameType !== 'undefined') {
         this.updateRoleConfigSummary()
       }
+      if (
+        typeof updates.status !== 'undefined'
+        || typeof updates.players !== 'undefined'
+        || typeof updates.maxPlayers !== 'undefined'
+      ) {
+        this.updateStatusText()
+      }
     }
   },
   upsertPlayer(player: Player) {
@@ -617,6 +653,7 @@ Page({
       .concat(player)
       .sort((a, b) => a.seatNo - b.seatNo)
     this.setData({ players })
+    this.updateStatusText()
   },
   joinRoomViaSocket() {
     if (this.socket) {

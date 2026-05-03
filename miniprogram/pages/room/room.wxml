@@ -6,11 +6,20 @@
         <text class="summary-label">房间码</text>
         <text class="room-code">{{roomCode}}</text>
       </view>
-      <view class="connection-status">
-        <view class="connection-dot connection-dot--{{connectionStatus}}"></view>
-        <text class="status">{{connectionStatusText}}</text>
+      <view class="summary-meta">
+        <view wx:if="{{statusText}}" class="status-badge status-badge--{{status}}">
+          <text>{{statusText}}</text>
+        </view>
+        <view class="connection-status">
+          <view class="connection-dot connection-dot--{{connectionStatus}}"></view>
+          <text class="status">{{connectionStatusText}}</text>
+        </view>
       </view>
     </view>
+  </ui-card>
+
+  <ui-card wx:if="{{status === 'PLAYING'}}">
+    <ui-button bind:tap="handleViewIdentity">查看身份</ui-button>
   </ui-card>
 
   <ui-state-panel
@@ -38,7 +47,7 @@
         <text class="name">{{item.user.nickName}}</text>
       </view>
       <ui-button
-        wx:if="{{isHost && item.user.id !== currentUserId}}"
+        wx:if="{{isHost && item.user.id !== currentUserId && status !== 'PLAYING'}}"
         variant="danger"
         size="small"
         block="{{false}}"
@@ -56,7 +65,7 @@
       <text class="game-tag">{{gameTitle}}</text>
     </view>
     <ui-button variant="secondary" size="small" block="{{false}}" bind:tap="handleOpenSettings" class="settings-btn">房间设置</ui-button>
-    <ui-button loading="{{startingGame}}" disabled="{{startingGame}}" bind:tap="handleStartGame">开始游戏</ui-button>
-    <ui-button loading="{{restartingGame}}" disabled="{{restartingGame}}" variant="secondary" bind:tap="handleRestartGame">重开游戏</ui-button>
+    <ui-button wx:if="{{status === 'WAITING'}}" loading="{{startingGame}}" disabled="{{startingGame}}" bind:tap="handleStartGame">开始游戏</ui-button>
+    <ui-button wx:if="{{status === 'PLAYING'}}" loading="{{endingGame}}" disabled="{{endingGame}}" variant="secondary" bind:tap="handleEndGame">结束游戏</ui-button>
   </ui-card>
 </view>

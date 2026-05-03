@@ -193,10 +193,10 @@ Page({
       ? getSgsTotalRoles(this.data.roleConfig as SgsRoleConfig)
       : getTotalRoles(this.data.roleConfig as RoleConfig)
     // roleConfigMismatch: configured roles don't match the room capacity
-    // playerCountMismatch: room capacity doesn't match current players
+    // (Do not treat maxPlayers !== playerCount as mismatch: higher capacity than
+    // current headcount is valid and must be saveable.)
     const roleConfigMismatch = totalRoles !== this.data.maxPlayers
-    const playerCountMismatch = this.data.maxPlayers !== this.data.playerCount
-    const roleMismatch = roleConfigMismatch || playerCountMismatch
+    const roleMismatch = roleConfigMismatch
     const saveBlocked = this.data.maxPlayers < this.data.playerCount
     const blockReason = saveBlocked ? '房间人数不能少于当前玩家数' : ''
     this.setData({ totalRoles, roleMismatch, saveBlocked, blockReason })

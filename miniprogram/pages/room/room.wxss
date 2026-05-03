@@ -28,6 +28,43 @@
   font-family: monospace;
 }
 
+.summary-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-2);
+}
+
+/* ── Status Badge ── */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-1) var(--space-4);
+  border-radius: var(--radius-full);
+  font-size: var(--font-sm);
+  font-weight: var(--font-medium);
+  letter-spacing: 0.04em;
+  background: var(--color-surface-raised);
+  color: var(--color-text-secondary);
+  border: 2rpx solid var(--color-border);
+}
+
+.status-badge--WAITING {
+  background: var(--color-bg-warm);
+  color: var(--color-text-secondary);
+}
+
+.status-badge--PLAYING {
+  background: rgba(45, 122, 95, 0.12);
+  color: var(--color-success);
+  border-color: rgba(45, 122, 95, 0.3);
+}
+
+.status-badge--FINISHED {
+  background: var(--color-surface-raised);
+  color: var(--color-text-muted);
+}
+
 /* ── Connection Status ── */
 .connection-status {
   display: flex;
