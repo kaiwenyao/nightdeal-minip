@@ -47,6 +47,14 @@
 }
 
 /* ── Sizes ── */
+.ui-button--mini {
+  min-height: 36rpx;
+  line-height: 36rpx;
+  font-size: var(--font-xs, 20rpx);
+  padding: 0 var(--space-2, 8rpx);
+  border-radius: var(--radius-sm, 12rpx);
+}
+
 .ui-button--small {
   min-height: 56rpx;
   line-height: 56rpx;

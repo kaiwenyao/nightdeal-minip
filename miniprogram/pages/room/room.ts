@@ -77,19 +77,26 @@ Page({
     connectionStatusText: '未连接',
     isHost: false,
     startingGame: false,
+    restartingGame: false,
     roleConfigSummary: '',
     roleConfig: null as unknown,
+    gameType: 'AVALON' as string,
+    gameTitle: '阿瓦隆' as string,
   },
   socket: null as SocketLike | null,
   navigatingToGame: false,
   onLoad(query: Record<string, string>) {
     const roomCode = query.roomCode || ''
     const isHost = query.isHost === '1'
+    const gameType = query.gameType || 'AVALON'
     const user = getUserProfile()
     const currentUserId = user && user.id ? user.id : 'mock-user'
+    const gameTitle = gameType === 'SGS' ? '三国杀' : '阿瓦隆'
     this.setData({
       roomCode,
       isHost,
+      gameType,
+      gameTitle,
       currentUserId,
       pageState: 'loading',
       connectionStatus: 'idle',
@@ -301,6 +308,27 @@ Page({
       wx.showToast({ title: message, icon: 'none' })
     }
   },
+  async handleRestartGame() {
+    if (!this.data.isHost) {
+      wx.showToast({ title: '仅房主可重开', icon: 'none' })
+      return
+    }
+    if (this.data.restartingGame) {
+      return
+    }
+    this.setData({ restartingGame: true })
+    try {
+      await request({
+        url: `/api/rooms/${this.data.roomCode}/restart`,
+        method: 'POST',
+      })
+      wx.showToast({ title: '已重新发牌', icon: 'success' })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '重开失败，请重试'
+      this.setData({ restartingGame: false })
+      wx.showToast({ title: message, icon: 'none' })
+    }
+  },
   navigateToGame() {
     if (this.navigatingToGame) {
       return
@@ -310,7 +338,7 @@ Page({
     this.setData({ startingGame: true })
 
     wx.navigateTo({
-      url: `/pages/game/game?roomCode=${this.data.roomCode}`,
+      url: `/pages/game/game?roomCode=${this.data.roomCode}&gameType=${this.data.gameType}`,
       fail: (error) => {
         this.navigatingToGame = false
         this.setData({ startingGame: false })

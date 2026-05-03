@@ -1,6 +1,7 @@
 import { getToken, getUserProfile, setToken, setUserProfile, clearToken, clearUserProfile, UserProfile } from '../../utils/auth'
 import { request, UnauthorizedError } from '../../utils/request'
 import { config } from '../../utils/config'
+import { getDefaultConfig } from '../../utils/role-config'
 
 interface LoginResponse {
   token: string
@@ -54,6 +55,7 @@ const defaultAvatarUrl =
 Component({
   data: {
     userInfo: {
+      id: '',
       avatarUrl: defaultAvatarUrl,
       nickName: '',
     },
@@ -63,6 +65,7 @@ Component({
     pageError: '',
     hasToken: false,
     isNavigatingToRoom: false,
+    gameType: 'AVALON' as string,
   },
   lifetimes: {
     attached() {
@@ -78,7 +81,9 @@ Component({
   },
   pageLifetimes: {
     show() {
-      this.setData({ isNavigatingToRoom: false, actionState: 'idle' })
+      const page = getCurrentPages().pop()
+      const gameType = page?.options?.gameType || 'AVALON'
+      this.setData({ isNavigatingToRoom: false, actionState: 'idle', gameType })
     },
   },
   methods: {
@@ -315,9 +320,15 @@ Component({
       }
       this.setActionState('creatingRoom')
       try {
+        const defaultMaxPlayers = 5
         const payload = await request<CreateRoomResponse>({
           url: '/api/rooms',
           method: 'POST',
+          data: {
+            gameType: this.data.gameType,
+            maxPlayers: defaultMaxPlayers,
+            roleConfig: this.data.gameType === 'SGS' ? undefined : getDefaultConfig(defaultMaxPlayers),
+          },
         })
         this.goRoomPage(payload.code, true)
       } catch (error) {
@@ -357,7 +368,7 @@ Component({
 
       this.setData({ actionState: 'idle', pageError: '', isNavigatingToRoom: true })
       wx.navigateTo({
-        url: `/pages/room/room?roomCode=${roomCode}&isHost=${isHost ? '1' : '0'}`,
+        url: `/pages/room/room?roomCode=${roomCode}&isHost=${isHost ? '1' : '0'}&gameType=${this.data.gameType}`,
         fail: (error) => {
           this.setData({ isNavigatingToRoom: false, actionState: 'idle' })
           const message = error.errMsg.includes('already exist webviewId') ? '正在进入房间' : '进入房间失败'

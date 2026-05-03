@@ -1,4 +1,4 @@
-import { RoleConfig, getTotalRoles, getDefaultConfig, ROLE_LABELS, SPECIAL_ROLES, BASE_ROLES } from '../../utils/role-config'
+import { RoleConfig, BaseRole, getTotalRoles, getDefaultConfig, ROLE_LABELS, SPECIAL_ROLES, BASE_ROLES } from '../../utils/role-config'
 import { request } from '../../utils/request'
 
 interface RoleItem {
@@ -68,12 +68,12 @@ Page({
     const specialRoleItems = SPECIAL_ROLES.map((key) => ({
       key,
       label: ROLE_LABELS[key],
-      enabled: !!(rc as Record<string, unknown>)[key],
+      enabled: !!rc[key],
     }))
     const baseRoleItems = BASE_ROLES.map((key) => ({
       key,
       label: ROLE_LABELS[key],
-      count: ((rc as Record<string, unknown>)[key] as number) || 0,
+      count: rc[key] || 0,
     }))
     const totalRoles = getTotalRoles(rc)
     this.setData({ specialRoleItems, baseRoleItems, totalRoles })
@@ -81,22 +81,62 @@ Page({
 
   updateValidationState() {
     const totalRoles = getTotalRoles(this.data.roleConfig)
-    const roleMismatch = totalRoles !== this.data.playerCount
+    // roleConfigMismatch: configured roles don't match the room capacity
+    // playerCountMismatch: room capacity doesn't match current players
+    const roleConfigMismatch = totalRoles !== this.data.maxPlayers
+    const playerCountMismatch = this.data.maxPlayers !== this.data.playerCount
+    const roleMismatch = roleConfigMismatch || playerCountMismatch
     const saveBlocked = this.data.maxPlayers < this.data.playerCount
     const blockReason = saveBlocked ? '房间人数不能少于当前玩家数' : ''
     this.setData({ totalRoles, roleMismatch, saveBlocked, blockReason })
+  },
+
+  /**
+   * Adjust roleConfig so that totalRoles matches maxPlayers.
+   * Preserves user's special role choices when possible; falls back to default config
+   * when the current special roles exceed the new player count.
+   */
+  syncRoleConfigWithMaxPlayers() {
+    const currentConfig = { ...this.data.roleConfig }
+    const targetCount = this.data.maxPlayers
+
+    const specialCount = SPECIAL_ROLES.reduce((sum, role) => sum + (currentConfig[role as keyof RoleConfig] ? 1 : 0), 0)
+    const baseCount = targetCount - specialCount
+
+    if (baseCount >= 2) {
+      const defaultConfig = getDefaultConfig(targetCount)
+      const defaultBaseTotal = defaultConfig.loyalServants + defaultConfig.minions
+      const loyalRatio = defaultBaseTotal > 0 ? defaultConfig.loyalServants / defaultBaseTotal : 0.5
+
+      currentConfig.loyalServants = Math.max(1, Math.round(baseCount * loyalRatio))
+      currentConfig.minions = baseCount - currentConfig.loyalServants
+
+      // Ensure at least 1 of each base role
+      if (currentConfig.minions < 1) {
+        currentConfig.minions = 1
+        currentConfig.loyalServants = baseCount - 1
+      }
+      if (currentConfig.loyalServants < 1) {
+        currentConfig.loyalServants = 1
+        currentConfig.minions = baseCount - 1
+      }
+
+      this.setData({ roleConfig: currentConfig as RoleConfig })
+    } else {
+      // Too many special roles for this player count — fall back to balanced default
+      this.setData({ roleConfig: getDefaultConfig(targetCount) })
+    }
   },
 
   decreaseMax() {
     if (this.data.maxPlayers <= 5) return
     const max = this.data.maxPlayers - 1
     if (max < this.data.playerCount) {
-      wx.showToast({ title: '不能超过当前玩家数', icon: 'none' })
+      wx.showToast({ title: '房间人数不能少于当前玩家数', icon: 'none' })
       return
     }
     this.setData({ maxPlayers: max })
-    const newConfig = getDefaultConfig(max)
-    this.setData({ roleConfig: newConfig })
+    this.syncRoleConfigWithMaxPlayers()
     this.updateRoleItemsFromConfig()
     this.updateValidationState()
   },
@@ -105,8 +145,7 @@ Page({
     if (this.data.maxPlayers >= 10) return
     const max = this.data.maxPlayers + 1
     this.setData({ maxPlayers: max })
-    const newConfig = getDefaultConfig(max)
-    this.setData({ roleConfig: newConfig })
+    this.syncRoleConfigWithMaxPlayers()
     this.updateRoleItemsFromConfig()
     this.updateValidationState()
   },
@@ -122,27 +161,31 @@ Page({
   },
 
   decreaseBaseRole(e: WechatMiniprogram.TouchEvent) {
-    const role = (e.currentTarget.dataset as Record<string, string>).role
-    if (!role) return
-    const updated = { ...this.data.roleConfig } as Record<string, unknown>
-    let val = (updated[role] as number) || 0
+    const role = (e.currentTarget.dataset as Record<string, string>).role as BaseRole
+    if (!role || !BASE_ROLES.includes(role)) return
+    const updated: RoleConfig = { ...this.data.roleConfig }
+    let val = updated[role] || 0
     val -= 1
     if (val < 0) val = 0
     updated[role] = val
-    this.setData({ roleConfig: updated as RoleConfig })
+    this.setData({ roleConfig: updated })
     this.updateRoleItemsFromConfig()
     this.updateValidationState()
   },
 
   increaseBaseRole(e: WechatMiniprogram.TouchEvent) {
-    const role = (e.currentTarget.dataset as Record<string, string>).role
-    if (!role) return
-    const updated = { ...this.data.roleConfig } as Record<string, unknown>
-    let val = (updated[role] as number) || 0
+    const role = (e.currentTarget.dataset as Record<string, string>).role as BaseRole
+    if (!role || !BASE_ROLES.includes(role)) return
+    const currentTotal = getTotalRoles(this.data.roleConfig)
+    if (currentTotal >= this.data.maxPlayers) {
+      wx.showToast({ title: '角色总数已达房间人数上限', icon: 'none' })
+      return
+    }
+    const updated: RoleConfig = { ...this.data.roleConfig }
+    let val = updated[role] || 0
     val += 1
-    if (val > 4) val = 4
     updated[role] = val
-    this.setData({ roleConfig: updated as RoleConfig })
+    this.setData({ roleConfig: updated })
     this.updateRoleItemsFromConfig()
     this.updateValidationState()
   },
@@ -165,7 +208,7 @@ Page({
       const roomCode = this.data.roomCode
       await request({
         url: `/api/rooms/${roomCode}/settings`,
-        method: 'PATCH',
+        method: 'PUT',
         data: {
           maxPlayers: this.data.maxPlayers,
           roleConfig: this.data.roleConfig,

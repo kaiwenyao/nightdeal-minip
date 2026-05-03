@@ -23,6 +23,25 @@ interface RequestOptions<TBody extends WechatMiniprogram.IAnyObject | string | A
 
 const DEFAULT_REQUEST_TIMEOUT_MS = 20000
 
+/** 部分环境下 wx.request 的 res.data 为 JSON 字符串，统一解析避免后续判型/解包异常 */
+function normalizeWxResponseBody(raw: unknown): unknown {
+  if (raw == null) {
+    return raw
+  }
+  if (typeof raw === 'string') {
+    const trimmed = raw.trim()
+    if (!trimmed) {
+      return {}
+    }
+    try {
+      return JSON.parse(trimmed) as unknown
+    } catch {
+      return raw
+    }
+  }
+  return raw
+}
+
 function getRequestFailMessage(errMsg?: string): string {
   const message = errMsg || ''
 
@@ -60,8 +79,9 @@ export function request<
           reject(new UnauthorizedError())
           return
         }
+        const body = normalizeWxResponseBody(res.data)
         if (res.statusCode >= 200 && res.statusCode < 300) {
-          const payload = res.data as ApiEnvelope<TResponse> | TResponse
+          const payload = body as ApiEnvelope<TResponse> | TResponse
           if (payload && typeof payload === 'object' && 'code' in payload && 'data' in payload) {
             const envelope = payload as ApiEnvelope<TResponse>
             if (envelope.code === 0) {
@@ -74,7 +94,7 @@ export function request<
           resolve(payload as TResponse)
           return
         }
-        const payload = res.data as { message?: string } | undefined
+        const payload = body as { message?: string } | undefined
         reject(new Error(payload?.message || `Request failed with status ${res.statusCode}`))
       },
       fail: (error) => {

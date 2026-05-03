@@ -29,6 +29,21 @@ const RECONNECT_DELAY_MAX_MS = 5000
 const MAX_RECONNECT_ATTEMPTS = 10
 const SOCKET_CONNECT_TIMEOUT_MS = 15000
 
+function getSocketErrMsg(error: unknown): string {
+  if (error && typeof error === 'object' && 'errMsg' in error) {
+    return String((error as { errMsg?: unknown }).errMsg || '')
+  }
+  if (error && typeof error === 'object' && 'message' in error) {
+    return String((error as { message?: unknown }).message || '')
+  }
+  return ''
+}
+
+export function isSocketDomainListError(error: unknown): boolean {
+  const msg = getSocketErrMsg(error)
+  return /url not in domain list|domain list|不在域名列表|域名校验失败/i.test(msg)
+}
+
 function parseSocketUrl(rawUrl: string, token: string): ParsedSocketUrl {
   const match = rawUrl.match(/^(https?|wss?):\/\/([^/?#]+)(\/[^?#]*)?/)
   if (!match) {
@@ -136,6 +151,12 @@ class WeappSocket implements SocketLike {
       timeout: SOCKET_CONNECT_TIMEOUT_MS,
       fail: (error) => {
         this.emitLocal('connect_error', error)
+        if (isSocketDomainListError(error)) {
+          this.manuallyClosed = true
+          this.clearConnectTimeoutTimer()
+          this.closeTask()
+          return
+        }
         this.scheduleReconnect()
       },
     })
@@ -162,6 +183,11 @@ class WeappSocket implements SocketLike {
         return
       }
       this.emitLocal('connect_error', error)
+      if (isSocketDomainListError(error)) {
+        this.manuallyClosed = true
+        this.clearConnectTimeoutTimer()
+        this.closeTask()
+      }
     })
     task.onClose(() => {
       if (this.task !== task) {

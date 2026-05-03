@@ -13,9 +13,13 @@ Page({
     roleHidden: true,
     myRole: '',
     mySeatNo: 0,
+    gameType: 'AVALON' as string,
+    gameTitle: '阿瓦隆' as string,
   },
   onLoad(query: Record<string, string>) {
-    this.setData({ roomCode: query.roomCode || '' })
+    const gameType = query.gameType || 'AVALON'
+    const gameTitle = gameType === 'SGS' ? '三国杀' : '阿瓦隆'
+    this.setData({ roomCode: query.roomCode || '', gameType, gameTitle })
     this.loadMyRole()
   },
   async loadMyRole() {

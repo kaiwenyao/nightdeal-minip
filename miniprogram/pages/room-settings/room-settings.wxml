@@ -7,9 +7,19 @@
       <text class="players-count">{{playerCount}} / {{maxPlayers}}</text>
     </view>
     <view class="stepper-row">
-      <ui-button size="small" bind:tap="decreaseMax" disabled="{{maxPlayers <= 5}}">-</ui-button>
+      <button
+        class="stepper-button {{maxPlayers <= 5 ? 'stepper-button--disabled' : ''}}"
+        disabled="{{maxPlayers <= 5}}"
+        hover-class="stepper-button--pressed"
+        bindtap="decreaseMax"
+      >-</button>
       <text class="stepper-value">{{maxPlayers}}</text>
-      <ui-button size="small" bind:tap="increaseMax" disabled="{{maxPlayers >= 10}}">+</ui-button>
+      <button
+        class="stepper-button {{maxPlayers >= 10 ? 'stepper-button--disabled' : ''}}"
+        disabled="{{maxPlayers >= 10}}"
+        hover-class="stepper-button--pressed"
+        bindtap="increaseMax"
+      >+</button>
     </view>
     <text class="hint-text">范围: 5-10人</text>
   </ui-card>
@@ -30,15 +40,29 @@
     <view wx:for="{{baseRoleItems}}" wx:key="key" class="role-row">
       <text class="role-name">{{item.label}}</text>
       <view class="stepper-row">
-        <ui-button size="small" bind:tap="decreaseBaseRole" data-role="{{item.key}}" disabled="{{item.count <= 0}}">-</ui-button>
+        <button
+          class="stepper-button {{item.count <= 0 ? 'stepper-button--disabled' : ''}}"
+          disabled="{{item.count <= 0}}"
+          data-role="{{item.key}}"
+          hover-class="stepper-button--pressed"
+          bindtap="decreaseBaseRole"
+        >-</button>
         <text class="stepper-value">{{item.count}}</text>
-        <ui-button size="small" bind:tap="increaseBaseRole" data-role="{{item.key}}" disabled="{{item.count >= 4}}">+</ui-button>
+        <button
+          class="stepper-button {{totalRoles >= maxPlayers ? 'stepper-button--disabled' : ''}}"
+          disabled="{{totalRoles >= maxPlayers}}"
+          data-role="{{item.key}}"
+          hover-class="stepper-button--pressed"
+          bindtap="increaseBaseRole"
+        >+</button>
       </view>
     </view>
 
     <view class="role-status {{roleMismatch ? 'warning' : 'ok'}}">
-      <text>角色总计: {{totalRoles}} / 当前玩家: {{playerCount}}</text>
-      <text wx:if="{{roleMismatch}}" class="status-hint">(人数不匹配，开始游戏时会校验)</text>
+      <text>角色总计: {{totalRoles}} / 房间人数: {{maxPlayers}}</text>
+      <text wx:if="{{roleMismatch}}" class="status-hint">
+        {{totalRoles !== maxPlayers ? '角色配置与房间人数不匹配' : '当前玩家 ' + playerCount + ' 人，' + (playerCount < maxPlayers ? '未满员' : '超出房间人数')}}
+      </text>
     </view>
   </ui-card>
 
