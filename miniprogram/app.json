@@ -1,7 +1,9 @@
 {
   "pages": [
+    "pages/game-select/game-select",
     "pages/index/index",
     "pages/room/room",
+    "pages/room-settings/room-settings",
     "pages/game/game",
     "pages/logs/logs"
   ],

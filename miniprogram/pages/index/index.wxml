@@ -1,7 +1,7 @@
-<navigation-bar title="NightDeal" back="{{false}}" color="black" background="#FFF"></navigation-bar>
+<navigation-bar title="NightDeal" back="{{true}}" color="black" background="#FFF"></navigation-bar>
 <view class="page-shell home-shell">
   <view class="hero">
-    <text class="title">阿瓦隆房间助手</text>
+    <text class="title">{{pageTitle}}</text>
     <text class="subtitle">登录后创建房间，或输入房间码加入。</text>
   </view>
 

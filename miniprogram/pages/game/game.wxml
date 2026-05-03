@@ -1,4 +1,4 @@
-<navigation-bar title="游戏中" back="{{true}}" color="black" background="#FFF"></navigation-bar>
+<navigation-bar title="{{gameTitle}}" back="{{true}}" color="black" background="#FFF"></navigation-bar>
 <view class="page-shell">
   <ui-state-panel
     wx:if="{{pageState === 'error'}}"
