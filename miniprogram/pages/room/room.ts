@@ -58,10 +58,11 @@ function parsePlayerUser(u: unknown): PlayerUser | null {
   if (!isRecord(u)) {
     return null
   }
-  if (typeof u.id !== 'string' || typeof u.nickName !== 'string' || typeof u.avatarUrl !== 'string') {
+  if (typeof u.id !== 'string' || typeof u.nickName !== 'string') {
     return null
   }
-  return { id: u.id, nickName: u.nickName, avatarUrl: u.avatarUrl }
+  const avatarUrl = typeof u.avatarUrl === 'string' ? u.avatarUrl : ''
+  return { id: u.id, nickName: u.nickName, avatarUrl }
 }
 
 function parsePlayer(p: unknown): Player | null {
@@ -207,7 +208,7 @@ Page({
     const isHost = query.isHost === '1'
     const gameType = query.gameType || 'AVALON'
     const currentUserId = user.id
-    const gameTitle = gameType === 'SGS' ? '三国杀' : '阿瓦隆'
+    const gameTitle = gameType === 'SGS' ? '三国杀' : gameType === 'AVALON' ? '阿瓦隆' : '房间'
     this.setData({
       roomCode,
       isHost,
@@ -234,7 +235,6 @@ Page({
   onUnload() {
     this.detachRoomSocketListeners()
     if (!this.navigatingToGame) {
-      this.leaveRoomViaSocket()
       const roomCode = this.data.roomCode
       if (roomCode) {
         void request({
@@ -244,12 +244,20 @@ Page({
           .catch(() => {
             // Leaving the page should not surface a stale network error to the next page.
           })
-          .finally(() => disconnectSocket())
+          .finally(() => {
+            if (this.socket?.connected) {
+              this.socket.emit('room:leave', { roomCode })
+            }
+            this.socket = null
+            disconnectSocket()
+          })
       } else {
+        this.socket = null
         disconnectSocket()
       }
       return
     }
+    this.socket = null
     disconnectSocket()
   },
   async loadRoomSnapshot() {
@@ -262,7 +270,7 @@ Page({
       const gameType = typeof payload.gameType === 'string' && payload.gameType
         ? payload.gameType
         : this.data.gameType
-      const gameTitle = gameType === 'SGS' ? '三国杀' : '阿瓦隆'
+      const gameTitle = gameType === 'SGS' ? '三国杀' : gameType === 'AVALON' ? '阿瓦隆' : '房间'
 
       this.setData({
         roomCode: payload.code,
@@ -325,7 +333,6 @@ Page({
           icon: 'none',
           duration: 6000,
         })
-        console.warn('Socket domain list error:', getSocketErrorMessage(error))
         return
       }
       this.setConnectionStatus('reconnecting')
@@ -578,9 +585,13 @@ Page({
       if (state.room.hostId) updates.hostId = state.room.hostId
       if (typeof state.room.maxPlayers === 'number') updates.maxPlayers = state.room.maxPlayers
       if (typeof state.room.roleConfig !== 'undefined') updates.roleConfig = state.room.roleConfig
-      if (state.room.gameType === 'SGS' || state.room.gameType === 'AVALON') {
+      if (typeof state.room.gameType === 'string' && state.room.gameType) {
         updates.gameType = state.room.gameType
-        updates.gameTitle = state.room.gameType === 'SGS' ? '三国杀' : '阿瓦隆'
+        updates.gameTitle = state.room.gameType === 'SGS'
+          ? '三国杀'
+          : state.room.gameType === 'AVALON'
+            ? '阿瓦隆'
+            : '房间'
       }
     }
     if (state.players) {
@@ -604,11 +615,6 @@ Page({
   joinRoomViaSocket() {
     if (this.socket) {
       this.socket.emit('room:join', { roomCode: this.data.roomCode })
-    }
-  },
-  leaveRoomViaSocket() {
-    if (this.socket?.connected && this.data.roomCode) {
-      this.socket.emit('room:leave', { roomCode: this.data.roomCode })
     }
   },
 })

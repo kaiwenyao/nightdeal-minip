@@ -109,9 +109,12 @@ Page({
     const gameType = query.gameType || 'AVALON'
     const minRoomPlayers = gameType === 'SGS' ? SGS_MIN_PLAYERS : AVALON_MIN_PLAYERS
     this.setData({ roomCode, gameType, minRoomPlayers, maxRoomPlayers: ROOM_MAX_PLAYERS })
-    if (roomCode) {
-      this.loadRoomData(roomCode)
+    if (!roomCode.trim()) {
+      wx.showToast({ title: '缺少房间码', icon: 'none' })
+      setTimeout(() => wx.navigateBack(), 600)
+      return
     }
+    this.loadRoomData(roomCode.trim())
   },
 
   async loadRoomData(roomCode: string) {
@@ -237,6 +240,7 @@ Page({
         || currentConfig.loyalServants < 1
         || currentConfig.minions < 1
       ) {
+        wx.showToast({ title: '人数已调整，角色已恢复默认可用配置', icon: 'none' })
         this.setData({ roleConfig: getDefaultConfig(targetCount) as unknown as RoleConfig | SgsRoleConfig })
         return
       }
@@ -244,6 +248,7 @@ Page({
       this.setData({ roleConfig: currentConfig as unknown as RoleConfig | SgsRoleConfig })
     } else {
       // Too many special roles for this player count — fall back to balanced default
+      wx.showToast({ title: '人数已调整，角色已恢复默认可用配置', icon: 'none' })
       this.setData({ roleConfig: getDefaultConfig(targetCount) as unknown as RoleConfig | SgsRoleConfig })
     }
   },
@@ -346,7 +351,12 @@ Page({
     }
     this.setData({ saving: true })
     try {
-      const roomCode = this.data.roomCode
+      const roomCode = (this.data.roomCode || '').trim()
+      if (!roomCode) {
+        this.setData({ saving: false })
+        wx.showToast({ title: '缺少房间信息，无法保存', icon: 'none' })
+        return
+      }
       await request({
         url: `/api/rooms/${roomCode}/settings`,
         method: 'PUT',
