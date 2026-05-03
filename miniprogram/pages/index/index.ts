@@ -102,7 +102,7 @@ Component({
       })
     },
     onRoomCodeInput(e: WechatMiniprogram.Input) {
-      const value = e.detail.value.replace(/[^a-zA-Z0-9]/g, '').slice(0, ROOM_CODE_LENGTH).toUpperCase()
+      const value = e.detail.value.replace(/[^a-zA-Z]/g, '').slice(0, ROOM_CODE_LENGTH).toUpperCase()
       this.setData({ roomCodeInput: value })
     },
     onChooseAvatar(e: WechatMiniprogram.CustomEvent<{ avatarUrl: string }>) {
