@@ -322,7 +322,7 @@ Page({
         url: `/api/rooms/${this.data.roomCode}/restart`,
         method: 'POST',
       })
-      wx.showToast({ title: '已重新发牌', icon: 'success' })
+      this.navigateToGame()
     } catch (error) {
       const message = error instanceof Error ? error.message : '重开失败，请重试'
       this.setData({ restartingGame: false })
