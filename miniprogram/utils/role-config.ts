@@ -20,7 +20,9 @@ export interface SgsRoleConfig {
 export const AVALON_MIN_PLAYERS = 5
 /** 三国杀房间人数下限。 */
 export const SGS_MIN_PLAYERS = 2
-/** 通用房间人数上限。 */
+/** 三国杀房间人数上限。 */
+export const SGS_MAX_PLAYERS = 8
+/** 通用房间人数上限（阿瓦隆等）。 */
 export const ROOM_MAX_PLAYERS = 10
 
 /** 标准局预设；7 人默认奥伯伦（也可用房间设置关奥伯伦、增加爪牙）。 */
@@ -41,8 +43,6 @@ export const SGS_DEFAULT_CONFIGS: Record<number, SgsRoleConfig> = {
   6: { monarch: 1, loyalist: 1, rebel: 3, traitor: 1 },
   7: { monarch: 1, loyalist: 2, rebel: 3, traitor: 1 },
   8: { monarch: 1, loyalist: 2, rebel: 4, traitor: 1 },
-  9: { monarch: 1, loyalist: 3, rebel: 4, traitor: 1 },
-  10: { monarch: 1, loyalist: 3, rebel: 4, traitor: 2 },
 }
 
 export function getTotalRoles(config: RoleConfig): number {
@@ -65,7 +65,11 @@ export function getDefaultConfig(playerCount: number): RoleConfig {
 }
 
 export function getSgsDefaultConfig(playerCount: number): SgsRoleConfig {
-  return SGS_DEFAULT_CONFIGS[playerCount] ?? SGS_DEFAULT_CONFIGS[SGS_MIN_PLAYERS]
+  const n = Math.min(
+    SGS_MAX_PLAYERS,
+    Math.max(SGS_MIN_PLAYERS, Math.floor(Number(playerCount) || SGS_MIN_PLAYERS)),
+  )
+  return SGS_DEFAULT_CONFIGS[n] ?? SGS_DEFAULT_CONFIGS[SGS_MIN_PLAYERS]
 }
 
 export const ROLE_LABELS: Record<string, string> = {

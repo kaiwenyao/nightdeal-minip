@@ -12,6 +12,7 @@ import {
   SGS_ROLES,
   AVALON_MIN_PLAYERS,
   SGS_MIN_PLAYERS,
+  SGS_MAX_PLAYERS,
   ROOM_MAX_PLAYERS,
 } from '../../utils/role-config'
 import { getToken, getUserProfile } from '../../utils/auth'
@@ -108,7 +109,8 @@ Page({
     const roomCode = query.roomCode || ''
     const gameType = query.gameType || 'AVALON'
     const minRoomPlayers = gameType === 'SGS' ? SGS_MIN_PLAYERS : AVALON_MIN_PLAYERS
-    this.setData({ roomCode, gameType, minRoomPlayers, maxRoomPlayers: ROOM_MAX_PLAYERS })
+    const maxRoomPlayers = gameType === 'SGS' ? SGS_MAX_PLAYERS : ROOM_MAX_PLAYERS
+    this.setData({ roomCode, gameType, minRoomPlayers, maxRoomPlayers })
     if (!roomCode.trim()) {
       wx.showToast({ title: '缺少房间码', icon: 'none' })
       setTimeout(() => wx.navigateBack(), 600)
@@ -132,10 +134,11 @@ Page({
         throw new Error('invalid room response')
       }
 
-      const maxPlayers = room.maxPlayers
-      const players = room.players
       const gameType = typeof room.gameType === 'string' ? room.gameType : 'AVALON'
       const isSgs = gameType === 'SGS'
+      const maxRoomPlayers = isSgs ? SGS_MAX_PLAYERS : ROOM_MAX_PLAYERS
+      const maxPlayers = isSgs ? Math.min(room.maxPlayers, SGS_MAX_PLAYERS) : room.maxPlayers
+      const players = room.players
       const minRoomPlayers = isSgs ? SGS_MIN_PLAYERS : AVALON_MIN_PLAYERS
       const roleConfig = isSgs
         ? parseSgsRoleConfig(room.roleConfig, maxPlayers)
@@ -144,7 +147,7 @@ Page({
       this.setData({
         maxPlayers,
         minRoomPlayers,
-        maxRoomPlayers: ROOM_MAX_PLAYERS,
+        maxRoomPlayers,
         playerCount: players.length,
         gameType,
         roleConfig,

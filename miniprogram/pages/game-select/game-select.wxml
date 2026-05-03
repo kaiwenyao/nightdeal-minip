@@ -15,7 +15,7 @@
     <view class="game-card" bind:tap="handleSelectSgs">
       <view class="game-icon sgs-icon">⚔️</view>
       <text class="game-name">三国杀</text>
-      <text class="game-desc">5-10人 身份推理</text>
+      <text class="game-desc">2-8人 身份推理</text>
     </view>
   </view>
 </view>
