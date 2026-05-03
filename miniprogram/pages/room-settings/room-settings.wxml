@@ -27,36 +27,48 @@
   <ui-card>
     <view class="card-heading">
       <text class="section-title">角色配置</text>
-      <text class="reset-link" bind:tap="handleResetToDefault">恢复默认</text>
+      <text wx:if="{{gameType !== 'SGS'}}" class="reset-link" bind:tap="handleResetToDefault">恢复默认</text>
     </view>
 
-    <view class="role-group-label">特殊角色</view>
-    <view wx:for="{{specialRoleItems}}" wx:key="key" class="role-row">
-      <text class="role-name">{{item.label}}</text>
-      <switch checked="{{item.enabled}}" data-role="{{item.key}}" bind:change="handleToggleRole" color="#c9a96e" />
-    </view>
-
-    <view class="role-group-label">基础角色</view>
-    <view wx:for="{{baseRoleItems}}" wx:key="key" class="role-row">
-      <text class="role-name">{{item.label}}</text>
-      <view class="stepper-row">
-        <button
-          class="stepper-button {{item.count <= 0 ? 'stepper-button--disabled' : ''}}"
-          disabled="{{item.count <= 0}}"
-          data-role="{{item.key}}"
-          hover-class="stepper-button--pressed"
-          bindtap="decreaseBaseRole"
-        >-</button>
-        <text class="stepper-value">{{item.count}}</text>
-        <button
-          class="stepper-button {{totalRoles >= maxPlayers ? 'stepper-button--disabled' : ''}}"
-          disabled="{{totalRoles >= maxPlayers}}"
-          data-role="{{item.key}}"
-          hover-class="stepper-button--pressed"
-          bindtap="increaseBaseRole"
-        >+</button>
+    <!-- Avalon roles -->
+    <block wx:if="{{gameType !== 'SGS'}}">
+      <view class="role-group-label">特殊角色</view>
+      <view wx:for="{{specialRoleItems}}" wx:key="key" class="role-row">
+        <text class="role-name">{{item.label}}</text>
+        <switch checked="{{item.enabled}}" data-role="{{item.key}}" bind:change="handleToggleRole" color="#c9a96e" />
       </view>
-    </view>
+
+      <view class="role-group-label">基础角色</view>
+      <view wx:for="{{baseRoleItems}}" wx:key="key" class="role-row">
+        <text class="role-name">{{item.label}}</text>
+        <view class="stepper-row">
+          <button
+            class="stepper-button {{item.count <= 0 ? 'stepper-button--disabled' : ''}}"
+            disabled="{{item.count <= 0}}"
+            data-role="{{item.key}}"
+            hover-class="stepper-button--pressed"
+            bindtap="decreaseBaseRole"
+          >-</button>
+          <text class="stepper-value">{{item.count}}</text>
+          <button
+            class="stepper-button {{totalRoles >= maxPlayers ? 'stepper-button--disabled' : ''}}"
+            disabled="{{totalRoles >= maxPlayers}}"
+            data-role="{{item.key}}"
+            hover-class="stepper-button--pressed"
+            bindtap="increaseBaseRole"
+          >+</button>
+        </view>
+      </view>
+    </block>
+
+    <!-- SGS roles (read-only) -->
+    <block wx:if="{{gameType === 'SGS'}}">
+      <view class="role-group-label">身份配置（根据人数自动调整）</view>
+      <view wx:for="{{sgsRoleItems}}" wx:key="key" class="role-row">
+        <text class="role-name">{{item.label}}</text>
+        <text class="stepper-value">×{{item.count}}</text>
+      </view>
+    </block>
 
     <view class="role-status {{roleMismatch ? 'warning' : 'ok'}}">
       <text>角色总计: {{totalRoles}} / 房间人数: {{maxPlayers}}</text>

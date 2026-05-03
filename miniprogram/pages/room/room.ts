@@ -1,7 +1,7 @@
 import { getUserProfile } from '../../utils/auth'
 import { request } from '../../utils/request'
 import { connectSocket, disconnectSocket, isSocketDomainListError, SocketLike } from '../../utils/socket'
-import { formatRoleSummary, RoleConfig } from '../../utils/role-config'
+import { formatRoleSummary, formatSgsRoleSummary, RoleConfig, SgsRoleConfig } from '../../utils/role-config'
 
 interface PlayerUser {
   id: string
@@ -250,6 +250,10 @@ Page({
       this.navigateToGame()
     })
 
+    socket.on('room:restarted', () => {
+      this.navigateToGame()
+    })
+
     socket.on('room:error', (data: unknown) => {
       const payload = data as { message: string }
       if (payload.message) {
@@ -349,11 +353,16 @@ Page({
   },
   updateRoleConfigSummary() {
     const rc = this.data.roleConfig
-    if (rc && typeof rc === 'object') {
-      const summary = formatRoleSummary(rc as RoleConfig)
+    if (!rc || typeof rc !== 'object') {
+      this.setData({ roleConfigSummary: '' })
+      return
+    }
+    if (this.data.gameType === 'SGS') {
+      const summary = formatSgsRoleSummary(rc as SgsRoleConfig)
       this.setData({ roleConfigSummary: summary })
     } else {
-      this.setData({ roleConfigSummary: '' })
+      const summary = formatRoleSummary(rc as RoleConfig)
+      this.setData({ roleConfigSummary: summary })
     }
   },
 
@@ -362,7 +371,7 @@ Page({
       return
     }
     wx.navigateTo({
-      url: `/pages/room-settings/room-settings?roomCode=${this.data.roomCode}`,
+      url: `/pages/room-settings/room-settings?roomCode=${this.data.roomCode}&gameType=${this.data.gameType}`,
     })
   },
 

@@ -1,4 +1,5 @@
 import { request } from '../../utils/request'
+import { connectSocket, disconnectSocket, SocketLike } from '../../utils/socket'
 
 interface MyRoleResponse {
   role: string
@@ -16,11 +17,44 @@ Page({
     gameType: 'AVALON' as string,
     gameTitle: '阿瓦隆' as string,
   },
+  socket: null as SocketLike | null,
   onLoad(query: Record<string, string>) {
     const gameType = query.gameType || 'AVALON'
     const gameTitle = gameType === 'SGS' ? '三国杀' : '阿瓦隆'
     this.setData({ roomCode: query.roomCode || '', gameType, gameTitle })
     this.loadMyRole()
+    this.initSocket()
+  },
+  onUnload() {
+    if (this.socket) {
+      this.socket.emit('room:leave', { roomCode: this.data.roomCode })
+      disconnectSocket()
+      this.socket = null
+    }
+  },
+  initSocket() {
+    const socket = connectSocket(false)
+    this.socket = socket
+
+    socket.on('connect', () => {
+      socket.emit('room:join', { roomCode: this.data.roomCode })
+    })
+
+    socket.on('room:restarted', () => {
+      this.setData({ roleHidden: true })
+      this.loadMyRole()
+    })
+
+    socket.on('room:started', () => {
+      this.setData({ roleHidden: true })
+      this.loadMyRole()
+    })
+
+    if (socket.connected) {
+      socket.emit('room:join', { roomCode: this.data.roomCode })
+      return
+    }
+    socket.connect()
   },
   async loadMyRole() {
     this.setData({ pageState: 'loadingRole', pageError: '' })
