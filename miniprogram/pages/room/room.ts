@@ -27,6 +27,7 @@ interface RoomSnapshot {
   id: string
   code: string
   status: string
+  gameType?: string
   roleConfig: unknown
   maxPlayers: number
   host: RoomHost | null
@@ -41,6 +42,7 @@ interface RoomStatePayload {
     maxPlayers?: number
     roleConfig?: unknown
     status?: string
+    gameType?: string
   }
   players?: Player[]
 }
@@ -99,6 +101,9 @@ function parseRoomStatePayload(data: unknown): RoomStatePayload {
     }
     if (typeof r.status === 'string') {
       out.room.status = r.status
+    }
+    if (typeof r.gameType === 'string') {
+      out.room.gameType = r.gameType
     }
   }
   if (Array.isArray(data.players)) {
@@ -218,13 +223,31 @@ Page({
   onShow() {
     this.navigatingToGame = false
     this.setData({ startingGame: false })
+    if (
+      this.data.roomCode
+      && this.data.pageState === 'ready'
+      && this.roomSocketBindings.length === 0
+    ) {
+      this.initSocket()
+    }
   },
   onUnload() {
     this.detachRoomSocketListeners()
     if (!this.navigatingToGame) {
       this.leaveRoomViaSocket()
-      this.leaveRoomViaRequest()
-      setTimeout(() => disconnectSocket(), 200)
+      const roomCode = this.data.roomCode
+      if (roomCode) {
+        void request({
+          url: `/api/rooms/${roomCode}/leave`,
+          method: 'POST',
+        })
+          .catch(() => {
+            // Leaving the page should not surface a stale network error to the next page.
+          })
+          .finally(() => disconnectSocket())
+      } else {
+        disconnectSocket()
+      }
       return
     }
     disconnectSocket()
@@ -236,12 +259,19 @@ Page({
         url: `/api/rooms/${this.data.roomCode}`,
       })
 
+      const gameType = typeof payload.gameType === 'string' && payload.gameType
+        ? payload.gameType
+        : this.data.gameType
+      const gameTitle = gameType === 'SGS' ? '三国杀' : '阿瓦隆'
+
       this.setData({
         roomCode: payload.code,
         hostId: payload.host?.id || '',
         maxPlayers: payload.maxPlayers,
         players: payload.players,
         roleConfig: payload.roleConfig,
+        gameType,
+        gameTitle,
         pageState: 'ready',
       })
       this.updateRoleConfigSummary()
@@ -295,7 +325,7 @@ Page({
           icon: 'none',
           duration: 6000,
         })
-        console.error('Socket domain list error:', getSocketErrorMessage(error))
+        console.warn('Socket domain list error:', getSocketErrorMessage(error))
         return
       }
       this.setConnectionStatus('reconnecting')
@@ -485,6 +515,9 @@ Page({
         this.setData({ startingGame: false })
         const message = error.errMsg.includes('already exist webviewId') ? '正在进入游戏' : '进入游戏失败'
         wx.showToast({ title: message, icon: 'none' })
+        if (this.data.roomCode && this.data.pageState === 'ready') {
+          this.initSocket()
+        }
       },
     })
   },
@@ -545,6 +578,10 @@ Page({
       if (state.room.hostId) updates.hostId = state.room.hostId
       if (typeof state.room.maxPlayers === 'number') updates.maxPlayers = state.room.maxPlayers
       if (typeof state.room.roleConfig !== 'undefined') updates.roleConfig = state.room.roleConfig
+      if (state.room.gameType === 'SGS' || state.room.gameType === 'AVALON') {
+        updates.gameType = state.room.gameType
+        updates.gameTitle = state.room.gameType === 'SGS' ? '三国杀' : '阿瓦隆'
+      }
     }
     if (state.players) {
       updates.players = state.players
@@ -552,7 +589,7 @@ Page({
 
     if (Object.keys(updates).length > 0) {
       this.setData(updates)
-      if (typeof updates.roleConfig !== 'undefined') {
+      if (typeof updates.roleConfig !== 'undefined' || typeof updates.gameType !== 'undefined') {
         this.updateRoleConfigSummary()
       }
     }
@@ -573,17 +610,5 @@ Page({
     if (this.socket?.connected && this.data.roomCode) {
       this.socket.emit('room:leave', { roomCode: this.data.roomCode })
     }
-  },
-  leaveRoomViaRequest() {
-    const roomCode = this.data.roomCode
-    if (!roomCode) {
-      return
-    }
-    void request({
-      url: `/api/rooms/${roomCode}/leave`,
-      method: 'POST',
-    }).catch(() => {
-      // Leaving the page should not surface a stale network error to the next page.
-    })
   },
 })

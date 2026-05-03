@@ -14,6 +14,7 @@ import {
   SGS_MIN_PLAYERS,
   ROOM_MAX_PLAYERS,
 } from '../../utils/role-config'
+import { getToken, getUserProfile } from '../../utils/auth'
 import { request } from '../../utils/request'
 
 function isRecord(v: unknown): v is Record<string, unknown> {
@@ -94,6 +95,16 @@ Page({
   },
 
   onLoad(query: Record<string, string>) {
+    const user = getUserProfile()
+    const token = getToken()
+    if (!user?.id || !token) {
+      wx.showToast({ title: '请先登录', icon: 'none' })
+      setTimeout(() => {
+        wx.reLaunch({ url: '/pages/index/index' })
+      }, 400)
+      return
+    }
+
     const roomCode = query.roomCode || ''
     const gameType = query.gameType || 'AVALON'
     const minRoomPlayers = gameType === 'SGS' ? SGS_MIN_PLAYERS : AVALON_MIN_PLAYERS
@@ -327,6 +338,10 @@ Page({
   async handleSave() {
     if (this.data.saveBlocked) {
       wx.showToast({ title: this.data.blockReason, icon: 'none' })
+      return
+    }
+    if (this.data.roleMismatch) {
+      wx.showToast({ title: '角色配置与房间人数不一致，请调整后保存', icon: 'none' })
       return
     }
     this.setData({ saving: true })
