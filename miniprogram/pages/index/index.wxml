@@ -1,4 +1,4 @@
-<navigation-bar title="NightDeal" back="{{false}}" color="black" background="#FFF"></navigation-bar>
+<navigation-bar title="NightDeal" back="{{true}}" color="black" background="#FFF"></navigation-bar>
 <view class="page-shell home-shell">
   <view class="hero">
     <text class="title">{{pageTitle}}</text>
