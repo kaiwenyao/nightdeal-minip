@@ -20,6 +20,7 @@
   background: var(--color-surface-raised);
   padding: var(--space-1) var(--space-4);
   border-radius: var(--radius-full);
+  flex-shrink: 0;
 }
 
 .stepper-row {
@@ -34,11 +35,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  flex: 0 0 56rpx;
-  width: 56rpx;
-  min-width: 56rpx;
-  height: 56rpx;
-  min-height: 56rpx;
+  flex: 0 0 64rpx;
+  width: 64rpx;
+  min-width: 64rpx;
+  height: 64rpx;
+  min-height: 64rpx;
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -46,9 +47,9 @@
   border-radius: var(--radius-sm);
   background: var(--color-text-primary);
   color: var(--color-surface);
-  font-size: var(--font-base);
+  font-size: var(--font-lg);
   font-weight: var(--font-semibold);
-  line-height: 56rpx;
+  line-height: 64rpx;
   letter-spacing: 0;
   box-shadow: 0 4rpx 14rpx rgba(26, 26, 46, 0.18);
 }
@@ -81,7 +82,8 @@
   justify-content: space-between;
   align-items: center;
   padding: var(--space-3) 0;
-  border-bottom: 1rpx solid var(--color-border-light);
+  border-bottom: 1rpx solid var(--color-border);
+  min-height: 80rpx;
 }
 
 .role-row:last-child {
@@ -94,6 +96,9 @@
   font-weight: var(--font-medium);
   flex: 1;
   min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .role-row .stepper-row {

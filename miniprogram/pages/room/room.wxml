@@ -18,8 +18,12 @@
     </view>
   </ui-card>
 
-  <ui-card wx:if="{{status === 'PLAYING'}}">
-    <ui-button bind:tap="handleViewIdentity">查看身份</ui-button>
+  <ui-card wx:if="{{status === 'PLAYING'}}" class="view-identity-card">
+    <view class="card-heading">
+      <text class="section-title">游戏进行中</text>
+      <text class="game-tag">{{gameTitle}}</text>
+    </view>
+    <ui-button variant="accent" bind:tap="handleViewIdentity">查看我的身份</ui-button>
   </ui-card>
 
   <ui-state-panel

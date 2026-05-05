@@ -79,17 +79,21 @@ page {
   --transition-normal: 250ms ease;
   --transition-slow: 400ms ease;
 
+  /* ── Navigation bar height token ── */
+  --nav-bar-height: 44px;
+
   background: var(--color-bg);
+  box-sizing: border-box;
 }
 
 /* ── Global Layout Classes ── */
 .page-shell {
   min-height: 100vh;
   box-sizing: border-box;
-  padding: var(--space-8, 32rpx);
+  padding: var(--space-6, 24rpx) var(--space-6, 24rpx) calc(var(--space-8, 32rpx) + env(safe-area-inset-bottom)) var(--space-6, 24rpx);
   display: flex;
   flex-direction: column;
-  gap: var(--space-6, 24rpx);
+  gap: var(--space-5, 20rpx);
   background: var(--color-bg, #f7f5f0);
 }
 
@@ -102,7 +106,7 @@ page {
 
 /* Utility: horizontal divider */
 .divider {
-  height: 1px;
+  height: 1rpx;
   background: var(--color-border, #e8e4dc);
   margin: var(--space-4, 16rpx) 0;
 }
@@ -110,4 +114,53 @@ page {
 /* Utility: safe area spacing for custom nav */
 .safe-top {
   padding-top: env(safe-area-inset-top);
+}
+
+/* Utility: safe area bottom spacing for scrollable content */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* ── Game Tag Badge ── */
+.game-tag {
+  display: inline-block;
+  font-size: var(--font-xs, 22rpx);
+  font-weight: var(--font-medium, 500);
+  color: var(--color-accent-dark, #a0854a);
+  background: var(--color-accent-bg, #faf5e9);
+  padding: var(--space-1, 4rpx) var(--space-3, 12rpx);
+  border-radius: var(--radius-full, 9999rpx);
+  letter-spacing: 0.02em;
+}
+
+/* ── Card Heading (shared across pages) ── */
+.card-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4, 16rpx);
+}
+
+.card-title {
+  display: block;
+  font-size: var(--font-lg, 32rpx);
+  font-weight: var(--font-bold, 700);
+  color: var(--color-text-primary, #1a1a2e);
+  letter-spacing: 0.02em;
+}
+
+.card-note {
+  font-size: var(--font-sm, 24rpx);
+  color: var(--color-teal-muted, #3d7a78);
+  font-weight: var(--font-medium, 500);
+  line-height: 1.4;
+  background: var(--color-teal-light, #e6f2f1);
+  padding: var(--space-1, 4rpx) var(--space-3, 12rpx);
+  border-radius: var(--radius-full, 9999rpx);
+  flex-shrink: 0;
+}
+
+/* ── Skyline compatibility resets ── */
+view, text, button, input {
+  box-sizing: border-box;
 }

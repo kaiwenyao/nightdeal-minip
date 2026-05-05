@@ -10,13 +10,15 @@
   <ui-state-panel wx:if="{{pageState === 'loadingRole'}}" type="loading" message="身份加载中..." />
 
   <ui-card>
-    <view class="role-card {{roleHidden ? '' : 'revealed'}}" bind:tap="handleToggleRole">
+    <text class="game-title-badge">{{gameTitle}}</text>
+    <view class="role-card {{roleHidden ? '' : 'revealed'}}" data-camp="{{camp}}" bind:tap="handleToggleRole">
       <view class="ornament-tl"></view>
       <view class="ornament-br"></view>
       <text class="label">你的身份</text>
       <text class="role-text">{{roleHidden ? '点击翻牌查看身份' : myRole}}</text>
       <text wx:if="{{!roleHidden}}" class="seat-text">座位号：#{{mySeatNo}}</text>
     </view>
+    <text wx:if="{{roleHidden}}" class="tap-hint">轻触卡片翻开身份牌</text>
   </ui-card>
 
   <ui-button variant="secondary" bind:tap="handleBackRoom">返回房间</ui-button>

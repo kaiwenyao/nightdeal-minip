@@ -10,6 +10,7 @@ page {
     var(--color-bg);
 }
 
+/* ── Hero ── */
 .hero {
   padding: var(--space-6) 4rpx var(--space-4);
 }
@@ -41,11 +42,12 @@ page {
   line-height: 1.6;
 }
 
+/* ── Game Grid ── */
 .game-grid {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--space-5);
-  padding: var(--space-4);
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+  padding: var(--space-2) 0;
 }
 
 .game-card {
@@ -53,12 +55,13 @@ page {
   flex-direction: column;
   align-items: center;
   gap: var(--space-3);
-  padding: var(--space-6) var(--space-4);
+  padding: var(--space-8) var(--space-4) var(--space-6);
   background: var(--color-surface);
   border: 2rpx solid var(--color-border);
   border-radius: var(--radius-lg);
-  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
-  cursor: pointer;
+  transition: transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease;
+  overflow: hidden;
+  position: relative;
 }
 
 .game-card:active {
@@ -69,7 +72,6 @@ page {
 
 .game-card--disabled {
   opacity: 0.55;
-  cursor: default;
 }
 
 .game-card--disabled:active {
@@ -79,14 +81,15 @@ page {
 }
 
 .game-icon {
-  width: 120rpx;
-  height: 120rpx;
-  border-radius: var(--radius-full);
+  width: 112rpx;
+  height: 112rpx;
+  border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 64rpx;
+  font-size: 56rpx;
   background: var(--color-bg-warm);
+  flex-shrink: 0;
 }
 
 .avalon-icon {
@@ -98,12 +101,27 @@ page {
 }
 
 .game-name {
-  font-size: var(--font-xl);
+  font-size: var(--font-lg);
   font-weight: var(--font-bold);
   color: var(--color-text-primary);
+  text-align: center;
 }
 
 .game-desc {
-  font-size: var(--font-sm);
-  color: var(--color-text-secondary);
+  font-size: var(--font-xs);
+  color: var(--color-text-muted);
+  text-align: center;
+  line-height: 1.4;
+}
+
+/* ── Coming-soon overlay ── */
+.game-card--disabled .game-desc {
+  color: var(--color-text-muted);
+}
+
+/* ── Single column fallback for very narrow screens ── */
+@media (max-width: 300rpx) {
+  .game-grid {
+    grid-template-columns: 1fr;
+  }
 }
