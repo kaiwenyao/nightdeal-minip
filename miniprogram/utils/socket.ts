@@ -342,7 +342,12 @@ class WeappSocket implements SocketLike {
   }
 
   private scheduleReconnect(): void {
-    if (this.reconnectTimer !== null || this.reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+    if (this.reconnectTimer !== null) {
+      return
+    }
+
+    if (this.reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+      this.emitLocal('reconnect_failed')
       return
     }
 

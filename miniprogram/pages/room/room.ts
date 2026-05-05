@@ -435,6 +435,14 @@ Page({
       wx.showToast({ title: '游戏已结束', icon: 'none' })
     })
 
+    this.bindRoomSocketEvent('reconnect_failed', () => {
+      this.setConnectionStatus('unavailable')
+      this.detachRoomSocketListeners()
+      disconnectSocket()
+      this.socket = null
+      wx.showToast({ title: '连接已断开，请返回重试', icon: 'none', duration: 3000 })
+    })
+
     this.bindRoomSocketEvent('room:error', (data: unknown) => {
       if (!isRecord(data) || typeof data.message !== 'string' || !data.message) {
         return
@@ -614,7 +622,10 @@ Page({
 
     if (state.room) {
       if (state.room.code) updates.roomCode = state.room.code
-      if (state.room.hostId) updates.hostId = state.room.hostId
+      if (state.room.hostId) {
+        updates.hostId = state.room.hostId
+        updates.isHost = state.room.hostId === this.data.currentUserId
+      }
       if (typeof state.room.maxPlayers === 'number') updates.maxPlayers = state.room.maxPlayers
       if (typeof state.room.roleConfig !== 'undefined') updates.roleConfig = state.room.roleConfig
       if (typeof state.room.status === 'string' && state.room.status) {
