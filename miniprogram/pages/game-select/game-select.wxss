@@ -43,7 +43,7 @@ page {
 
 .game-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: var(--space-5);
   padding: var(--space-4);
 }
@@ -65,6 +65,17 @@ page {
   transform: scale(0.97);
   border-color: var(--color-accent);
   box-shadow: 0 4rpx 16rpx rgba(201, 169, 110, 0.15);
+}
+
+.game-card--disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.game-card--disabled:active {
+  transform: none;
+  border-color: var(--color-border);
+  box-shadow: none;
 }
 
 .game-icon {

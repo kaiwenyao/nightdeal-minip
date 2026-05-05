@@ -9,14 +9,7 @@ Page({
     this.setData({ isNavigating: false })
   },
   handleSelectAvalon() {
-    if (this.data.isNavigating) return
-    this.setData({ isNavigating: true })
-    wx.navigateTo({
-      url: '/pages/index/index?gameType=AVALON',
-      fail: () => {
-        this.setData({ isNavigating: false })
-      },
-    })
+    wx.showToast({ title: '阿瓦隆正在开发中', icon: 'none' })
   },
   handleSelectSgs() {
     if (this.data.isNavigating) return
