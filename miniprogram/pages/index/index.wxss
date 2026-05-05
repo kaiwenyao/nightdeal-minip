@@ -3,11 +3,15 @@ page {
 }
 
 .home-shell {
-  gap: var(--space-5);
+  gap: var(--space-10);
   background:
     radial-gradient(ellipse 120% 60% at 50% 0%, rgba(201, 169, 110, 0.12), transparent 60%),
     radial-gradient(ellipse 80% 40% at 80% 10%, rgba(15, 76, 75, 0.06), transparent 50%),
     var(--color-bg);
+}
+
+.home-shell ui-card {
+  margin-bottom: var(--space-10);
 }
 
 /* ── Hero ── */
@@ -115,7 +119,6 @@ page {
   background: transparent;
   position: relative;
   overflow: hidden;
-  border: 3rpx solid var(--color-accent-light);
   line-height: 112rpx;
   text-align: center;
 }

@@ -1,3 +1,7 @@
+.page-shell ui-card {
+  margin-bottom: var(--space-10);
+}
+
 .room-summary {
   display: flex;
   justify-content: space-between;
