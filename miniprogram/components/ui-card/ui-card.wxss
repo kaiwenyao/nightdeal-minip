@@ -8,6 +8,7 @@
   gap: var(--space-4, 16rpx);
   border: 1rpx solid var(--color-border, #e8e4dc);
   transition: box-shadow var(--transition-normal, 250ms ease);
+  box-sizing: border-box;
 }
 
 /* Variant: elevated (more shadow) */

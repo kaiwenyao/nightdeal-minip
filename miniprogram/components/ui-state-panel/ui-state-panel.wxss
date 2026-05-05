@@ -6,6 +6,7 @@
   justify-content: space-between;
   gap: var(--space-4, 16rpx);
   border: 2rpx solid transparent;
+  box-sizing: border-box;
 }
 
 .ui-state-panel--loading {

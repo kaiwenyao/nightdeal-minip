@@ -21,8 +21,8 @@ page {
 
 .log-item {
   padding: var(--space-3, 12rpx) 0;
-  border-bottom: 1px solid #f3f4f6;
-  color: var(--color-text-primary, #111827);
+  border-bottom: 1rpx solid var(--color-border, #e8e4dc);
+  color: var(--color-text-primary, #1a1a2e);
   font-size: var(--font-sm, 24rpx);
 }
 

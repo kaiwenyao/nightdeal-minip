@@ -42,6 +42,7 @@ Page({
     roleHidden: true,
     myRole: '',
     mySeatNo: 0,
+    camp: '' as string,
     gameType: 'AVALON' as string,
     gameTitle: '阿瓦隆' as string,
   },
@@ -173,9 +174,11 @@ Page({
         url: `/api/rooms/${this.data.roomCode}/my-role`,
       })
       this.clearRoleLoadWatchdog()
+      const camp = this.inferCamp(payload.role)
       this.setData({
         myRole: payload.role,
         mySeatNo: payload.seatNo,
+        camp,
         pageState: 'ready',
       })
     } catch (error) {
@@ -192,6 +195,17 @@ Page({
       return
     }
     this.setData({ roleHidden: !this.data.roleHidden })
+  },
+  inferCamp(role: string): string {
+    const evilRoles = ['刺客', '莫甘娜', '奥伯伦', '莫德雷德', '爪牙']
+    const goodRoles = ['梅林', '派西维尔', '亚瑟的忠臣', '湖中妖女']
+    if (evilRoles.includes(role)) {
+      return 'evil'
+    }
+    if (goodRoles.includes(role)) {
+      return 'good'
+    }
+    return ''
   },
   handleBackRoom() {
     markRoomPageSkipNextRoomStartedNav()
