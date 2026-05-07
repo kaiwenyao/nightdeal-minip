@@ -1,4 +1,7 @@
+declare function atob(data: string): string
+
 const TOKEN_KEY = 'nd_token'
+const TOKEN_EXP_KEY = 'nd_token_exp'
 const USER_KEY = 'nd_user'
 
 export interface UserProfile {
@@ -7,27 +10,90 @@ export interface UserProfile {
   avatarUrl: string
 }
 
-export function getToken(): string {
-  return wx.getStorageSync(TOKEN_KEY) || ''
+function decodeJwtExp(token: string): number | null {
+  try {
+    const parts = token.split('.')
+    if (parts.length !== 3) {
+      return null
+    }
+    const payload = parts[1]
+    const normalized = payload.replace(/-/g, '+').replace(/_/g, '/')
+    const padded = normalized.padEnd(normalized.length + ((4 - (normalized.length % 4)) % 4), '=')
+    const json = atob(padded)
+    const parsed = JSON.parse(json) as { exp?: unknown }
+    return typeof parsed.exp === 'number' ? parsed.exp : null
+  } catch {
+    return null
+  }
 }
 
-export function setToken(token: string): void {
-  wx.setStorageSync(TOKEN_KEY, token)
+function getStorageAsync<T>(key: string): Promise<T | null> {
+  return new Promise((resolve) => {
+    wx.getStorage({
+      key,
+      encrypt: true,
+      success: (res) => resolve(res.data as T),
+      fail: () => resolve(null),
+    })
+  })
 }
 
-export function clearToken(): void {
-  wx.removeStorageSync(TOKEN_KEY)
+function setStorageAsync<T>(key: string, data: T): Promise<void> {
+  return new Promise((resolve, reject) => {
+    wx.setStorage({
+      key,
+      data,
+      encrypt: true,
+      success: () => resolve(),
+      fail: reject,
+    })
+  })
 }
 
-export function getUserProfile(): UserProfile | null {
-  const value = wx.getStorageSync(USER_KEY)
-  return value || null
+function removeStorageAsync(key: string): Promise<void> {
+  return new Promise((resolve) => {
+    wx.removeStorage({
+      key,
+      success: () => resolve(),
+      fail: () => resolve(),
+    })
+  })
 }
 
-export function setUserProfile(profile: UserProfile): void {
-  wx.setStorageSync(USER_KEY, profile)
+export async function getToken(): Promise<string | null> {
+  const token = await getStorageAsync<string>(TOKEN_KEY)
+  if (!token) {
+    return null
+  }
+  const exp = await getStorageAsync<number>(TOKEN_EXP_KEY)
+  if (!exp || Date.now() >= exp * 1000) {
+    await clearToken()
+    return null
+  }
+  return token
 }
 
-export function clearUserProfile(): void {
-  wx.removeStorageSync(USER_KEY)
+export async function setToken(token: string): Promise<void> {
+  const exp = decodeJwtExp(token)
+  await setStorageAsync(TOKEN_KEY, token)
+  if (exp) {
+    await setStorageAsync(TOKEN_EXP_KEY, exp)
+  }
+}
+
+export async function clearToken(): Promise<void> {
+  await removeStorageAsync(TOKEN_KEY)
+  await removeStorageAsync(TOKEN_EXP_KEY)
+}
+
+export async function getUserProfile(): Promise<UserProfile | null> {
+  return getStorageAsync<UserProfile>(USER_KEY)
+}
+
+export async function setUserProfile(profile: UserProfile): Promise<void> {
+  await setStorageAsync(USER_KEY, profile)
+}
+
+export async function clearUserProfile(): Promise<void> {
+  await removeStorageAsync(USER_KEY)
 }

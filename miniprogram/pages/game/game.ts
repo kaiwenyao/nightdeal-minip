@@ -1,5 +1,5 @@
 import { request } from '../../utils/request'
-import { connectSocket, isSocketDomainListError, SocketLike } from '../../utils/socket'
+import { connectSocket, isSocketDomainListError, setSkipNextRoomStartedNav, SocketLike } from '../../utils/socket'
 
 interface MyRoleResponse {
   role: string
@@ -7,22 +7,6 @@ interface MyRoleResponse {
 }
 
 const ROLE_LOAD_WATCHDOG_MS = 23000
-
-/** 与 room 页 `_skipNextRoomStartedNav` 配合：任意方式从身份页回到房间时，避免 room:join 重放 `room:started` 立刻再跳进身份页。 */
-function markRoomPageSkipNextRoomStartedNav(): void {
-  const pages = getCurrentPages()
-  const depth = pages.length
-  const top = depth > 0 ? (pages[depth - 1] as { route?: string }) : null
-  const topRoute = top && typeof top.route === 'string' ? top.route : ''
-  if (topRoute !== 'pages/game/game' || depth < 2) {
-    return
-  }
-  const prev = pages[depth - 2] as { route?: string; _skipNextRoomStartedNav?: boolean }
-  const prevRoute = typeof prev.route === 'string' ? prev.route : ''
-  if (prevRoute === 'pages/room/room') {
-    prev._skipNextRoomStartedNav = true
-  }
-}
 
 function titleForGameType(gameType: string): string {
   if (gameType === 'SGS') {
@@ -69,7 +53,7 @@ Page({
     this.initSocket()
   },
   onUnload() {
-    markRoomPageSkipNextRoomStartedNav()
+    setSkipNextRoomStartedNav(true)
     // 房间生命周期由 room 页持有：game→room（navigateBack）时不应 leave/disconnect，
     // 否则会把仍在房间页面栈上的用户从房间踢出，且 room 页只跑 onShow，不会重连。
     this.clearRoleLoadWatchdog()
@@ -131,7 +115,7 @@ Page({
         return
       }
       wx.showToast({ title: '房主已结束游戏', icon: 'none' })
-      markRoomPageSkipNextRoomStartedNav()
+      setSkipNextRoomStartedNav(true)
       wx.navigateBack()
     })
 
@@ -208,7 +192,7 @@ Page({
     return ''
   },
   handleBackRoom() {
-    markRoomPageSkipNextRoomStartedNav()
+    setSkipNextRoomStartedNav(true)
     wx.navigateBack()
   },
   handleRetryLoad() {
