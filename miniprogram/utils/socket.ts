@@ -143,7 +143,6 @@ class WeappSocket implements SocketLike {
 
   emit(event: string, payload?: unknown): void {
     if (!this.task || !this.isConnected) {
-      console.warn('Socket not connected, cannot emit:', event)
       return
     }
 
@@ -234,7 +233,7 @@ class WeappSocket implements SocketLike {
 
     switch (engineType) {
       case '0':
-        this.handleEngineOpen(payload)
+        void this.handleEngineOpen(payload)
         break
       case '2':
         this.sendRaw('3')
@@ -244,24 +243,25 @@ class WeappSocket implements SocketLike {
         this.handleSocketPacket(payload)
         break
       case '1':
-        this.disconnect()
+        this.closeTask()
+        this.handleClose()
         break
       default:
         break
     }
   }
 
-  private handleEngineOpen(payload: string): void {
+  private async handleEngineOpen(payload: string): Promise<void> {
     try {
       const handshake = JSON.parse(payload) as EngineHandshake
       this.pingInterval = handshake.pingInterval || 0
       this.pingTimeout = handshake.pingTimeout || 0
       this.schedulePingTimeout()
-    } catch (error) {
-      console.warn('Invalid socket handshake:', error)
+    } catch {
+      // ignore invalid handshake
     }
 
-    const token = getToken()
+    const token = await getToken()
     const authPayload = token ? JSON.stringify({ token }) : '{}'
     this.sendSocketPacket('0', authPayload)
   }
@@ -403,17 +403,35 @@ class WeappSocket implements SocketLike {
 function safeJsonParse(value: string): unknown {
   try {
     return JSON.parse(value)
-  } catch (error) {
-    console.warn('Invalid socket packet:', error)
+  } catch {
     return null
   }
 }
 
 let socket: SocketLike | null = null
+let lastRoomCode: string | null = null
+let skipNextRoomStartedNav = false
+
+export function setLastRoomCode(code: string | null): void {
+  lastRoomCode = code
+}
+
+export function getSkipNextRoomStartedNav(): boolean {
+  return skipNextRoomStartedNav
+}
+
+export function setSkipNextRoomStartedNav(value: boolean): void {
+  skipNextRoomStartedNav = value
+}
 
 export function connectSocket(autoConnect = true): SocketLike {
   if (!socket) {
     socket = new WeappSocket()
+    socket.on('connect', () => {
+      if (lastRoomCode) {
+        socket?.emit('room:join', { roomCode: lastRoomCode })
+      }
+    })
   }
   if (autoConnect && !socket.connected) {
     socket.connect()

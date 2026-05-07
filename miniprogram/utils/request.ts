@@ -1,4 +1,4 @@
-import { getToken } from './auth'
+import { getToken, clearToken, clearUserProfile } from './auth'
 import { config } from './config'
 
 export class UnauthorizedError extends Error {
@@ -56,13 +56,22 @@ function getRequestFailMessage(errMsg?: string): string {
   return message || '网络请求失败'
 }
 
-export function request<
+function getCurrentRoute(): string {
+  const pages = getCurrentPages()
+  if (pages.length === 0) {
+    return ''
+  }
+  const top = pages[pages.length - 1] as { route?: string }
+  return typeof top.route === 'string' ? top.route : ''
+}
+
+export async function request<
   TResponse,
   TBody extends WechatMiniprogram.IAnyObject | string | ArrayBuffer = WechatMiniprogram.IAnyObject
 >(
   options: RequestOptions<TBody>,
 ): Promise<TResponse> {
-  const token = getToken()
+  const token = await getToken()
 
   return new Promise((resolve, reject) => {
     wx.request({
@@ -76,6 +85,12 @@ export function request<
       },
       success: (res) => {
         if (res.statusCode === 401) {
+          void Promise.all([clearToken(), clearUserProfile()]).then(() => {
+            const currentRoute = getCurrentRoute()
+            if (currentRoute !== 'pages/index/index') {
+              wx.reLaunch({ url: '/pages/index/index' })
+            }
+          })
           reject(new UnauthorizedError())
           return
         }

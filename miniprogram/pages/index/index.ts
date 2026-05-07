@@ -69,9 +69,8 @@ Component({
     pageTitle: '阿瓦隆房间助手',
   },
   lifetimes: {
-    attached() {
-      const cachedProfile = getUserProfile()
-      const token = getToken()
+    async attached() {
+      const [cachedProfile, token] = await Promise.all([getUserProfile(), getToken()])
       if (cachedProfile) {
         this.setData({ userInfo: cachedProfile })
       }
@@ -121,7 +120,7 @@ Component({
         return null // 没有新头像需要上传
       }
 
-      const token = getToken()
+      const token = await getToken()
       if (!token) {
         throw new Error('未登录，无法上传头像')
       }
@@ -212,7 +211,7 @@ Component({
           timeout: LOGIN_REQUEST_TIMEOUT_MS,
         })
 
-        setToken(payload.token)
+        await setToken(payload.token)
 
         const uploadedOssUrl = await this.tryUploadAvatar()
 
@@ -224,7 +223,7 @@ Component({
           avatarUrl: uploadedOssUrl || fallbackAvatar,
         }
 
-        setUserProfile(loginUser)
+        await setUserProfile(loginUser)
         this.setData({ userInfo: loginUser, hasToken: true, actionState: 'idle' })
 
         // Best-effort push to backend (client → server direction)
@@ -285,13 +284,13 @@ Component({
           avatarUrl: response.user.avatarUrl || avatarUrl || defaultAvatarUrl,
         }
 
-        setUserProfile(updatedUser)
+        await setUserProfile(updatedUser)
         this.setData({ userInfo: updatedUser, actionState: 'idle' })
         wx.showToast({ title: '资料已更新', icon: 'success' })
       } catch (error) {
         if (error instanceof UnauthorizedError) {
-          clearToken()
-          clearUserProfile()
+          await clearToken()
+          await clearUserProfile()
           this.setData({ hasToken: false, actionState: 'idle' })
           await this.handleWechatLogin()
           return

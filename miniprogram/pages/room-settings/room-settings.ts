@@ -95,9 +95,8 @@ Page({
     totalRoles: 0,
   },
 
-  onLoad(query: Record<string, string>) {
-    const user = getUserProfile()
-    const token = getToken()
+  async onLoad(query: Record<string, string>) {
+    const [user, token] = await Promise.all([getUserProfile(), getToken()])
     if (!user?.id || !token) {
       wx.showToast({ title: '请先登录', icon: 'none' })
       setTimeout(() => {
@@ -116,7 +115,7 @@ Page({
       setTimeout(() => wx.navigateBack(), 600)
       return
     }
-    this.loadRoomData(roomCode.trim())
+    await this.loadRoomData(roomCode.trim())
   },
 
   async loadRoomData(roomCode: string) {
@@ -132,6 +131,14 @@ Page({
         || !Array.isArray(room.players)
       ) {
         throw new Error('invalid room response')
+      }
+
+      const hostId = isRecord(room.host) && typeof room.host.id === 'string' ? room.host.id : ''
+      const user = await getUserProfile()
+      if (hostId && user?.id !== hostId) {
+        wx.showToast({ title: '仅房主可修改设置', icon: 'none' })
+        wx.navigateBack()
+        return
       }
 
       const gameType = typeof room.gameType === 'string' ? room.gameType : 'AVALON'

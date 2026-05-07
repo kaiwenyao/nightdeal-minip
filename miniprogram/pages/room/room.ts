@@ -1,6 +1,6 @@
 import { getToken, getUserProfile } from '../../utils/auth'
 import { request } from '../../utils/request'
-import { connectSocket, disconnectSocket, isSocketDomainListError, SocketLike } from '../../utils/socket'
+import { connectSocket, disconnectSocket, isSocketDomainListError, setLastRoomCode, getSkipNextRoomStartedNav, setSkipNextRoomStartedNav, SocketLike } from '../../utils/socket'
 import { formatRoleSummary, formatSgsRoleSummary, RoleConfig, SgsRoleConfig } from '../../utils/role-config'
 
 interface PlayerUser {
@@ -195,11 +195,8 @@ Page({
   socket: null as SocketLike | null,
   roomSocketBindings: [] as Array<{ event: string; listener: (...args: unknown[]) => void }>,
   navigatingToGame: false,
-  /** 从身份页返回房间后，忽略下一次服务端因 room:join 重放而发来的 room:started，避免立刻再跳进游戏页。 */
-  _skipNextRoomStartedNav: false,
-  onLoad(query: Record<string, string>) {
-    const user = getUserProfile()
-    const token = getToken()
+  async onLoad(query: Record<string, string>) {
+    const [user, token] = await Promise.all([getUserProfile(), getToken()])
     if (!user?.id || !token) {
       wx.showToast({ title: '请先登录', icon: 'none' })
       setTimeout(() => {
@@ -254,10 +251,12 @@ Page({
             }
             this.socket = null
             disconnectSocket()
+            setLastRoomCode(null)
           })
       } else {
         this.socket = null
         disconnectSocket()
+        setLastRoomCode(null)
       }
       return
     }
@@ -279,6 +278,7 @@ Page({
       this.setData({
         roomCode: payload.code,
         hostId: payload.host?.id || '',
+        isHost: payload.host?.id === this.data.currentUserId,
         maxPlayers: payload.maxPlayers,
         players: payload.players,
         roleConfig: payload.roleConfig,
@@ -424,8 +424,11 @@ Page({
     })
 
     this.bindRoomSocketEvent('room:started', () => {
-      if (this._skipNextRoomStartedNav) {
-        this._skipNextRoomStartedNav = false
+      if (getSkipNextRoomStartedNav()) {
+        setSkipNextRoomStartedNav(false)
+        return
+      }
+      if (this.data.status === 'PLAYING') {
         return
       }
       this.navigateToGame()
@@ -440,7 +443,20 @@ Page({
       this.detachRoomSocketListeners()
       disconnectSocket()
       this.socket = null
-      wx.showToast({ title: '连接已断开，请返回重试', icon: 'none', duration: 3000 })
+      wx.showModal({
+        title: '连接已断开',
+        content: '无法重新连接到房间服务器',
+        confirmText: '返回首页',
+        cancelText: '重试',
+        success: (res) => {
+          if (res.confirm) {
+            wx.reLaunch({ url: '/pages/index/index' })
+          } else if (res.cancel) {
+            this.setData({ pageState: 'loading', pageError: '' })
+            this.loadRoomSnapshot()
+          }
+        },
+      })
     })
 
     this.bindRoomSocketEvent('room:error', (data: unknown) => {
@@ -668,6 +684,7 @@ Page({
   },
   joinRoomViaSocket() {
     if (this.socket) {
+      setLastRoomCode(this.data.roomCode)
       this.socket.emit('room:join', { roomCode: this.data.roomCode })
     }
   },
