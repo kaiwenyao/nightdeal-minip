@@ -65,7 +65,11 @@ export async function getToken(): Promise<string | null> {
   if (!token) {
     return null
   }
-  const exp = await getStorageAsync<number>(TOKEN_EXP_KEY)
+  let exp = await getStorageAsync<number>(TOKEN_EXP_KEY)
+  if (!exp) {
+    // Fallback: derive expiry from JWT payload if storage key is missing
+    exp = decodeJwtExp(token)
+  }
   if (!exp || Date.now() >= exp * 1000) {
     await clearToken()
     return null

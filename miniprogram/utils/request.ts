@@ -23,6 +23,22 @@ interface RequestOptions<TBody extends WechatMiniprogram.IAnyObject | string | A
 
 const DEFAULT_REQUEST_TIMEOUT_MS = 20000
 
+let isHandling401 = false
+
+/** Map known error codes to user-friendly Chinese messages. */
+function sanitizeServerMessage(statusCode: number, message: string): string {
+  const knownMessages: Record<number, string> = {
+    401: '登录态失效，请重新登录',
+    403: '没有权限执行此操作',
+    404: '请求的资源不存在',
+    429: '请求过于频繁，请稍后再试',
+    500: '服务器内部错误，请稍后再试',
+    502: '服务暂时不可用，请稍后再试',
+    503: '服务暂时不可用，请稍后再试',
+  }
+  return knownMessages[statusCode] || message
+}
+
 /** 部分环境下 wx.request 的 res.data 为 JSON 字符串，统一解析避免后续判型/解包异常 */
 function normalizeWxResponseBody(raw: unknown): unknown {
   if (raw == null) {
@@ -85,7 +101,13 @@ export async function request<
       },
       success: (res) => {
         if (res.statusCode === 401) {
+          if (isHandling401) {
+            reject(new UnauthorizedError())
+            return
+          }
+          isHandling401 = true
           void Promise.all([clearToken(), clearUserProfile()]).then(() => {
+            isHandling401 = false
             const currentRoute = getCurrentRoute()
             if (currentRoute !== 'pages/index/index') {
               wx.reLaunch({ url: '/pages/index/index' })
@@ -110,7 +132,7 @@ export async function request<
           return
         }
         const payload = body as { message?: string } | undefined
-        reject(new Error(payload?.message || `Request failed with status ${res.statusCode}`))
+        reject(new Error(sanitizeServerMessage(res.statusCode, payload?.message || `Request failed with status ${res.statusCode}`)))
       },
       fail: (error) => {
         reject(new Error(getRequestFailMessage(error.errMsg)))
