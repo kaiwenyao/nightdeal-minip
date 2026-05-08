@@ -600,7 +600,7 @@ Page({
   },
 
   handleOpenSettings() {
-    if (!this.data.isHost) {
+    if (!this.data.isHost || this.data.pageState !== 'ready') {
       return
     }
     wx.navigateTo({
