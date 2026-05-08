@@ -8,6 +8,10 @@ interface MyRoleResponse {
 
 const ROLE_LOAD_WATCHDOG_MS = 23000
 
+function isRecord(v: unknown): v is Record<string, unknown> {
+  return typeof v === 'object' && v !== null && !Array.isArray(v)
+}
+
 function titleForGameType(gameType: string): string {
   if (gameType === 'SGS') {
     return '三国杀'
@@ -111,9 +115,6 @@ Page({
     })
 
     this.bindGameSocketEvent('room:ended', () => {
-      if (this.data.pageState !== 'ready') {
-        return
-      }
       wx.showToast({ title: '房主已结束游戏', icon: 'none' })
       setSkipNextRoomStartedNav(true)
       wx.navigateBack()
@@ -134,6 +135,39 @@ Page({
           icon: 'none',
           duration: 2500,
         })
+      }
+    })
+
+    this.bindGameSocketEvent('reconnect_failed', () => {
+      wx.showModal({
+        title: '连接已断开',
+        content: '无法重新连接到房间服务器，请返回房间重试',
+        confirmText: '返回房间',
+        showCancel: false,
+        success: () => {
+          setSkipNextRoomStartedNav(true)
+          wx.navigateBack()
+        },
+      })
+    })
+
+    this.bindGameSocketEvent('room:error', (data: unknown) => {
+      if (!isRecord(data) || typeof data.message !== 'string' || !data.message) {
+        return
+      }
+      const kicked = data.code === 'KICKED' || data.message === '你已被房主踢出房间'
+      if (kicked) {
+        wx.showModal({
+          title: '被踢出房间',
+          content: '你已被房主踢出',
+          confirmText: '返回首页',
+          showCancel: false,
+          success: () => {
+            wx.reLaunch({ url: '/pages/index/index' })
+          },
+        })
+      } else {
+        wx.showToast({ title: data.message, icon: 'none' })
       }
     })
 

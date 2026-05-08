@@ -299,6 +299,10 @@ Page({
     const role = (e.currentTarget.dataset as Record<string, string>).role
     if (!role) return
     const value = e.detail.value
+    if (!value && (role === 'merlin' || role === 'assassin')) {
+      wx.showToast({ title: '梅林和刺客是必选角色', icon: 'none' })
+      return
+    }
     const updated: RoleConfig = { ...(this.data.roleConfig as RoleConfig), [role]: value }
     this.setData({ roleConfig: updated as unknown as RoleConfig | SgsRoleConfig })
     this.updateRoleItemsFromConfig()

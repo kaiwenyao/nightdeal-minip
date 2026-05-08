@@ -225,12 +225,12 @@ Page({
   onShow() {
     this.navigatingToGame = false
     this.setData({ startingGame: false, endingGame: false })
-    if (
-      this.data.roomCode
-      && this.data.pageState === 'ready'
-      && this.roomSocketBindings.length === 0
-    ) {
-      this.initSocket()
+    if (this.data.roomCode && this.data.pageState === 'ready') {
+      if (this.roomSocketBindings.length === 0) {
+        this.initSocket()
+      } else if (this.socket && !this.socket.connected) {
+        this.setConnectionStatus('reconnecting')
+      }
     }
   },
   onUnload() {
@@ -466,6 +466,7 @@ Page({
       wx.showToast({ title: data.message, icon: 'none' })
       const kicked = data.code === 'KICKED' || data.message === ROOM_ERROR_KICKED_MESSAGE
       if (kicked) {
+        setLastRoomCode(null)
         setTimeout(() => {
           wx.navigateBack({
             fail: () => {

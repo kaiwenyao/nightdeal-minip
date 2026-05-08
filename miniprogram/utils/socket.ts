@@ -24,8 +24,8 @@ export interface SocketLike {
 }
 
 const SOCKET_IO_PATH = '/socket.io'
-const RECONNECT_DELAY_MS = 1000
-const RECONNECT_DELAY_MAX_MS = 5000
+const RECONNECT_DELAY_MS = 500
+const RECONNECT_DELAY_MAX_MS = 15000
 const MAX_RECONNECT_ATTEMPTS = 10
 const SOCKET_CONNECT_TIMEOUT_MS = 15000
 
@@ -352,7 +352,7 @@ class WeappSocket implements SocketLike {
     }
 
     this.reconnectAttempts += 1
-    const delay = Math.min(RECONNECT_DELAY_MS * this.reconnectAttempts, RECONNECT_DELAY_MAX_MS)
+    const delay = Math.min(RECONNECT_DELAY_MS * Math.pow(2, this.reconnectAttempts - 1), RECONNECT_DELAY_MAX_MS)
     this.reconnectTimer = setTimeout(() => {
       this.reconnectTimer = null
       this.connect()
@@ -362,7 +362,7 @@ class WeappSocket implements SocketLike {
   private schedulePingTimeout(): void {
     this.clearPingTimeoutTimer()
 
-    if (!this.pingInterval || !this.pingTimeout) {
+    if (this.pingInterval <= 0 || this.pingTimeout <= 0) {
       return
     }
 
@@ -416,6 +416,10 @@ export function setLastRoomCode(code: string | null): void {
   lastRoomCode = code
 }
 
+export function getLastRoomCode(): string | null {
+  return lastRoomCode
+}
+
 export function getSkipNextRoomStartedNav(): boolean {
   return skipNextRoomStartedNav
 }
@@ -427,11 +431,6 @@ export function setSkipNextRoomStartedNav(value: boolean): void {
 export function connectSocket(autoConnect = true): SocketLike {
   if (!socket) {
     socket = new WeappSocket()
-    socket.on('connect', () => {
-      if (lastRoomCode) {
-        socket?.emit('room:join', { roomCode: lastRoomCode })
-      }
-    })
   }
   if (autoConnect && !socket.connected) {
     socket.connect()
