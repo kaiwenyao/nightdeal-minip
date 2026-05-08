@@ -11,7 +11,7 @@
 
   <ui-card>
     <text class="game-title-badge">{{gameTitle}}</text>
-    <view class="role-card {{roleHidden ? '' : 'revealed'}}" data-camp="{{camp}}" bind:tap="handleToggleRole">
+    <view class="role-card {{roleHidden ? '' : 'revealed'}} {{camp === 'good' ? 'camp-good' : (camp === 'evil' ? 'camp-evil' : '')}}" bind:tap="handleToggleRole">
       <view class="ornament-tl"></view>
       <view class="ornament-br"></view>
       <text class="label">你的身份</text>

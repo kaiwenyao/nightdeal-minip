@@ -66,15 +66,7 @@ page {
 
 /* Hidden state: card back pattern */
 .role-card:not(.revealed) {
-  background:
-    repeating-linear-gradient(
-      45deg,
-      transparent,
-      transparent 10rpx,
-      rgba(201, 169, 110, 0.03) 10rpx,
-      rgba(201, 169, 110, 0.03) 20rpx
-    ),
-    linear-gradient(145deg, #2a2a40, #1a1a2e);
+  background: linear-gradient(145deg, #2a2a40, #1a1a2e);
 }
 
 /* Revealed state: glow effect */
@@ -135,14 +127,14 @@ page {
 }
 
 /* ── Camp-specific colors ── */
-.role-card.revealed[data-camp="good"] {
+.role-card.revealed.camp-good {
   border-color: rgba(45, 122, 95, 0.5);
   box-shadow:
     0 8rpx 40rpx rgba(26, 26, 46, 0.3),
     0 0 60rpx rgba(45, 122, 95, 0.1);
 }
 
-.role-card.revealed[data-camp="evil"] {
+.role-card.revealed.camp-evil {
   border-color: rgba(184, 58, 58, 0.5);
   box-shadow:
     0 8rpx 40rpx rgba(26, 26, 46, 0.3),
