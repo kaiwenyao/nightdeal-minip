@@ -2,18 +2,19 @@
 <view class="page-shell home-shell">
   <view class="hero">
     <text class="title">选择游戏</text>
+    <view class="title-rule"></view>
     <text class="subtitle">请选择你要进行的桌游</text>
   </view>
 
   <view class="game-grid">
-    <view class="game-card" hover-class="game-card--pressed" bind:tap="handleSelectSgs">
-      <view class="game-icon sgs-icon">⚔️</view>
+    <view class="game-card game-card--first" hover-class="game-card--pressed" bind:tap="handleSelectSgs">
+      <view class="game-icon sgs-icon">杀</view>
       <text class="game-name">三国杀</text>
       <text class="game-desc">2-8人 身份推理</text>
     </view>
 
     <view class="game-card game-card--disabled" hover-class="game-card--disabled-pressed" bind:tap="handleSelectAvalon">
-      <view class="game-icon avalon-icon">🏰</view>
+      <view class="game-icon avalon-icon">A</view>
       <text class="game-name">阿瓦隆</text>
       <text class="game-desc">正在开发</text>
     </view>

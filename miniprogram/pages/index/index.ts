@@ -24,6 +24,11 @@ interface AvatarUploadResponse {
   avatarUrl: string
 }
 
+interface NicknameReviewDetail {
+  pass: boolean
+  timeout: boolean
+}
+
 interface CreateRoomResponse {
   id: string
   code: string
@@ -47,10 +52,18 @@ interface JoinRoomResponse {
 type ActionState = 'idle' | 'authorizing' | 'loggingIn' | 'updatingProfile' | 'creatingRoom' | 'joiningRoom'
 
 const ROOM_CODE_LENGTH = 6
+const NICKNAME_MAX_LENGTH = 20
 const LOGIN_REQUEST_TIMEOUT_MS = 12000
 const AVATAR_UPLOAD_TIMEOUT_MS = 30000
 const defaultAvatarUrl =
   'https://mmbiz.qpic.cn/mmbiz/icTdbqWNOwNRna42FI242Lcia07jQodd2FJGIYQfG0LAJGFxM4FbnQP6yfMxBgJ0F3YRqJCJ1aPAK2dQagdusBZg/0'
+
+function normalizeNickName(value: string): string {
+  return value
+    .replace(/[\u200B-\u200F\u2028-\u202F\u2060\uFEFF]/g, '')
+    .trim()
+    .slice(0, NICKNAME_MAX_LENGTH)
+}
 
 Component({
   data: {
@@ -95,13 +108,40 @@ Component({
       this.setData({ actionState, pageError })
     },
     onInputChange(e: WechatMiniprogram.Input) {
-      const nickName = e.detail.value
-        .replace(/[\u200B-\u200F\u2028-\u202F\u2060\uFEFF]/g, '')
-        .trim()
-        .slice(0, 20)
+      const nickName = normalizeNickName(e.detail.value)
       this.setData({
         'userInfo.nickName': nickName,
+        pageError: '',
       })
+    },
+    onNicknameBlur(e: WechatMiniprogram.CustomEvent<{ value: string }>) {
+      const nickName = normalizeNickName(e.detail.value || this.data.userInfo.nickName)
+      this.setData({
+        'userInfo.nickName': nickName,
+        pageError: '',
+      })
+    },
+    onNicknameReview(e: WechatMiniprogram.CustomEvent<NicknameReviewDetail>) {
+      if (e.detail.timeout) {
+        console.warn('Nickname review timed out; continue with backend validation.')
+        return
+      }
+      if (!e.detail.pass) {
+        this.setData({ 'userInfo.nickName': '', pageError: '昵称含违规内容，请修改' })
+        wx.showToast({ title: '昵称含违规内容，请修改', icon: 'none' })
+      }
+    },
+    getCurrentNickName(allowEmpty = false): string | null {
+      const nickName = normalizeNickName(this.data.userInfo.nickName)
+      if (nickName !== this.data.userInfo.nickName) {
+        this.setData({ 'userInfo.nickName': nickName })
+      }
+      if (!allowEmpty && nickName.length === 0) {
+        this.setData({ pageError: '昵称需 1-20 字' })
+        wx.showToast({ title: '昵称需 1-20 字', icon: 'none' })
+        return null
+      }
+      return nickName
     },
     onRoomCodeInput(e: WechatMiniprogram.Input) {
       const value = e.detail.value.replace(/[^a-zA-Z]/g, '').slice(0, ROOM_CODE_LENGTH).toUpperCase()
@@ -192,6 +232,11 @@ Component({
         return
       }
 
+      const currentNickName = this.getCurrentNickName(true)
+      if (currentNickName === null) {
+        return
+      }
+
       this.setActionState('authorizing')
       try {
         const loginCode = await new Promise<string>((resolve, reject) => {
@@ -223,7 +268,7 @@ Component({
 
         const loginUser: UserProfile = {
           id: payload.user.id,
-          nickName: this.data.userInfo.nickName || payload.user.nickName || '游客',
+          nickName: currentNickName || payload.user.nickName || '游客',
           avatarUrl: uploadedOssUrl || fallbackAvatar,
         }
 
@@ -258,6 +303,11 @@ Component({
         return
       }
 
+      const nickName = this.getCurrentNickName()
+      if (!nickName) {
+        return
+      }
+
       this.setActionState('updatingProfile')
       try {
         // 如果有新头像，先上传到OSS
@@ -277,7 +327,7 @@ Component({
           url: '/api/auth/update-profile',
           method: 'POST',
           data: {
-            nickName: this.data.userInfo.nickName,
+            nickName,
             avatarUrl,
           },
           timeout: LOGIN_REQUEST_TIMEOUT_MS,
@@ -285,7 +335,7 @@ Component({
 
         const updatedUser: UserProfile = {
           id: response.user.id || this.data.userInfo.id,
-          nickName: response.user.nickName ?? this.data.userInfo.nickName,
+          nickName: response.user.nickName ?? nickName,
           avatarUrl: response.user.avatarUrl || avatarUrl || defaultAvatarUrl,
         }
 

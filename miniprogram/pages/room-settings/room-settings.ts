@@ -99,7 +99,6 @@ Page({
   async onLoad(query: Record<string, string>) {
     const auth = await requireAuth()
     if (!auth) return
-    const { profile: user, token } = auth
 
     const roomCode = query.roomCode || ''
     const gameType = query.gameType || 'AVALON'

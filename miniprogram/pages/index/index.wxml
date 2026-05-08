@@ -22,11 +22,14 @@
       </button>
       <input
         class="text-input name-input"
-        type="nickname"
+        type="{{hasToken ? 'text' : 'nickname'}}"
+        maxlength="20"
         placeholder="请输入昵称"
         value="{{userInfo.nickName}}"
         disabled="{{actionState === 'authorizing' || actionState === 'loggingIn' || isNavigatingToRoom}}"
         bindinput="onInputChange"
+        bindblur="onNicknameBlur"
+        bindnicknamereview="onNicknameReview"
       />
     </view>
 
