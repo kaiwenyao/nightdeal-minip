@@ -1,3 +1,4 @@
+import { requireAuth } from '../../utils/auth-guard'
 import { request } from '../../utils/request'
 import { connectSocket, isSocketDomainListError, setSkipNextRoomStartedNav, SocketLike } from '../../utils/socket'
 
@@ -37,7 +38,10 @@ Page({
   socket: null as SocketLike | null,
   gameSocketBindings: [] as Array<{ event: string; listener: (...args: unknown[]) => void }>,
   loadRoleWatchdog: null as number | null,
-  onLoad(query: Record<string, string>) {
+  async onLoad(query: Record<string, string>) {
+    const auth = await requireAuth()
+    if (!auth) return
+
     const roomCode = (query.roomCode || '').trim()
     const gameType = query.gameType || 'AVALON'
     const gameTitle = titleForGameType(gameType)
