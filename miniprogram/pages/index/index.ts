@@ -95,7 +95,7 @@ Component({
       this.setData({ actionState, pageError })
     },
     onInputChange(e: WechatMiniprogram.Input) {
-      const nickName = e.detail.value
+      const nickName = e.detail.value.trim().slice(0, 20)
       this.setData({
         'userInfo.nickName': nickName,
       })
