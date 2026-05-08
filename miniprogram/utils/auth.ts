@@ -1,5 +1,3 @@
-declare function atob(data: string): string
-
 const TOKEN_KEY = 'nd_token'
 const TOKEN_EXP_KEY = 'nd_token_exp'
 const USER_KEY = 'nd_user'
@@ -10,17 +8,43 @@ export interface UserProfile {
   avatarUrl: string
 }
 
+/**
+ * Decode base64url to string without depending on global atob,
+ * which may not be available in all WeChat mini program runtimes.
+ */
+function base64urlDecode(str: string): string {
+  const lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+  let base64 = str.replace(/-/g, '+').replace(/_/g, '/')
+  const pad = base64.length % 4
+  if (pad) base64 += '='.repeat(4 - pad)
+
+  let result = ''
+  const len = base64.length
+  for (let i = 0; i < len; i += 4) {
+    const b0 = lookup.indexOf(base64[i])
+    const b1 = lookup.indexOf(base64[i + 1])
+    const b2 = base64[i + 2] === '=' ? 0 : lookup.indexOf(base64[i + 2])
+    const b3 = base64[i + 3] === '=' ? 0 : lookup.indexOf(base64[i + 3])
+    result += String.fromCharCode((b0 << 2) | (b1 >> 4))
+    if (base64[i + 2] !== '=') result += String.fromCharCode(((b1 & 0xf) << 4) | (b2 >> 2))
+    if (base64[i + 3] !== '=') result += String.fromCharCode(((b2 & 0x3) << 6) | b3)
+  }
+  return decodeURIComponent(
+    result
+      .split('')
+      .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+      .join(''),
+  )
+}
+
 function decodeJwtExp(token: string): number | null {
   try {
     const parts = token.split('.')
     if (parts.length !== 3) {
       return null
     }
-    const payload = parts[1]
-    const normalized = payload.replace(/-/g, '+').replace(/_/g, '/')
-    const padded = normalized.padEnd(normalized.length + ((4 - (normalized.length % 4)) % 4), '=')
-    const json = atob(padded)
-    const parsed = JSON.parse(json) as { exp?: unknown }
+    const payload = base64urlDecode(parts[1])
+    const parsed = JSON.parse(payload) as { exp?: unknown }
     return typeof parsed.exp === 'number' ? parsed.exp : null
   } catch {
     return null

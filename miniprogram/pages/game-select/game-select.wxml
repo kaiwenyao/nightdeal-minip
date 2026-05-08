@@ -6,13 +6,13 @@
   </view>
 
   <view class="game-grid">
-    <view class="game-card" bind:tap="handleSelectSgs">
+    <view class="game-card" hover-class="game-card--pressed" bind:tap="handleSelectSgs">
       <view class="game-icon sgs-icon">⚔️</view>
       <text class="game-name">三国杀</text>
       <text class="game-desc">2-8人 身份推理</text>
     </view>
 
-    <view class="game-card game-card--disabled" bind:tap="handleSelectAvalon">
+    <view class="game-card game-card--disabled" hover-class="game-card--disabled-pressed" bind:tap="handleSelectAvalon">
       <view class="game-icon avalon-icon">🏰</view>
       <text class="game-name">阿瓦隆</text>
       <text class="game-desc">正在开发</text>

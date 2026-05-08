@@ -99,20 +99,20 @@ export async function request<
         'content-type': 'application/json',
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
-      success: (res) => {
+      success: async (res) => {
         if (res.statusCode === 401) {
           if (isHandling401) {
             reject(new UnauthorizedError())
             return
           }
           isHandling401 = true
-          void Promise.all([clearToken(), clearUserProfile()]).then(() => {
-            isHandling401 = false
-            const currentRoute = getCurrentRoute()
-            if (currentRoute !== 'pages/index/index') {
-              wx.reLaunch({ url: '/pages/index/index' })
-            }
-          })
+          await clearToken()
+          await clearUserProfile()
+          isHandling401 = false
+          const currentRoute = getCurrentRoute()
+          if (currentRoute !== 'pages/index/index') {
+            wx.reLaunch({ url: '/pages/index/index' })
+          }
           reject(new UnauthorizedError())
           return
         }

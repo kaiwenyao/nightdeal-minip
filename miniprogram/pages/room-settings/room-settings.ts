@@ -15,7 +15,8 @@ import {
   SGS_MAX_PLAYERS,
   ROOM_MAX_PLAYERS,
 } from '../../utils/role-config'
-import { getToken, getUserProfile } from '../../utils/auth'
+import { requireAuth } from '../../utils/auth-guard'
+import { getUserProfile } from '../../utils/auth'
 import { request } from '../../utils/request'
 
 function isRecord(v: unknown): v is Record<string, unknown> {
@@ -96,14 +97,9 @@ Page({
   },
 
   async onLoad(query: Record<string, string>) {
-    const [user, token] = await Promise.all([getUserProfile(), getToken()])
-    if (!user?.id || !token) {
-      wx.showToast({ title: '请先登录', icon: 'none' })
-      setTimeout(() => {
-        wx.reLaunch({ url: '/pages/index/index' })
-      }, 400)
-      return
-    }
+    const auth = await requireAuth()
+    if (!auth) return
+    const { profile: user, token } = auth
 
     const roomCode = query.roomCode || ''
     const gameType = query.gameType || 'AVALON'

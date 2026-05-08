@@ -44,8 +44,8 @@ page {
 
 /* ── Game Grid ── */
 .game-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  flex-wrap: wrap;
   gap: var(--space-8);
   padding: var(--space-2) 0;
 }
@@ -55,6 +55,8 @@ page {
   flex-direction: column;
   align-items: center;
   gap: var(--space-3);
+  flex: 1 1 calc(50% - var(--space-8) / 2);
+  min-width: 0;
   padding: var(--space-8) var(--space-4) var(--space-6);
   background: var(--color-surface);
   border: 2rpx solid var(--color-border);
@@ -64,7 +66,7 @@ page {
   position: relative;
 }
 
-.game-card:active {
+.game-card--pressed {
   transform: scale(0.97);
   border-color: var(--color-accent);
   box-shadow: 0 4rpx 16rpx rgba(201, 169, 110, 0.15);
@@ -74,10 +76,8 @@ page {
   opacity: 0.55;
 }
 
-.game-card--disabled:active {
-  transform: none;
-  border-color: var(--color-border);
-  box-shadow: none;
+.game-card--disabled-pressed {
+  /* no visual change on press for disabled card */
 }
 
 .game-icon {
@@ -119,9 +119,3 @@ page {
   color: var(--color-text-muted);
 }
 
-/* ── Single column fallback for very narrow screens ── */
-@media (max-width: 300rpx) {
-  .game-grid {
-    grid-template-columns: 1fr;
-  }
-}

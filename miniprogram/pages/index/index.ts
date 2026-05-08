@@ -95,7 +95,10 @@ Component({
       this.setData({ actionState, pageError })
     },
     onInputChange(e: WechatMiniprogram.Input) {
-      const nickName = e.detail.value.trim().slice(0, 20)
+      const nickName = e.detail.value
+        .replace(/[\u200B-\u200F\u2028-\u202F\u2060\uFEFF]/g, '')
+        .trim()
+        .slice(0, 20)
       this.setData({
         'userInfo.nickName': nickName,
       })
@@ -178,7 +181,8 @@ Component({
           })
         }
         return ossUrl
-      } catch {
+      } catch (error) {
+        console.warn('Avatar upload failed:', error)
         this.setData({ rawAvatarPath: '' })
         return null
       }
@@ -237,7 +241,8 @@ Component({
             },
             timeout: LOGIN_REQUEST_TIMEOUT_MS,
           })
-        } catch {
+        } catch (error) {
+          console.warn('Profile sync failed after login:', error)
           // Non-fatal: profile saved locally, will sync on next "更新资料" tap
         }
 

@@ -1,4 +1,4 @@
-import { getToken, getUserProfile } from '../../utils/auth'
+import { requireAuth } from '../../utils/auth-guard'
 import { request } from '../../utils/request'
 import { connectSocket, disconnectSocket, isSocketDomainListError, setLastRoomCode, getSkipNextRoomStartedNav, setSkipNextRoomStartedNav, SocketLike } from '../../utils/socket'
 import { formatRoleSummary, formatSgsRoleSummary, RoleConfig, SgsRoleConfig } from '../../utils/role-config'
@@ -196,14 +196,9 @@ Page({
   roomSocketBindings: [] as Array<{ event: string; listener: (...args: unknown[]) => void }>,
   navigatingToGame: false,
   async onLoad(query: Record<string, string>) {
-    const [user, token] = await Promise.all([getUserProfile(), getToken()])
-    if (!user?.id || !token) {
-      wx.showToast({ title: '请先登录', icon: 'none' })
-      setTimeout(() => {
-        wx.reLaunch({ url: '/pages/index/index' })
-      }, 400)
-      return
-    }
+    const auth = await requireAuth()
+    if (!auth) return
+    const { profile: user, token } = auth
 
     const roomCode = query.roomCode || ''
     const isHost = query.isHost === '1'
@@ -243,7 +238,7 @@ Page({
           method: 'POST',
         })
           .catch(() => {
-            // Leaving the page should not surface a stale network error to the next page.
+            // Page already unloading, network errors are irrelevant
           })
           .finally(() => {
             if (this.socket?.connected) {
