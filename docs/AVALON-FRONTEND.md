@@ -2,7 +2,7 @@
 
 本文档是阿瓦隆（Avalon）游戏功能在小程序端的开发文档。规则与协议以**后端**文档为权威，前端只负责呈现 + 操作 + 错误兜底，**不在客户端做任何规则裁决**。
 
-> 配套后端文档（规则 / Prisma / REST / WS / 错误码权威源）：[`nightdeal-backend/docs/AVALON-DEVELOPMENT.md`](https://github.com/kaiwenyao/nightdeal-backend/blob/docs/avalon-development/docs/AVALON-DEVELOPMENT.md)
+> 配套后端文档（规则 / Prisma / REST / WS / 错误码权威源）：[`nightdeal-backend/docs/AVALON-DEVELOPMENT.md`](https://github.com/kaiwenyao/nightdeal/blob/main/nightdeal-backend/docs/AVALON-DEVELOPMENT.md)
 
 ---
 
@@ -518,7 +518,7 @@ onPhase(payload: AvalonPhasePayload) {
 
 ## 12. 相关文档
 
-- [`nightdeal-backend/docs/AVALON-DEVELOPMENT.md`](https://github.com/kaiwenyao/nightdeal-backend/blob/docs/avalon-development/docs/AVALON-DEVELOPMENT.md) — 后端权威文档（规则 / Prisma / REST / WS / 错误码）
+- [`nightdeal-backend/docs/AVALON-DEVELOPMENT.md`](https://github.com/kaiwenyao/nightdeal/blob/main/nightdeal-backend/docs/AVALON-DEVELOPMENT.md) — 后端权威文档（规则 / Prisma / REST / WS / 错误码）
 - [`docs/wechat-auth.md`](./wechat-auth.md) — 微信登录与 token 流程
 - 源码参考：
   - `utils/socket.ts` — WS 封装与 bindEvent/detachListeners 模式
