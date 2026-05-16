@@ -110,7 +110,7 @@ flowchart TD
 | `room:error` | 展示错误；被踢时返回 |
 | `player:updated` | 合并玩家昵称和头像 |
 
-公开 `room:state` 不包含玩家角色。自己的角色只通过 REST `my-role` 或后端 `room:started` 单播传递。
+公开 `room:state` 不包含玩家角色。后端 `room:started` 会单播 `{ yourRole }`，但当前身份页仅通过 REST `my-role` 加载（收到 `room:started` 时重新请求）。
 
 ## 6. 身份页
 

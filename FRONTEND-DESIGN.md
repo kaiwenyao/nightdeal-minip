@@ -38,7 +38,7 @@
 | `pages/game-select` | Avalon / SGS 选择入口 |
 | `pages/index` | 登录、资料更新、创建/加入房间 |
 | `pages/room` | 房间等待、玩家列表、房主操作和实时状态 |
-| `pages/room-settings` | 房主配置人数和角色 |
+| `pages/room-settings` | 房主配置房间人数；Avalon 可调角色，SGS 角色自动配置 |
 | `pages/game` | 当前用户身份展示 |
 | `pages/logs` | 微信模板示例页，不属于主流程 |
 
@@ -147,6 +147,8 @@ flowchart TD
 
 - 房主加载当前房间设置
 - 根据游戏类型显示 Avalon 或 SGS 配置
+- Avalon 可调整特殊角色和基础角色数量
+- SGS 只调整房间人数，身份配置按人数自动切换并只读展示
 - 校验角色数量是否等于 `maxPlayers`
 - 防止 `maxPlayers` 小于当前玩家数
 - 保存到 `PUT /api/rooms/:code/settings`
@@ -264,7 +266,7 @@ wss://nightdeal.kaiwen.dev/room
 | `room:error` | 显示错误；`KICKED` 时返回首页或上一页 |
 | `player:updated` | 合并玩家昵称和头像 |
 
-公开 `room:state` 不包含其他玩家角色。自己的角色只通过 REST `my-role` 或后端单播 `room:started` 的 `yourRole` 传递。
+公开 `room:state` 不包含其他玩家角色。后端会在 `room:started` 单播 `{ yourRole }`，但当前 `pages/game` 仅通过 REST `GET /api/rooms/:code/my-role` 加载身份（收到 `room:started` 时重新请求该接口）。
 
 ## 8. 本地状态
 
