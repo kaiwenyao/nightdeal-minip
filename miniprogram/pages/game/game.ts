@@ -220,7 +220,7 @@ Page({
   },
   inferCamp(role: string): string {
     const evilRoles = ['刺客', '莫甘娜', '奥伯伦', '莫德雷德', '爪牙', '反贼', '内奸']
-    const goodRoles = ['梅林', '派西维尔', '亚瑟的忠臣', '湖中妖女', '主公', '忠臣']
+    const goodRoles = ['梅林', '派西维尔', '忠臣', '亚瑟的忠臣', '湖中妖女', '主公']
     if (evilRoles.includes(role)) {
       return 'evil'
     }
