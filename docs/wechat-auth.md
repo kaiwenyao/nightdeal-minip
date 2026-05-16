@@ -70,8 +70,8 @@ pages/index/index.ts -> handleWechatLogin
 4. `setToken(payload.token)`
 5. 如果有新头像，调用 `tryUploadAvatar`
 6. 组装 `UserProfile`
-7. `setUserProfile(loginUser)`
-8. 尝试调用 `POST /api/auth/update-profile`
+7. `setUserProfile(loginUser)`；没有后端头像 URL 时本地展示默认头像
+8. 尝试调用 `POST /api/auth/update-profile`；头像字段只发送后端已有 URL、上传后的 URL 或空字符串，不发送默认占位头像
 
 资料同步失败不会阻断登录。前端会保留本地登录态，用户之后可以再次点击更新资料。
 
@@ -110,7 +110,7 @@ onChooseAvatar
 - 将临时路径写入 `userInfo.avatarUrl` 用于本地预览
 - 将临时路径写入 `rawAvatarPath`，等待后续上传
 
-默认头像仍使用代码中的 `defaultAvatarUrl`。
+默认头像仍使用代码中的 `defaultAvatarUrl`，但它只是 UI 占位图，不作为最终 `avatarUrl` 同步到后端。
 
 ### 6.2 上传头像
 
@@ -153,6 +153,7 @@ Content-Type: multipart/form-data
 
 - `userInfo.avatarUrl` 更新为后端返回的 HTTPS URL
 - `rawAvatarPath` 清空
+- 后续资料同步使用该 HTTPS URL；没有上传结果时发送空字符串或后端已有头像 URL
 
 上传失败时：
 

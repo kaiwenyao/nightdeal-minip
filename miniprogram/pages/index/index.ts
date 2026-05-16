@@ -65,6 +65,20 @@ function normalizeNickName(value: string): string {
     .slice(0, NICKNAME_MAX_LENGTH)
 }
 
+function getDisplayAvatarUrl(avatarUrl: string): string {
+  return avatarUrl || defaultAvatarUrl
+}
+
+function getBackendAvatarUrl(avatarUrl: string): string {
+  if (!avatarUrl || avatarUrl === defaultAvatarUrl) {
+    return ''
+  }
+  if (/^(wxfile|file):\/\//.test(avatarUrl) || /^https?:\/\/tmp\//.test(avatarUrl)) {
+    return ''
+  }
+  return avatarUrl
+}
+
 Component({
   data: {
     userInfo: {
@@ -263,13 +277,12 @@ Component({
         await setToken(payload.token)
 
         const uploadedOssUrl = await this.tryUploadAvatar()
-
-        const fallbackAvatar = payload.user.avatarUrl || defaultAvatarUrl
+        const backendAvatarUrl = uploadedOssUrl || payload.user.avatarUrl || ''
 
         const loginUser: UserProfile = {
           id: payload.user.id,
           nickName: currentNickName || payload.user.nickName || '游客',
-          avatarUrl: uploadedOssUrl || fallbackAvatar,
+          avatarUrl: getDisplayAvatarUrl(backendAvatarUrl),
         }
 
         await setUserProfile(loginUser)
@@ -282,7 +295,7 @@ Component({
             method: 'POST',
             data: {
               nickName: loginUser.nickName,
-              avatarUrl: loginUser.avatarUrl,
+              avatarUrl: backendAvatarUrl,
             },
             timeout: LOGIN_REQUEST_TIMEOUT_MS,
           })
@@ -311,7 +324,7 @@ Component({
       this.setActionState('updatingProfile')
       try {
         // 如果有新头像，先上传到OSS
-        let avatarUrl = this.data.userInfo.avatarUrl
+        let avatarUrl = getBackendAvatarUrl(this.data.userInfo.avatarUrl)
         if (this.data.rawAvatarPath && this.data.rawAvatarPath !== defaultAvatarUrl) {
           const ossUrl = await this.uploadAvatarToServer()
           if (ossUrl) {
@@ -336,7 +349,7 @@ Component({
         const updatedUser: UserProfile = {
           id: response.user.id || this.data.userInfo.id,
           nickName: response.user.nickName ?? nickName,
-          avatarUrl: response.user.avatarUrl || avatarUrl || defaultAvatarUrl,
+          avatarUrl: getDisplayAvatarUrl(response.user.avatarUrl || avatarUrl),
         }
 
         await setUserProfile(updatedUser)
