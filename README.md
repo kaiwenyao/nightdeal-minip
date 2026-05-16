@@ -2,6 +2,8 @@
 
 NightDeal 用户端微信小程序，覆盖游戏选择、微信登录、创建/加入房间、房间设置、实时房间同步和身份查看。
 
+> 当前 Avalon 只支持通用房间和身份查看；完整组队、公投、任务、刺杀流程尚未实现。SGS 同样复用通用身份查看流程。
+
 ## 1. 技术栈
 
 | 组件 | 当前实现 |
@@ -182,3 +184,4 @@ GET /api/rooms/:code/my-role
 | --- | --- |
 | [FRONTEND-DESIGN.md](./FRONTEND-DESIGN.md) | 当前页面、状态和事件设计 |
 | [docs/wechat-auth.md](./docs/wechat-auth.md) | 微信登录、头像和资料同步 |
+| [docs/AVALON-FRONTEND.md](./docs/AVALON-FRONTEND.md) | 当前 Avalon 前端实现边界和后续完整流程计划 |

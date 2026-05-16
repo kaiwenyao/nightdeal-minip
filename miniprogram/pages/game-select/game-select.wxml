@@ -13,10 +13,10 @@
       <text class="game-desc">2-8人 身份推理</text>
     </view>
 
-    <view class="game-card game-card--disabled" hover-class="game-card--disabled-pressed" bind:tap="handleSelectAvalon">
+    <view class="game-card" hover-class="game-card--pressed" bind:tap="handleSelectAvalon">
       <view class="game-icon avalon-icon">A</view>
       <text class="game-name">阿瓦隆</text>
-      <text class="game-desc">正在开发</text>
+      <text class="game-desc">5-10人 身份分配</text>
     </view>
   </view>
 </view>
