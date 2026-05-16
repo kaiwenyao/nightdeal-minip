@@ -562,8 +562,6 @@ Page({
     let statusText = ''
     if (status === 'PLAYING') {
       statusText = '游戏中'
-    } else if (status === 'FINISHED') {
-      statusText = '已结束'
     } else if (maxPlayers > 0 && players.length < maxPlayers) {
       statusText = `人数不全 (${players.length}/${maxPlayers})`
     } else {
