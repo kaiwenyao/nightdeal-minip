@@ -347,7 +347,10 @@ Page({
     const max = this.data.maxPlayers
     const isSgs = this.data.gameType === 'SGS'
     const newConfig = isSgs ? getSgsDefaultConfig(max) : getDefaultConfig(max)
-    this.setData({ roleConfig: newConfig as unknown as RoleConfig | SgsRoleConfig })
+    this.setData({
+      roleConfig: newConfig as unknown as RoleConfig | SgsRoleConfig,
+      isRandomSeat: false,
+    })
     if (isSgs) {
       this.updateSgsRoleItemsFromConfig()
     } else {

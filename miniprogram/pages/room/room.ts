@@ -193,6 +193,7 @@ Page({
     gameTitle: '阿瓦隆' as string,
     status: 'WAITING' as string,
     statusText: '',
+    // Persisted from room snapshot / settings-updated; reserved for future UI (e.g. room info badge)
     isRandomSeat: false,
   },
   socket: null as SocketLike | null,
