@@ -509,6 +509,15 @@ Component({
         this.setData({ currentRoomCode: '' })
         wx.showToast({ title: '已离开房间', icon: 'success' })
       } catch (error) {
+        if (error instanceof UnauthorizedError) {
+          await clearToken()
+          await clearUserProfile()
+          this.setData({ hasToken: false, currentRoomCode: '' })
+          setLastRoomCode(null)
+          this.setActionState('idle')
+          wx.showToast({ title: '登录态失效，请重新登录', icon: 'none' })
+          return
+        }
         const message = error instanceof Error ? error.message : '离开房间失败'
         // 如果房间不存在或没有权限，说明用户已不在房间中，同步清除本地状态
         if (message.includes('不存在') || message.includes('没有权限')) {

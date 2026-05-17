@@ -412,12 +412,26 @@ let socket: SocketLike | null = null
 let lastRoomCode: string | null = null
 let skipNextRoomStartedNav = false
 
+const LAST_ROOM_CODE_KEY = 'nd_last_room_code'
+
 export function setLastRoomCode(code: string | null): void {
   lastRoomCode = code
+  if (code) {
+    wx.setStorageSync(LAST_ROOM_CODE_KEY, code)
+  } else {
+    wx.removeStorageSync(LAST_ROOM_CODE_KEY)
+  }
 }
 
 export function getLastRoomCode(): string | null {
-  return lastRoomCode
+  if (lastRoomCode) {
+    return lastRoomCode
+  }
+  try {
+    return wx.getStorageSync(LAST_ROOM_CODE_KEY) || null
+  } catch {
+    return null
+  }
 }
 
 export function getSkipNextRoomStartedNav(): boolean {
