@@ -431,6 +431,7 @@ Page({
 
     this.bindRoomSocketEvent('room:ended', () => {
       wx.showToast({ title: '游戏已结束', icon: 'none' })
+      this.resetToWaitingState()
     })
 
     this.bindRoomSocketEvent('reconnect_failed', () => {
@@ -528,6 +529,7 @@ Page({
         url: `/api/rooms/${this.data.roomCode}/end`,
         method: 'POST',
       })
+      this.resetToWaitingState()
     } catch (error) {
       const message = error instanceof Error ? error.message : '结束失败，请重试'
       wx.showToast({ title: message, icon: 'none' })
@@ -556,6 +558,10 @@ Page({
         }
       },
     })
+  },
+  resetToWaitingState() {
+    this.setData({ status: 'WAITING', startingGame: false, endingGame: false })
+    this.updateStatusText()
   },
   updateStatusText() {
     const { status, players, maxPlayers } = this.data
