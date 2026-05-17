@@ -50,7 +50,7 @@ interface JoinRoomResponse {
   createdAt: string
 }
 
-type ActionState = 'idle' | 'authorizing' | 'loggingIn' | 'updatingProfile' | 'creatingRoom' | 'joiningRoom'
+type ActionState = 'idle' | 'authorizing' | 'loggingIn' | 'updatingProfile' | 'creatingRoom' | 'joiningRoom' | 'leavingRoom'
 
 const ROOM_CODE_LENGTH = 6
 const NICKNAME_MAX_LENGTH = 20
@@ -477,6 +477,7 @@ Component({
       if (!roomCode) {
         return
       }
+      setLastRoomCode(roomCode)
       this.goRoomPage(roomCode, false)
     },
     async handleLeaveRoom() {
@@ -487,11 +488,17 @@ Component({
       if (!roomCode) {
         return
       }
+      this.setActionState('leavingRoom')
       const { confirm } = await wx.showModal({
         title: '确认离开',
         content: '离开房间后将无法继续参与当前游戏',
       })
       if (!confirm) {
+        this.setActionState('idle')
+        return
+      }
+      // 弹窗期间可能有其他操作介入，再次检查
+      if (this.isBusy() && this.data.actionState !== 'leavingRoom') {
         return
       }
       try {
@@ -510,6 +517,10 @@ Component({
           this.setData({ currentRoomCode: '' })
         }
         wx.showToast({ title: message, icon: 'none' })
+      } finally {
+        if (this.data.actionState === 'leavingRoom') {
+          this.setActionState('idle')
+        }
       }
     },
   },
