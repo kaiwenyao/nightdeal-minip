@@ -30,6 +30,7 @@ interface RoomSnapshot {
   gameType?: string
   roleConfig: unknown
   maxPlayers: number
+  isRandomSeat?: boolean
   host: RoomHost | null
   players: Player[]
   createdAt: string
@@ -140,16 +141,17 @@ function parsePlayerUpdatedPayload(data: unknown): { userId: string; nickName?: 
   return { userId: data.userId, nickName, avatarUrl }
 }
 
-function parseRoomSettingsUpdatedPayload(data: unknown): { maxPlayers?: number; roleConfig?: unknown } | null {
+function parseRoomSettingsUpdatedPayload(data: unknown): { maxPlayers?: number; roleConfig?: unknown; isRandomSeat?: boolean } | null {
   if (!isRecord(data)) {
     return null
   }
   const maxPlayers = typeof data.maxPlayers === 'number' ? data.maxPlayers : undefined
   const roleConfig = 'roleConfig' in data ? data.roleConfig : undefined
-  if (maxPlayers === undefined && roleConfig === undefined) {
+  const isRandomSeat = typeof data.isRandomSeat === 'boolean' ? data.isRandomSeat : undefined
+  if (maxPlayers === undefined && roleConfig === undefined && isRandomSeat === undefined) {
     return null
   }
-  return { maxPlayers, roleConfig }
+  return { maxPlayers, roleConfig, isRandomSeat }
 }
 
 function getSocketErrorMessage(error: unknown): string {
@@ -191,6 +193,7 @@ Page({
     gameTitle: '阿瓦隆' as string,
     status: 'WAITING' as string,
     statusText: '',
+    isRandomSeat: false,
   },
   socket: null as SocketLike | null,
   roomSocketBindings: [] as Array<{ event: string; listener: (...args: unknown[]) => void }>,
@@ -257,6 +260,7 @@ Page({
         gameType,
         gameTitle,
         status: payload.status || 'WAITING',
+        isRandomSeat: payload.isRandomSeat ?? false,
         pageState: 'ready',
       })
       this.updateRoleConfigSummary()
@@ -394,6 +398,9 @@ Page({
       if (payload.roleConfig !== undefined && payload.roleConfig !== null) {
         this.setData({ roleConfig: payload.roleConfig })
         this.updateRoleConfigSummary()
+      }
+      if (typeof payload.isRandomSeat === 'boolean') {
+        this.setData({ isRandomSeat: payload.isRandomSeat })
       }
     })
 
