@@ -1,10 +1,16 @@
+import { HttpError, ROOM_NOT_FOUND_CODE } from './request'
+
 export const ROOM_GONE_USER_MESSAGE = '房间已过期或不存在'
 
 export function isRoomMissingError(error: unknown): boolean {
+  if (error instanceof HttpError && error.businessCode === ROOM_NOT_FOUND_CODE) {
+    return true
+  }
   if (!(error instanceof Error)) {
     return false
   }
   const message = error.message
+  // 兜底：兼容旧版未携带 businessCode 的错误或其他普通 Error
   return (
     message.includes('不存在') ||
     message.includes('已过期') ||
