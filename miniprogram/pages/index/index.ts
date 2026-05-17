@@ -498,7 +498,7 @@ Component({
         return
       }
       // 弹窗期间可能有其他操作介入，再次检查
-      if (this.isBusy() && this.data.actionState !== 'leavingRoom') {
+      if (this.data.actionState !== 'leavingRoom') {
         return
       }
       try {
