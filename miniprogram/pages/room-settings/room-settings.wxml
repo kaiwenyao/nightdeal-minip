@@ -78,6 +78,17 @@
     </view>
   </ui-card>
 
+  <ui-card>
+    <view class="card-heading">
+      <text class="section-title">随机座位号</text>
+    </view>
+    <view class="setting-row">
+      <text class="setting-label">开局时随机分配座位号</text>
+      <switch checked="{{isRandomSeat}}" bind:change="handleToggleRandomSeat" color="#c9a96e" />
+    </view>
+    <text class="hint-text">开启后，房主点击“开始游戏”时会随机打乱所有玩家的座位号，再分配角色。</text>
+  </ui-card>
+
   <ui-button
     variant="primary"
     loading="{{saving}}"

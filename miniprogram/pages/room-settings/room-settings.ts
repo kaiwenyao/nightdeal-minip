@@ -94,6 +94,7 @@ Page({
     baseRoleItems: [] as BaseRoleItem[],
     sgsRoleItems: [] as SgsRoleItem[],
     totalRoles: 0,
+    isRandomSeat: false,
   },
 
   async onLoad(query: Record<string, string>) {
@@ -146,6 +147,7 @@ Page({
         ? parseSgsRoleConfig(room.roleConfig, maxPlayers)
         : parseAvalonRoleConfig(room.roleConfig, maxPlayers)
 
+      const isRandomSeat = typeof room.isRandomSeat === 'boolean' ? room.isRandomSeat : false
       this.setData({
         maxPlayers,
         minRoomPlayers,
@@ -153,6 +155,7 @@ Page({
         playerCount: players.length,
         gameType,
         roleConfig,
+        isRandomSeat,
       })
       if (isSgs) {
         this.updateSgsRoleItemsFromConfig()
@@ -336,11 +339,18 @@ Page({
     this.updateValidationState()
   },
 
+  handleToggleRandomSeat(e: WechatMiniprogram.SwitchChange) {
+    this.setData({ isRandomSeat: e.detail.value })
+  },
+
   handleResetToDefault() {
     const max = this.data.maxPlayers
     const isSgs = this.data.gameType === 'SGS'
     const newConfig = isSgs ? getSgsDefaultConfig(max) : getDefaultConfig(max)
-    this.setData({ roleConfig: newConfig as unknown as RoleConfig | SgsRoleConfig })
+    this.setData({
+      roleConfig: newConfig as unknown as RoleConfig | SgsRoleConfig,
+      isRandomSeat: false,
+    })
     if (isSgs) {
       this.updateSgsRoleItemsFromConfig()
     } else {
@@ -372,6 +382,7 @@ Page({
         data: {
           maxPlayers: this.data.maxPlayers,
           roleConfig: this.data.roleConfig,
+          isRandomSeat: this.data.isRandomSeat,
         },
       })
       this.setData({ saving: false })
