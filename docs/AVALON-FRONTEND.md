@@ -84,7 +84,7 @@ flowchart TD
 | 事件 | Payload | 发送位置 |
 | --- | --- | --- |
 | `room:join` | `{ roomCode }` | 房间页连接后 |
-| `room:leave` | `{ roomCode }` | 房间页卸载且不是进入游戏页 |
+| `room:leave` | `{ roomCode }` | ~~房间页卸载~~（PR #30 后不再发送；由 WebSocket 断连触发后端 offline） |
 
 房主操作当前主要走 REST：
 

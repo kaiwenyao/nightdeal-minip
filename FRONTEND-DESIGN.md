@@ -108,6 +108,7 @@ flowchart TD
 | `updatingProfile` | 更新资料 |
 | `creatingRoom` | 创建房间 |
 | `joiningRoom` | 加入房间 |
+| `leavingRoom` | 离开房间（确认弹窗期间） |
 
 创建房间：
 
@@ -139,11 +140,10 @@ flowchart TD
 
 离开页面行为：
 
-- 如果不是进入游戏页，会调用 `POST /api/rooms/:code/leave`
-- 随后发出 `room:leave`
-- 清理 socket 和 lastRoomCode
-
-进入游戏页时不离开房间。
+- 用户点击返回按钮或跳转游戏页：`onUnload` 仅断开 socket，保留 `lastRoomCode`
+- 后端通过 WebSocket 断连将用户标记为 offline
+- 显式"离开房间"（首页按钮）才调用 `POST /api/rooms/:code/leave` 并清除 `lastRoomCode`
+- `room:leave` WebSocket 事件不再由前端发送
 
 `room:ended` 与房主 `POST .../end` 成功时：当前实现仅 Toast，**不会**将本地 `status` 置为 `WAITING`；若未收到 `room:state`，房间页可能仍显示对局中按钮（见仓库 Issue）。
 

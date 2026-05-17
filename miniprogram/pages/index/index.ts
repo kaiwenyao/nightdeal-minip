@@ -1,6 +1,7 @@
 import { getToken, getUserProfile, setToken, setUserProfile, clearToken, clearUserProfile, UserProfile } from '../../utils/auth'
 import { request, UnauthorizedError } from '../../utils/request'
 import { config } from '../../utils/config'
+import { getLastRoomCode, setLastRoomCode } from '../../utils/socket'
 import { getDefaultConfig } from '../../utils/role-config'
 
 interface LoginResponse {
@@ -49,7 +50,7 @@ interface JoinRoomResponse {
   createdAt: string
 }
 
-type ActionState = 'idle' | 'authorizing' | 'loggingIn' | 'updatingProfile' | 'creatingRoom' | 'joiningRoom'
+type ActionState = 'idle' | 'authorizing' | 'loggingIn' | 'updatingProfile' | 'creatingRoom' | 'joiningRoom' | 'leavingRoom'
 
 const ROOM_CODE_LENGTH = 6
 const NICKNAME_MAX_LENGTH = 20
@@ -94,6 +95,7 @@ Component({
     isNavigatingToRoom: false,
     gameType: 'AVALON' as string,
     pageTitle: '阿瓦隆房间助手',
+    currentRoomCode: '',
   },
   lifetimes: {
     async attached() {
@@ -111,7 +113,8 @@ Component({
       const page = getCurrentPages().pop()
       const gameType = page?.options?.gameType || 'AVALON'
       const pageTitle = gameType === 'SGS' ? '三国杀房间助手' : '阿瓦隆房间助手'
-      this.setData({ isNavigatingToRoom: false, actionState: 'idle', gameType, pageTitle })
+      const currentRoomCode = getLastRoomCode() || ''
+      this.setData({ isNavigatingToRoom: false, actionState: 'idle', gameType, pageTitle, currentRoomCode })
       void this.refreshHasToken()
     },
   },
@@ -408,6 +411,15 @@ Component({
         wx.showToast({ title: '请先登录', icon: 'none' })
         return
       }
+      if (this.data.currentRoomCode) {
+        const { confirm } = await wx.showModal({
+          title: '确认创建新房间',
+          content: '你已在一个房间中，创建新房间将离开之前的房间',
+        })
+        if (!confirm) {
+          return
+        }
+      }
       this.setActionState('creatingRoom')
       try {
         const defaultMaxPlayers = this.data.gameType === 'SGS' ? 2 : 5
@@ -465,6 +477,69 @@ Component({
           wx.showToast({ title: message, icon: 'none' })
         },
       })
+    },
+    handleReturnToRoom() {
+      if (this.isBusy()) {
+        return
+      }
+      const roomCode = this.data.currentRoomCode
+      if (!roomCode) {
+        return
+      }
+      this.goRoomPage(roomCode, false)
+    },
+    async handleLeaveRoom() {
+      if (this.isBusy()) {
+        return
+      }
+      const roomCode = this.data.currentRoomCode
+      if (!roomCode) {
+        return
+      }
+      this.setActionState('leavingRoom')
+      const { confirm } = await wx.showModal({
+        title: '确认离开',
+        content: '离开房间后将无法继续参与当前游戏',
+      })
+      if (!confirm) {
+        this.setActionState('idle')
+        return
+      }
+      // 防御性检查：弹窗期间若被其他流程（如登录失效踢回首页）修改了 actionState，
+      // 则静默返回，由接管方负责状态复位
+      if (this.data.actionState !== 'leavingRoom') {
+        return
+      }
+      try {
+        await request({
+          url: `/api/rooms/${roomCode}/leave`,
+          method: 'POST',
+        })
+        setLastRoomCode(null)
+        this.setData({ currentRoomCode: '' })
+        wx.showToast({ title: '已离开房间', icon: 'success' })
+      } catch (error) {
+        if (error instanceof UnauthorizedError) {
+          await clearToken()
+          await clearUserProfile()
+          this.setData({ hasToken: false, currentRoomCode: '' })
+          setLastRoomCode(null)
+          this.setActionState('idle')
+          wx.showToast({ title: '登录态失效，请重新登录', icon: 'none' })
+          return
+        }
+        const message = error instanceof Error ? error.message : '离开房间失败'
+        // 如果房间不存在或没有权限，说明用户已不在房间中，同步清除本地状态
+        if (message.includes('不存在') || message.includes('没有权限')) {
+          setLastRoomCode(null)
+          this.setData({ currentRoomCode: '' })
+        }
+        wx.showToast({ title: message, icon: 'none' })
+      } finally {
+        if (this.data.actionState === 'leavingRoom') {
+          this.setActionState('idle')
+        }
+      }
     },
   },
 })

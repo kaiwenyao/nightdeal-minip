@@ -230,33 +230,10 @@ Page({
   },
   onUnload() {
     this.detachRoomSocketListeners()
-    if (!this.navigatingToGame) {
-      const roomCode = this.data.roomCode
-      if (roomCode) {
-        void request({
-          url: `/api/rooms/${roomCode}/leave`,
-          method: 'POST',
-        })
-          .catch(() => {
-            // Page already unloading, network errors are irrelevant
-          })
-          .finally(() => {
-            if (this.socket?.connected) {
-              this.socket.emit('room:leave', { roomCode })
-            }
-            this.socket = null
-            disconnectSocket()
-            setLastRoomCode(null)
-          })
-      } else {
-        this.socket = null
-        disconnectSocket()
-        setLastRoomCode(null)
-      }
-      return
-    }
-    this.socket = null
+    // 跳转游戏页或返回首页：均只断开 socket，保留 lastRoomCode
+    // 后端会将用户标记为 offline，用户可通过首页"返回房间"重新加入
     disconnectSocket()
+    this.socket = null
   },
   async loadRoomSnapshot() {
     this.setData({ pageState: 'loading', pageError: '' })
@@ -288,6 +265,8 @@ Page({
     } catch (error) {
       const message = error instanceof Error ? error.message : '房间加载失败，请返回重试'
       this.setData({ pageState: 'error', pageError: message })
+      // Room no longer exists or user was kicked; clear lastRoomCode to prevent ghost card on index
+      setLastRoomCode(null)
     }
   },
   detachRoomSocketListeners() {

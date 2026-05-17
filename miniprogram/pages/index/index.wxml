@@ -42,6 +42,30 @@
     </ui-button>
   </ui-card>
 
+  <ui-card wx:if="{{currentRoomCode}}">
+    <view class="card-heading">
+      <text class="card-title">返回房间</text>
+      <text class="card-note">{{currentRoomCode}}</text>
+    </view>
+    <ui-button
+      loading="{{isNavigatingToRoom}}"
+      disabled="{{actionState !== 'idle' || isNavigatingToRoom}}"
+      bind:tap="handleReturnToRoom"
+    >
+      返回房间
+    </ui-button>
+    <ui-button
+      variant="secondary"
+      size="small"
+      block="{{false}}"
+      loading="{{actionState === 'leavingRoom'}}"
+      disabled="{{actionState !== 'idle' || isNavigatingToRoom}}"
+      bind:tap="handleLeaveRoom"
+    >
+      离开房间
+    </ui-button>
+  </ui-card>
+
   <ui-card>
     <view class="card-heading">
       <text class="card-title">创建房间</text>
