@@ -107,6 +107,9 @@ function parseRoomStatePayload(data: unknown): RoomStatePayload {
     if (typeof r.gameType === 'string') {
       out.room.gameType = r.gameType
     }
+    if (typeof r.isRandomSeat === 'boolean') {
+      out.room.isRandomSeat = r.isRandomSeat
+    }
   }
   if (Array.isArray(data.players)) {
     out.players = data.players.map(parsePlayer).filter((x): x is Player => x !== null)
@@ -641,6 +644,9 @@ Page({
           : state.room.gameType === 'AVALON'
             ? '阿瓦隆'
             : '房间'
+      }
+      if (typeof state.room.isRandomSeat === 'boolean') {
+        updates.isRandomSeat = state.room.isRandomSeat
       }
     }
     if (state.players) {
