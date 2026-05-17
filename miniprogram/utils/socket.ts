@@ -416,10 +416,14 @@ const LAST_ROOM_CODE_KEY = 'nd_last_room_code'
 
 export function setLastRoomCode(code: string | null): void {
   lastRoomCode = code
-  if (code) {
-    wx.setStorageSync(LAST_ROOM_CODE_KEY, code)
-  } else {
-    wx.removeStorageSync(LAST_ROOM_CODE_KEY)
+  try {
+    if (code) {
+      wx.setStorageSync(LAST_ROOM_CODE_KEY, code)
+    } else {
+      wx.removeStorageSync(LAST_ROOM_CODE_KEY)
+    }
+  } catch {
+    // Storage failure is non-fatal; memory value remains authoritative
   }
 }
 

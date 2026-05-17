@@ -265,6 +265,8 @@ Page({
     } catch (error) {
       const message = error instanceof Error ? error.message : '房间加载失败，请返回重试'
       this.setData({ pageState: 'error', pageError: message })
+      // Room no longer exists or user was kicked; clear lastRoomCode to prevent ghost card on index
+      setLastRoomCode(null)
     }
   },
   detachRoomSocketListeners() {

@@ -505,7 +505,8 @@ Component({
         this.setActionState('idle')
         return
       }
-      // 弹窗期间可能有其他操作介入，再次检查
+      // 防御性检查：弹窗期间若被其他流程（如登录失效踢回首页）修改了 actionState，
+      // 则静默返回，由接管方负责状态复位
       if (this.data.actionState !== 'leavingRoom') {
         return
       }
