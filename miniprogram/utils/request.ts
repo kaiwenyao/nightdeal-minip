@@ -58,6 +58,30 @@ function normalizeWxResponseBody(raw: unknown): unknown {
   return raw
 }
 
+function resolveHttpErrorMessage(statusCode: number, body: unknown): string {
+  if (body && typeof body === 'object') {
+    const record = body as Record<string, unknown>
+    if (record.code === 40401) {
+      const roomMsg = record.message
+      if (typeof roomMsg === 'string' && roomMsg.trim()) {
+        return roomMsg.trim()
+      }
+      return '房间不存在'
+    }
+    const raw = record.message
+    if (typeof raw === 'string' && raw.trim()) {
+      return raw.trim()
+    }
+    if (Array.isArray(raw) && typeof raw[0] === 'string' && raw[0].trim()) {
+      return raw[0].trim()
+    }
+  }
+  return sanitizeServerMessage(
+    statusCode,
+    `Request failed with status ${statusCode}`,
+  )
+}
+
 function getRequestFailMessage(errMsg?: string): string {
   const message = errMsg || ''
 
@@ -131,8 +155,7 @@ export async function request<
           resolve(payload as TResponse)
           return
         }
-        const payload = body as { message?: string } | undefined
-        reject(new Error(sanitizeServerMessage(res.statusCode, payload?.message || `Request failed with status ${res.statusCode}`)))
+        reject(new Error(resolveHttpErrorMessage(res.statusCode, body)))
       },
       fail: (error) => {
         reject(new Error(getRequestFailMessage(error.errMsg)))

@@ -3,6 +3,7 @@ import { request, UnauthorizedError } from '../../utils/request'
 import { config } from '../../utils/config'
 import { getLastRoomCode, setLastRoomCode } from '../../utils/socket'
 import { getDefaultConfig } from '../../utils/role-config'
+import { isRoomMissingError, ROOM_GONE_USER_MESSAGE } from '../../utils/room-errors'
 
 interface LoginResponse {
   token: string
@@ -50,7 +51,15 @@ interface JoinRoomResponse {
   createdAt: string
 }
 
-type ActionState = 'idle' | 'authorizing' | 'loggingIn' | 'updatingProfile' | 'creatingRoom' | 'joiningRoom' | 'leavingRoom'
+type ActionState =
+  | 'idle'
+  | 'authorizing'
+  | 'loggingIn'
+  | 'updatingProfile'
+  | 'creatingRoom'
+  | 'joiningRoom'
+  | 'returningToRoom'
+  | 'leavingRoom'
 
 const ROOM_CODE_LENGTH = 6
 const NICKNAME_MAX_LENGTH = 20
@@ -478,7 +487,7 @@ Component({
         },
       })
     },
-    handleReturnToRoom() {
+    async handleReturnToRoom() {
       if (this.isBusy()) {
         return
       }
@@ -486,7 +495,34 @@ Component({
       if (!roomCode) {
         return
       }
-      this.goRoomPage(roomCode, false)
+      this.setActionState('returningToRoom')
+      try {
+        await request<{ code: string }>({
+          url: `/api/rooms/${roomCode}`,
+        })
+        this.goRoomPage(roomCode, false)
+      } catch (error) {
+        if (error instanceof UnauthorizedError) {
+          await clearToken()
+          await clearUserProfile()
+          this.setData({ hasToken: false, currentRoomCode: '' })
+          setLastRoomCode(null)
+          wx.showToast({ title: '登录态失效，请重新登录', icon: 'none' })
+          return
+        }
+        if (isRoomMissingError(error)) {
+          setLastRoomCode(null)
+          this.setData({ currentRoomCode: '' })
+          wx.showToast({ title: ROOM_GONE_USER_MESSAGE, icon: 'none' })
+          return
+        }
+        const message = error instanceof Error ? error.message : '进入房间失败'
+        wx.showToast({ title: message, icon: 'none' })
+      } finally {
+        if (this.data.actionState === 'returningToRoom') {
+          this.setActionState('idle')
+        }
+      }
     },
     async handleLeaveRoom() {
       if (this.isBusy()) {
