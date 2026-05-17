@@ -1,6 +1,7 @@
 import { getToken, getUserProfile, setToken, setUserProfile, clearToken, clearUserProfile, UserProfile } from '../../utils/auth'
 import { request, UnauthorizedError } from '../../utils/request'
 import { config } from '../../utils/config'
+import { getLastRoomCode, setLastRoomCode } from '../../utils/socket'
 import { getDefaultConfig } from '../../utils/role-config'
 
 interface LoginResponse {
@@ -94,6 +95,7 @@ Component({
     isNavigatingToRoom: false,
     gameType: 'AVALON' as string,
     pageTitle: '阿瓦隆房间助手',
+    currentRoomCode: '',
   },
   lifetimes: {
     async attached() {
@@ -111,7 +113,8 @@ Component({
       const page = getCurrentPages().pop()
       const gameType = page?.options?.gameType || 'AVALON'
       const pageTitle = gameType === 'SGS' ? '三国杀房间助手' : '阿瓦隆房间助手'
-      this.setData({ isNavigatingToRoom: false, actionState: 'idle', gameType, pageTitle })
+      const currentRoomCode = getLastRoomCode() || ''
+      this.setData({ isNavigatingToRoom: false, actionState: 'idle', gameType, pageTitle, currentRoomCode })
       void this.refreshHasToken()
     },
   },
@@ -465,6 +468,37 @@ Component({
           wx.showToast({ title: message, icon: 'none' })
         },
       })
+    },
+    handleReturnToRoom() {
+      if (this.isBusy()) {
+        return
+      }
+      const roomCode = this.data.currentRoomCode
+      if (!roomCode) {
+        return
+      }
+      this.goRoomPage(roomCode, false)
+    },
+    async handleLeaveRoom() {
+      if (this.isBusy()) {
+        return
+      }
+      const roomCode = this.data.currentRoomCode
+      if (!roomCode) {
+        return
+      }
+      try {
+        await request({
+          url: `/api/rooms/${roomCode}/leave`,
+          method: 'POST',
+        })
+        setLastRoomCode(null)
+        this.setData({ currentRoomCode: '' })
+        wx.showToast({ title: '已离开房间', icon: 'success' })
+      } catch (error) {
+        const message = error instanceof Error ? error.message : '离开房间失败'
+        wx.showToast({ title: message, icon: 'none' })
+      }
     },
   },
 })
