@@ -411,6 +411,15 @@ Component({
         wx.showToast({ title: '请先登录', icon: 'none' })
         return
       }
+      if (this.data.currentRoomCode) {
+        const { confirm } = await wx.showModal({
+          title: '确认创建新房间',
+          content: '你已在一个房间中，创建新房间将离开之前的房间',
+        })
+        if (!confirm) {
+          return
+        }
+      }
       this.setActionState('creatingRoom')
       try {
         const defaultMaxPlayers = this.data.gameType === 'SGS' ? 2 : 5
