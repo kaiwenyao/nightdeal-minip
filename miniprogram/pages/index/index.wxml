@@ -58,6 +58,7 @@
       variant="secondary"
       size="small"
       block="{{false}}"
+      loading="{{actionState === 'leavingRoom'}}"
       disabled="{{actionState !== 'idle' || isNavigatingToRoom}}"
       bind:tap="handleLeaveRoom"
     >

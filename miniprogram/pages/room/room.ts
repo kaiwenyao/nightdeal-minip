@@ -230,18 +230,10 @@ Page({
   },
   onUnload() {
     this.detachRoomSocketListeners()
-    if (this.navigatingToGame) {
-      // 跳转到游戏页：只断开 socket，保留 lastRoomCode 以便返回房间
-      disconnectSocket()
-      this.socket = null
-      return
-    }
-
-    // 正常返回首页（用户点击左上角返回）：不发送 leave 请求，保留 lastRoomCode
+    // 跳转游戏页或返回首页：均只断开 socket，保留 lastRoomCode
     // 后端会将用户标记为 offline，用户可通过首页"返回房间"重新加入
     disconnectSocket()
     this.socket = null
-    // 注意：不调用 setLastRoomCode(null)，保留重连能力
   },
   async loadRoomSnapshot() {
     this.setData({ pageState: 'loading', pageError: '' })

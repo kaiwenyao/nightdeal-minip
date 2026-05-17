@@ -477,7 +477,6 @@ Component({
       if (!roomCode) {
         return
       }
-      setLastRoomCode(roomCode)
       this.goRoomPage(roomCode, false)
     },
     async handleLeaveRoom() {
