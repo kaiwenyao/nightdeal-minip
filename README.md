@@ -70,7 +70,7 @@ socketUrl: 'ws://localhost:3000/room'
 
 | 页面 | 说明 |
 | --- | --- |
-| `pages/game-select` | 选择 Avalon 或 SGS |
+| `pages/game-select` | 冷启动首屏；选择 Avalon 或 SGS 后进入 `index?gameType=...` |
 | `pages/index` | 登录、资料更新、创建/加入房间 |
 | `pages/room` | 房间成员、实时状态、开始/结束、踢人、设置入口 |
 | `pages/room-settings` | 房主配置房间人数；Avalon 可调角色，SGS 角色按人数自动配置且只读展示 |

@@ -33,6 +33,8 @@
 
 ## 3. 页面结构
 
+小程序冷启动首屏为 `pages/game-select`（`app.json` 第一项）；进入 `pages/index` 须带查询参数 `gameType=AVALON` 或 `gameType=SGS`。
+
 | 页面 | 说明 |
 | --- | --- |
 | `pages/game-select` | Avalon / SGS 选择入口 |
@@ -84,6 +86,8 @@ flowchart TD
 - 将 `gameType=AVALON` 或 `gameType=SGS` 传给首页
 
 ### 5.2 `pages/index`
+
+入口页使用 `hasToken` 做轻量登录判断（`attached` 时读取），未使用 `requireAuth`；其它业务页（`room`、`game`、`room-settings`）使用 `requireAuth`。从其它页因 401 回到首页时，`pageLifetimes.show` 目前不刷新 `hasToken`，可能短暂显示「已登录」（见仓库 Issue）。
 
 职责：
 
@@ -140,6 +144,8 @@ flowchart TD
 - 清理 socket 和 lastRoomCode
 
 进入游戏页时不离开房间。
+
+`room:ended` 与房主 `POST .../end` 成功时：当前实现仅 Toast，**不会**将本地 `status` 置为 `WAITING`；若未收到 `room:state`，房间页可能仍显示对局中按钮（见仓库 Issue）。
 
 ### 5.4 `pages/room-settings`
 
@@ -320,7 +326,7 @@ wss://nightdeal.kaiwen.dev/room
 ## 11. 测试重点
 
 - 登录、token 过期、401 回首页
-- 头像上传成功、失败和 401
+- 头像上传：`request()` 路径下 401 会清登录态；登录流程内 `tryUploadAvatar` 失败（含 401）仅 `console.warn`，不 `clearToken`（见仓库 Issue）
 - Avalon / SGS 创建房间默认人数
 - 加入房间码格式和后端错误展示
 - 房主设置页人数和角色数量校验

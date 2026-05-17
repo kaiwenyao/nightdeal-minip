@@ -112,9 +112,14 @@ Component({
       const gameType = page?.options?.gameType || 'AVALON'
       const pageTitle = gameType === 'SGS' ? '三国杀房间助手' : '阿瓦隆房间助手'
       this.setData({ isNavigatingToRoom: false, actionState: 'idle', gameType, pageTitle })
+      void this.refreshHasToken()
     },
   },
   methods: {
+    async refreshHasToken() {
+      const token = await getToken()
+      this.setData({ hasToken: Boolean(token) })
+    },
     isBusy() {
       return this.data.actionState !== 'idle' || this.data.isNavigatingToRoom
     },
@@ -236,6 +241,12 @@ Component({
         }
         return ossUrl
       } catch (error) {
+        if (error instanceof UnauthorizedError) {
+          await clearToken()
+          await clearUserProfile()
+          this.setData({ hasToken: false, rawAvatarPath: '' })
+          throw error
+        }
         console.warn('Avatar upload failed:', error)
         this.setData({ rawAvatarPath: '' })
         return null
@@ -276,7 +287,17 @@ Component({
 
         await setToken(payload.token)
 
-        const uploadedOssUrl = await this.tryUploadAvatar()
+        let uploadedOssUrl: string | null = null
+        try {
+          uploadedOssUrl = await this.tryUploadAvatar()
+        } catch (error) {
+          if (error instanceof UnauthorizedError) {
+            this.setActionState('idle')
+            wx.showToast({ title: '登录态失效，请重新登录', icon: 'none' })
+            return
+          }
+          throw error
+        }
         const backendAvatarUrl = uploadedOssUrl || payload.user.avatarUrl || ''
 
         const loginUser: UserProfile = {
