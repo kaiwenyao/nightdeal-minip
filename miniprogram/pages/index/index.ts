@@ -487,6 +487,13 @@ Component({
       if (!roomCode) {
         return
       }
+      const { confirm } = await wx.showModal({
+        title: '确认离开',
+        content: '离开房间后将无法继续参与当前游戏',
+      })
+      if (!confirm) {
+        return
+      }
       try {
         await request({
           url: `/api/rooms/${roomCode}/leave`,
@@ -497,6 +504,11 @@ Component({
         wx.showToast({ title: '已离开房间', icon: 'success' })
       } catch (error) {
         const message = error instanceof Error ? error.message : '离开房间失败'
+        // 如果房间不存在或没有权限，说明用户已不在房间中，同步清除本地状态
+        if (message.includes('不存在') || message.includes('没有权限')) {
+          setLastRoomCode(null)
+          this.setData({ currentRoomCode: '' })
+        }
         wx.showToast({ title: message, icon: 'none' })
       }
     },
