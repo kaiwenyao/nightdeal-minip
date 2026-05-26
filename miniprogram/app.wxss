@@ -94,8 +94,15 @@ page {
   flex-direction: column;
   gap: var(--space-5, 20rpx);
   background: var(--color-bg, #f7f5f0);
-  height: 100vh;
+  flex: 1;
   width: 100%;
+  overflow: auto;
+}
+
+page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
 }
 
 .section-title {
