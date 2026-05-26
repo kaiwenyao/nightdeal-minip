@@ -125,8 +125,15 @@ Component({
       const gameType = page?.options?.gameType || 'AVALON'
       const pageTitle = gameType === 'SGS' ? '三国杀房间助手' : '阿瓦隆房间助手'
       const currentRoomCode = getLastRoomCode() || ''
+      // Only read share params from page options once; clear after consuming
+      // to prevent repeated auto-join on subsequent show() calls
       const pendingRoomCode = page?.options?.roomCode || ''
       const pendingGameType = page?.options?.gameType || ''
+      if (pendingRoomCode && page?.options) {
+        // Clear consumed share params to prevent re-triggering
+        delete page.options.roomCode
+        delete page.options.gameType
+      }
       this.setData({
         isNavigatingToRoom: false,
         actionState: 'idle',
@@ -139,10 +146,10 @@ Component({
       await this.refreshHasToken()
       if (this.data.hasToken && this.data.pendingRoomCode) {
         const roomCode = this.data.pendingRoomCode
-        const pendingGameType = this.data.pendingGameType
+        const consumedGameType = this.data.pendingGameType
         this.setData({ pendingRoomCode: '', pendingGameType: '' })
-        if (pendingGameType) {
-          this.setData({ gameType: pendingGameType })
+        if (consumedGameType) {
+          this.setData({ gameType: consumedGameType })
         }
         this.setData({ roomCodeInput: roomCode })
         await this.handleJoinRoom()

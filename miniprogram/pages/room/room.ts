@@ -204,13 +204,13 @@ Page({
   roomSocketBindings: [] as Array<{ event: string; listener: (...args: unknown[]) => void }>,
   navigatingToGame: false,
   async onLoad(query: Record<string, string>) {
-    const auth = await requireAuth()
+    const roomCode = query.roomCode || ''
+    const gameType = query.gameType || 'AVALON'
+    const auth = await requireAuth({ roomCode, gameType })
     if (!auth) return
     const { profile: user } = auth
 
-    const roomCode = query.roomCode || ''
     const isHost = query.isHost === '1'
-    const gameType = query.gameType || 'AVALON'
     const currentUserId = user.id
     const gameTitle = gameType === 'SGS' ? '三国杀' : gameType === 'AVALON' ? '阿瓦隆' : '房间'
     this.setData({
