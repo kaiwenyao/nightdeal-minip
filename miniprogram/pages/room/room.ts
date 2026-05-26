@@ -2,6 +2,7 @@ import { requireAuth } from '../../utils/auth-guard'
 import { request } from '../../utils/request'
 import { connectSocket, disconnectSocket, isSocketDomainListError, setLastRoomCode, getSkipNextRoomStartedNav, setSkipNextRoomStartedNav, SocketLike } from '../../utils/socket'
 import { formatRoleSummary, formatSgsRoleSummary, RoleConfig, SgsRoleConfig } from '../../utils/role-config'
+import { getRoomLoadErrorMessage, isRoomMissingError, isPermissionError } from '../../utils/room-errors'
 
 interface PlayerUser {
   id: string
@@ -271,10 +272,11 @@ Page({
       this.updateStatusText()
       this.initSocket()
     } catch (error) {
-      const message = error instanceof Error ? error.message : '房间加载失败，请返回重试'
+      const message = getRoomLoadErrorMessage(error)
       this.setData({ pageState: 'error', pageError: message })
-      // Room no longer exists or user was kicked; clear lastRoomCode to prevent ghost card on index
-      setLastRoomCode(null)
+      if (isRoomMissingError(error) || isPermissionError(error)) {
+        setLastRoomCode(null)
+      }
     }
   },
   detachRoomSocketListeners() {

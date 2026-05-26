@@ -1,10 +1,24 @@
 import { getToken, clearToken, clearUserProfile } from './auth'
 import { config } from './config'
 
+export const ROOM_NOT_FOUND_CODE = 40401
+
 export class UnauthorizedError extends Error {
   constructor(message = '登录态失效') {
     super(message)
     this.name = 'UnauthorizedError'
+  }
+}
+
+export class HttpError extends Error {
+  statusCode: number
+  businessCode?: number
+
+  constructor(message: string, statusCode: number, businessCode?: number) {
+    super(message)
+    this.name = 'HttpError'
+    this.statusCode = statusCode
+    this.businessCode = businessCode
   }
 }
 
@@ -56,6 +70,32 @@ function normalizeWxResponseBody(raw: unknown): unknown {
     }
   }
   return raw
+}
+
+function resolveHttpError(statusCode: number, body: unknown): HttpError {
+  if (body && typeof body === 'object') {
+    const record = body as Record<string, unknown>
+    const businessCode = typeof record.code === 'number' ? record.code : undefined
+    if (businessCode === ROOM_NOT_FOUND_CODE) {
+      const roomMsg = record.message
+      if (typeof roomMsg === 'string' && roomMsg.trim()) {
+        return new HttpError(roomMsg.trim(), statusCode, businessCode)
+      }
+      return new HttpError('房间不存在', statusCode, businessCode)
+    }
+    const raw = record.message
+    if (typeof raw === 'string' && raw.trim()) {
+      return new HttpError(raw.trim(), statusCode, businessCode)
+    }
+    // 后端有时将 message 返回为字符串数组（如 validation errors），取第一条展示
+    if (Array.isArray(raw) && typeof raw[0] === 'string' && raw[0].trim()) {
+      return new HttpError(raw[0].trim(), statusCode, businessCode)
+    }
+  }
+  return new HttpError(
+    sanitizeServerMessage(statusCode, `Request failed with status ${statusCode}`),
+    statusCode,
+  )
 }
 
 function getRequestFailMessage(errMsg?: string): string {
@@ -131,8 +171,7 @@ export async function request<
           resolve(payload as TResponse)
           return
         }
-        const payload = body as { message?: string } | undefined
-        reject(new Error(sanitizeServerMessage(res.statusCode, payload?.message || `Request failed with status ${res.statusCode}`)))
+        reject(resolveHttpError(res.statusCode, body))
       },
       fail: (error) => {
         reject(new Error(getRequestFailMessage(error.errMsg)))
