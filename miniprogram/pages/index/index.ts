@@ -145,14 +145,18 @@ Component({
       })
       await this.refreshHasToken()
       if (this.data.hasToken && this.data.pendingRoomCode) {
-        const roomCode = this.data.pendingRoomCode
-        const consumedGameType = this.data.pendingGameType
-        this.setData({ pendingRoomCode: '', pendingGameType: '' })
-        if (consumedGameType) {
-          this.setData({ gameType: consumedGameType })
+        try {
+          const roomCode = this.data.pendingRoomCode
+          const consumedGameType = this.data.pendingGameType
+          this.setData({ pendingRoomCode: '', pendingGameType: '' })
+          if (consumedGameType) {
+            this.setData({ gameType: consumedGameType })
+          }
+          this.setData({ roomCodeInput: roomCode })
+          await this.handleJoinRoom()
+        } catch (e) {
+          console.warn('Auto-join from share link failed:', e)
         }
-        this.setData({ roomCodeInput: roomCode })
-        await this.handleJoinRoom()
       }
     },
   },
