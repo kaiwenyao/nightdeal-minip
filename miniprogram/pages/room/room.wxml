@@ -16,7 +16,10 @@
         </view>
       </view>
     </view>
-    <button class="share-btn" bind:tap="handleShareInvite">
+    <button wx:if="{{maxPlayers > 0 && players.length >= maxPlayers}}" class="share-btn share-btn--disabled" bind:tap="handleShareInvite">
+      <text class="share-btn-text">房间已满</text>
+    </button>
+    <button wx:else class="share-btn" open-type="share">
       <text class="share-btn-text">邀请好友</text>
     </button>
   </ui-card>

@@ -62,6 +62,16 @@
   font-weight: var(--font-medium);
 }
 
+.share-btn--disabled {
+  background: var(--color-surface-raised);
+  border-color: var(--color-border);
+  opacity: 0.6;
+}
+
+.share-btn--disabled .share-btn-text {
+  color: var(--color-text-muted);
+}
+
 /* ── Status Badge ── */
 .status-badge {
   display: inline-flex;

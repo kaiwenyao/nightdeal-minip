@@ -241,25 +241,7 @@ Page({
     })
   },
   handleShareInvite() {
-    const { players, maxPlayers, roomCode, gameType, gameTitle } = this.data
-    if (maxPlayers > 0 && players.length >= maxPlayers) {
-      wx.showToast({ title: '房间已满，无法邀请更多玩家', icon: 'none' })
-      return
-    }
-    if (!roomCode) {
-      wx.showToast({ title: '房间信息加载中，请稍后再试', icon: 'none' })
-      return
-    }
-    wx.showShareMenu({
-      withShareTicket: true,
-      menus: ['shareAppMessage', 'shareTimeline'],
-      success: () => {
-        wx.shareAppMessage({
-          title: `NightDeal ${gameTitle}房间 ${roomCode}`,
-          path: `/pages/index/index?roomCode=${roomCode}&gameType=${gameType}`,
-        })
-      },
-    })
+    wx.showToast({ title: '房间已满，无法邀请更多玩家', icon: 'none' })
   },
   onShareAppMessage() {
     const { roomCode, gameType, gameTitle, players, maxPlayers } = this.data
