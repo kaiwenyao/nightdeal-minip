@@ -16,7 +16,7 @@
         </view>
       </view>
     </view>
-    <button class="share-btn" open-type="share">
+    <button class="share-btn" bind:tap="handleShareInvite">
       <text class="share-btn-text">邀请好友</text>
     </button>
   </ui-card>

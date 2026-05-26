@@ -240,6 +240,17 @@ Page({
       menus: ['shareAppMessage', 'shareTimeline'],
     })
   },
+  handleShareInvite() {
+    const { players, maxPlayers } = this.data
+    if (players.length >= maxPlayers) {
+      wx.showToast({ title: '房间已满，无法邀请更多玩家', icon: 'none' })
+      return
+    }
+    wx.showShareMenu({
+      withShareTicket: true,
+      menus: ['shareAppMessage', 'shareTimeline'],
+    })
+  },
   onShareAppMessage() {
     const { roomCode, gameType, gameTitle, players, maxPlayers } = this.data
     const playerCount = players.length
