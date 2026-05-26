@@ -123,14 +123,14 @@ Component({
         })
       } else {
         wx.reLaunch({
-          url: '/pages/index/index'
+          url: '/pages/game-select/game-select'
         })
       }
       this.triggerEvent('back', { delta }, {})
     },
     home() {
       wx.reLaunch({
-        url: '/pages/index/index'
+        url: '/pages/game-select/game-select'
       })
     }
   },
