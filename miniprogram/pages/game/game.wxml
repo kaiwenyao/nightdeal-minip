@@ -1,5 +1,5 @@
 <navigation-bar title="{{gameTitle}}" back="{{true}}" color="black" background="#FFF"></navigation-bar>
-<view class="page-shell">
+<scroll-view class="page-shell" scroll-y type="list">
   <ui-state-panel
     wx:if="{{pageState === 'error'}}"
     type="error"
@@ -22,4 +22,4 @@
   </ui-card>
 
   <ui-button variant="secondary" bind:tap="handleBackRoom">返回房间</ui-button>
-</view>
+</scroll-view>

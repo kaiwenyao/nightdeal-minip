@@ -1,5 +1,5 @@
 <navigation-bar title="房间中" back="{{true}}" color="black" background="#FFF"></navigation-bar>
-<view class="page-shell">
+<scroll-view class="page-shell" scroll-y type="list">
   <ui-card>
     <view class="room-summary">
       <view>
@@ -78,4 +78,4 @@
     <ui-button wx:if="{{status === 'WAITING'}}" loading="{{startingGame}}" disabled="{{startingGame}}" bind:tap="handleStartGame">开始游戏</ui-button>
     <ui-button wx:if="{{status === 'PLAYING'}}" loading="{{endingGame}}" disabled="{{endingGame}}" variant="secondary" bind:tap="handleEndGame">结束游戏</ui-button>
   </ui-card>
-</view>
+</scroll-view>

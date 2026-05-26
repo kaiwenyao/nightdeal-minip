@@ -1,5 +1,5 @@
 <navigation-bar title="NightDeal" back="{{true}}" color="black" background="#FFF"></navigation-bar>
-<view class="page-shell home-shell">
+<scroll-view class="page-shell home-shell" scroll-y type="list">
   <view class="hero">
     <text class="title">{{pageTitle}}</text>
     <text class="subtitle">登录后创建房间，或输入房间码加入。</text>
@@ -107,4 +107,4 @@
   </ui-card>
 
   <ui-state-panel wx:if="{{pageError}}" type="error" message="{{pageError}}" />
-</view>
+</scroll-view>

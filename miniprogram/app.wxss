@@ -1,10 +1,6 @@
 /** app.wxss — NightDeal Design Tokens **/
 
 page {
-  /* Enable scrolling in Skyline renderer */
-  overflow-y: auto;
-  overflow-x: hidden;
-  
   /* ── Color Palette ── */
   /* Primary: deep ink with warm undertone */
   --color-bg: #f7f5f0;
@@ -98,6 +94,8 @@ page {
   flex-direction: column;
   gap: var(--space-5, 20rpx);
   background: var(--color-bg, #f7f5f0);
+  height: 100vh;
+  width: 100%;
 }
 
 .section-title {
