@@ -154,7 +154,7 @@ Component({
           }
           this.setData({ roomCodeInput: roomCode })
           wx.showToast({ title: '正在加入房间...', icon: 'loading', duration: 2000 })
-          await this.handleJoinRoom()
+          await this.handleJoinRoom(true)
         } else {
           wx.showToast({ title: '请先登录后加入房间', icon: 'none', duration: 2000 })
           await this.handleWechatLogin()
@@ -382,7 +382,7 @@ Component({
             this.setData({ gameType: pendingGameType })
           }
           this.setData({ roomCodeInput: roomCode })
-          await this.handleJoinRoom()
+          await this.handleJoinRoom(true)
         }
       } catch (error) {
         const message = error instanceof Error ? error.message : '登录服务不可用，请稍后重试'
@@ -493,7 +493,7 @@ Component({
         this.setActionState('idle', message)
       }
     },
-    async handleJoinRoom() {
+    async handleJoinRoom(fromShareLink = false) {
       if (this.isBusy()) {
         return
       }
@@ -512,7 +512,7 @@ Component({
           url: `/api/rooms/${code}/join`,
           method: 'POST',
         })
-        this.goRoomPage(payload.code, false)
+        this.goRoomPage(payload.code, false, fromShareLink)
       } catch (error) {
         const message = isRoomMissingError(error)
           ? ROOM_GONE_USER_MESSAGE
@@ -521,14 +521,16 @@ Component({
         wx.showToast({ title: message, icon: 'none', duration: 3000 })
       }
     },
-    goRoomPage(roomCode: string, isHost: boolean) {
+    goRoomPage(roomCode: string, isHost: boolean, replace = false) {
       if (this.data.isNavigatingToRoom) {
         return
       }
 
       this.setData({ actionState: 'idle', pageError: '', isNavigatingToRoom: true })
-      wx.navigateTo({
-        url: `/pages/room/room?roomCode=${roomCode}&isHost=${isHost ? '1' : '0'}&gameType=${this.data.gameType}`,
+      const url = `/pages/room/room?roomCode=${roomCode}&isHost=${isHost ? '1' : '0'}&gameType=${this.data.gameType}`
+      const navigateFn = replace ? wx.redirectTo : wx.navigateTo
+      navigateFn({
+        url,
         fail: (error) => {
           this.setData({ isNavigatingToRoom: false, actionState: 'idle' })
           const message = error.errMsg.includes('already exist webviewId') ? '正在进入房间' : '进入房间失败'
