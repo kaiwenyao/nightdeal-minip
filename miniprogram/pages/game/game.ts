@@ -228,14 +228,35 @@ Page({
     this.setData({ roleHidden: !this.data.roleHidden })
   },
   inferCamp(role: string): string {
-    const evilRoles = ['刺客', '莫甘娜', '奥伯伦', '莫德雷德', '爪牙', '反贼', '内奸']
+    const evilRoles = ['刺客', '莫甘娜', '奥伯伦', '莫德雷德', '爪牙', '反贼']
     const goodRoles = ['梅林', '派西维尔', '忠臣', '亚瑟的忠臣', '湖中妖女', '主公']
+    const traitorRoles = ['内奸']
     if (evilRoles.includes(role)) {
       return 'evil'
     }
     if (goodRoles.includes(role)) {
       return 'good'
     }
+    if (traitorRoles.includes(role)) {
+      return 'traitor'
+    }
+    return ''
+  },
+  getCampName(camp: string): string {
+    if (camp === 'good') return '好人阵营'
+    if (camp === 'evil') return '坏人阵营'
+    if (camp === 'traitor') return '内奸阵营'
+    return ''
+  },
+  getCampHint(camp: string, gameType: string): string {
+    if (gameType === 'SGS') {
+      if (camp === 'good') return '你的目标是消灭所有反贼和内奸，保护主公。'
+      if (camp === 'evil') return '你的目标是消灭主公。'
+      if (camp === 'traitor') return '你的目标是成为最后的存活者。需要先消灭反贼，再消灭主公。'
+      return ''
+    }
+    if (camp === 'good') return '好人阵营需要完成任务或找出刺客。梅林知道谁是坏人，但不能暴露身份。'
+    if (camp === 'evil') return '坏人阵营需要阻止任务成功或在任务成功后刺杀梅林。'
     return ''
   },
   getCampName(camp: string): string {
