@@ -241,14 +241,14 @@ Page({
     })
   },
   handleShareInvite() {
-    const { players, maxPlayers } = this.data
+    const { players, maxPlayers, roomCode, gameType, gameTitle } = this.data
     if (players.length >= maxPlayers) {
       wx.showToast({ title: '房间已满，无法邀请更多玩家', icon: 'none' })
       return
     }
-    wx.showShareMenu({
-      withShareTicket: true,
-      menus: ['shareAppMessage', 'shareTimeline'],
+    wx.shareAppMessage({
+      title: `NightDeal ${gameTitle}房间 ${roomCode}`,
+      path: `/pages/index/index?roomCode=${roomCode}&gameType=${gameType}`,
     })
   },
   onShareAppMessage() {
