@@ -204,13 +204,13 @@ Page({
   roomSocketBindings: [] as Array<{ event: string; listener: (...args: unknown[]) => void }>,
   navigatingToGame: false,
   async onLoad(query: Record<string, string>) {
-    const auth = await requireAuth()
+    const roomCode = query.roomCode || ''
+    const gameType = query.gameType || 'AVALON'
+    const auth = await requireAuth({ roomCode, gameType })
     if (!auth) return
     const { profile: user } = auth
 
-    const roomCode = query.roomCode || ''
     const isHost = query.isHost === '1'
-    const gameType = query.gameType || 'AVALON'
     const currentUserId = user.id
     const gameTitle = gameType === 'SGS' ? '三国杀' : gameType === 'AVALON' ? '阿瓦隆' : '房间'
     this.setData({
@@ -234,6 +234,34 @@ Page({
       } else if (this.socket && !this.socket.connected) {
         this.setConnectionStatus('reconnecting')
       }
+    }
+    wx.showShareMenu({
+      withShareTicket: true,
+      menus: ['shareAppMessage', 'shareTimeline'],
+    })
+  },
+  onShareAppMessage() {
+    const { roomCode, gameType, gameTitle, players, maxPlayers } = this.data
+    const playerCount = players.length
+    const title = playerCount > 0
+      ? `NightDeal ${gameTitle}房间 ${roomCode} (${playerCount}/${maxPlayers}人)`
+      : `NightDeal ${gameTitle}房间 ${roomCode}`
+
+    return {
+      title,
+      path: `/pages/index/index?roomCode=${roomCode}&gameType=${gameType}`,
+    }
+  },
+  onShareTimeline() {
+    const { roomCode, gameType, gameTitle, players, maxPlayers } = this.data
+    const playerCount = players.length
+    const title = playerCount > 0
+      ? `NightDeal ${gameTitle}房间 ${roomCode} (${playerCount}/${maxPlayers}人)`
+      : `NightDeal ${gameTitle}房间 ${roomCode}`
+
+    return {
+      title,
+      query: `roomCode=${roomCode}&gameType=${gameType}`,
     }
   },
   onUnload() {

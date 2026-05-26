@@ -40,6 +40,28 @@
   flex-shrink: 0;
 }
 
+.share-btn {
+  margin-top: var(--space-4);
+  background: var(--color-surface);
+  border: 2rpx solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+.share-btn::after {
+  border: none;
+}
+
+.share-btn-text {
+  color: var(--color-accent);
+  font-size: var(--font-sm);
+  font-weight: var(--font-medium);
+}
+
 /* ── Status Badge ── */
 .status-badge {
   display: inline-flex;

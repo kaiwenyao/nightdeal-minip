@@ -105,6 +105,8 @@ Component({
     gameType: 'AVALON' as string,
     pageTitle: '阿瓦隆房间助手',
     currentRoomCode: '',
+    pendingRoomCode: '',
+    pendingGameType: '',
   },
   lifetimes: {
     async attached() {
@@ -118,13 +120,44 @@ Component({
     },
   },
   pageLifetimes: {
-    show() {
+    async show() {
       const page = getCurrentPages().pop()
       const gameType = page?.options?.gameType || 'AVALON'
       const pageTitle = gameType === 'SGS' ? '三国杀房间助手' : '阿瓦隆房间助手'
       const currentRoomCode = getLastRoomCode() || ''
-      this.setData({ isNavigatingToRoom: false, actionState: 'idle', gameType, pageTitle, currentRoomCode })
-      void this.refreshHasToken()
+      // Only read share params from page options once; clear after consuming
+      // to prevent repeated auto-join on subsequent show() calls
+      const pendingRoomCode = page?.options?.roomCode || ''
+      const pendingGameType = page?.options?.gameType || ''
+      if (pendingRoomCode && page?.options) {
+        // Clear consumed share params to prevent re-triggering
+        delete page.options.roomCode
+        delete page.options.gameType
+      }
+      this.setData({
+        isNavigatingToRoom: false,
+        actionState: 'idle',
+        gameType,
+        pageTitle,
+        currentRoomCode,
+        pendingRoomCode: pendingRoomCode || this.data.pendingRoomCode,
+        pendingGameType: pendingGameType || this.data.pendingGameType,
+      })
+      await this.refreshHasToken()
+      if (this.data.hasToken && this.data.pendingRoomCode) {
+        try {
+          const roomCode = this.data.pendingRoomCode
+          const consumedGameType = this.data.pendingGameType
+          this.setData({ pendingRoomCode: '', pendingGameType: '' })
+          if (consumedGameType) {
+            this.setData({ gameType: consumedGameType })
+          }
+          this.setData({ roomCodeInput: roomCode })
+          await this.handleJoinRoom()
+        } catch (e) {
+          console.warn('Auto-join from share link failed:', e)
+        }
+      }
     },
   },
   methods: {
@@ -338,6 +371,17 @@ Component({
         }
 
         wx.showToast({ title: '登录成功', icon: 'success' })
+
+        if (this.data.pendingRoomCode) {
+          const roomCode = this.data.pendingRoomCode
+          const pendingGameType = this.data.pendingGameType
+          this.setData({ pendingRoomCode: '', pendingGameType: '' })
+          if (pendingGameType) {
+            this.setData({ gameType: pendingGameType })
+          }
+          this.setData({ roomCodeInput: roomCode })
+          await this.handleJoinRoom()
+        }
       } catch (error) {
         const message = error instanceof Error ? error.message : '登录服务不可用，请稍后重试'
         this.setActionState('idle', message)

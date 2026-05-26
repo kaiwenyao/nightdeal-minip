@@ -1,16 +1,21 @@
 import { getToken, getUserProfile, UserProfile } from './auth'
 
-/**
- * Require authentication before accessing a protected page.
- * If the user is not authenticated, redirects to the index page.
- * Returns token and profile if authenticated, or null if redirected.
- */
-export async function requireAuth(): Promise<{ token: string; profile: UserProfile } | null> {
+interface AuthRedirectParams {
+  roomCode?: string
+  gameType?: string
+}
+
+export async function requireAuth(redirectParams?: AuthRedirectParams): Promise<{ token: string; profile: UserProfile } | null> {
   const [token, profile] = await Promise.all([getToken(), getUserProfile()])
   if (!token || !profile?.id) {
     wx.showToast({ title: '请先登录', icon: 'none' })
+    const params = new URLSearchParams()
+    if (redirectParams?.roomCode) params.set('roomCode', redirectParams.roomCode)
+    if (redirectParams?.gameType) params.set('gameType', redirectParams.gameType)
+    const queryString = params.toString()
+    const url = queryString ? `/pages/index/index?${queryString}` : '/pages/index/index'
     setTimeout(() => {
-      wx.reLaunch({ url: '/pages/index/index' })
+      wx.reLaunch({ url })
     }, 400)
     return null
   }
