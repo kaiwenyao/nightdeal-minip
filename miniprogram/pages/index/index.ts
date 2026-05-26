@@ -514,8 +514,11 @@ Component({
         })
         this.goRoomPage(payload.code, false)
       } catch (error) {
-        const message = error instanceof Error ? error.message : '加入房间失败，请检查房间码'
+        const message = isRoomMissingError(error)
+          ? ROOM_GONE_USER_MESSAGE
+          : error instanceof Error ? error.message : '加入房间失败，请检查房间码'
         this.setActionState('idle', message)
+        wx.showToast({ title: message, icon: 'none', duration: 3000 })
       }
     },
     goRoomPage(roomCode: string, isHost: boolean) {
