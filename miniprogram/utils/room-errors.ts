@@ -10,12 +10,21 @@ export function isRoomMissingError(error: unknown): boolean {
     return false
   }
   const message = error.message
-  // 兜底：兼容旧版未携带 businessCode 的错误或其他普通 Error
   return (
     message.includes('不存在') ||
     message.includes('已过期') ||
     message.includes('资源不存在')
   )
+}
+
+export function isPermissionError(error: unknown): boolean {
+  if (error instanceof HttpError && error.statusCode === 403) {
+    return true
+  }
+  if (!(error instanceof Error)) {
+    return false
+  }
+  return error.message.includes('没有权限')
 }
 
 export function getRoomLoadErrorMessage(error: unknown): string {

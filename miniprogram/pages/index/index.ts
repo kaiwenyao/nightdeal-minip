@@ -3,7 +3,7 @@ import { request, UnauthorizedError } from '../../utils/request'
 import { config } from '../../utils/config'
 import { getLastRoomCode, setLastRoomCode } from '../../utils/socket'
 import { getDefaultConfig } from '../../utils/role-config'
-import { isRoomMissingError, ROOM_GONE_USER_MESSAGE } from '../../utils/room-errors'
+import { isRoomMissingError, isPermissionError, ROOM_GONE_USER_MESSAGE } from '../../utils/room-errors'
 
 interface LoginResponse {
   token: string
@@ -510,7 +510,7 @@ Component({
           wx.showToast({ title: '登录态失效，请重新登录', icon: 'none' })
           return
         }
-        if (isRoomMissingError(error)) {
+        if (isRoomMissingError(error) || isPermissionError(error)) {
           setLastRoomCode(null)
           this.setData({ currentRoomCode: '' })
           wx.showToast({ title: ROOM_GONE_USER_MESSAGE, icon: 'none' })
