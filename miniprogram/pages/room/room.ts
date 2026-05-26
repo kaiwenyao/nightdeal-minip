@@ -2,7 +2,7 @@ import { requireAuth } from '../../utils/auth-guard'
 import { request } from '../../utils/request'
 import { connectSocket, disconnectSocket, isSocketDomainListError, setLastRoomCode, getSkipNextRoomStartedNav, setSkipNextRoomStartedNav, SocketLike } from '../../utils/socket'
 import { formatRoleSummary, formatSgsRoleSummary, RoleConfig, SgsRoleConfig } from '../../utils/role-config'
-import { getRoomLoadErrorMessage, isRoomMissingError } from '../../utils/room-errors'
+import { getRoomLoadErrorMessage, isRoomMissingError, isPermissionError } from '../../utils/room-errors'
 
 interface PlayerUser {
   id: string
@@ -274,7 +274,7 @@ Page({
     } catch (error) {
       const message = getRoomLoadErrorMessage(error)
       this.setData({ pageState: 'error', pageError: message })
-      if (isRoomMissingError(error)) {
+      if (isRoomMissingError(error) || isPermissionError(error)) {
         setLastRoomCode(null)
       }
     }
