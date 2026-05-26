@@ -235,6 +235,34 @@ Page({
         this.setConnectionStatus('reconnecting')
       }
     }
+    wx.showShareMenu({
+      withShareTicket: true,
+      menus: ['shareAppMessage', 'shareTimeline'],
+    })
+  },
+  onShareAppMessage() {
+    const { roomCode, gameType, gameTitle, players, maxPlayers } = this.data
+    const playerCount = players.length
+    const title = playerCount > 0
+      ? `NightDeal ${gameTitle}房间 ${roomCode} (${playerCount}/${maxPlayers}人)`
+      : `NightDeal ${gameTitle}房间 ${roomCode}`
+
+    return {
+      title,
+      path: `/pages/index/index?roomCode=${roomCode}&gameType=${gameType}`,
+    }
+  },
+  onShareTimeline() {
+    const { roomCode, gameType, gameTitle, players, maxPlayers } = this.data
+    const playerCount = players.length
+    const title = playerCount > 0
+      ? `NightDeal ${gameTitle}房间 ${roomCode} (${playerCount}/${maxPlayers}人)`
+      : `NightDeal ${gameTitle}房间 ${roomCode}`
+
+    return {
+      title,
+      query: `roomCode=${roomCode}&gameType=${gameType}`,
+    }
   },
   onUnload() {
     this.detachRoomSocketListeners()

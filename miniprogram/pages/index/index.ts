@@ -105,6 +105,8 @@ Component({
     gameType: 'AVALON' as string,
     pageTitle: '阿瓦隆房间助手',
     currentRoomCode: '',
+    pendingRoomCode: '',
+    pendingGameType: '',
   },
   lifetimes: {
     async attached() {
@@ -118,13 +120,33 @@ Component({
     },
   },
   pageLifetimes: {
-    show() {
+    async show() {
       const page = getCurrentPages().pop()
       const gameType = page?.options?.gameType || 'AVALON'
       const pageTitle = gameType === 'SGS' ? '三国杀房间助手' : '阿瓦隆房间助手'
       const currentRoomCode = getLastRoomCode() || ''
-      this.setData({ isNavigatingToRoom: false, actionState: 'idle', gameType, pageTitle, currentRoomCode })
-      void this.refreshHasToken()
+      const pendingRoomCode = page?.options?.roomCode || ''
+      const pendingGameType = page?.options?.gameType || ''
+      this.setData({
+        isNavigatingToRoom: false,
+        actionState: 'idle',
+        gameType,
+        pageTitle,
+        currentRoomCode,
+        pendingRoomCode: pendingRoomCode || this.data.pendingRoomCode,
+        pendingGameType: pendingGameType || this.data.pendingGameType,
+      })
+      await this.refreshHasToken()
+      if (this.data.hasToken && this.data.pendingRoomCode) {
+        const roomCode = this.data.pendingRoomCode
+        const pendingGameType = this.data.pendingGameType
+        this.setData({ pendingRoomCode: '', pendingGameType: '' })
+        if (pendingGameType) {
+          this.setData({ gameType: pendingGameType })
+        }
+        this.setData({ roomCodeInput: roomCode })
+        await this.handleJoinRoom()
+      }
     },
   },
   methods: {
@@ -338,6 +360,17 @@ Component({
         }
 
         wx.showToast({ title: '登录成功', icon: 'success' })
+
+        if (this.data.pendingRoomCode) {
+          const roomCode = this.data.pendingRoomCode
+          const pendingGameType = this.data.pendingGameType
+          this.setData({ pendingRoomCode: '', pendingGameType: '' })
+          if (pendingGameType) {
+            this.setData({ gameType: pendingGameType })
+          }
+          this.setData({ roomCodeInput: roomCode })
+          await this.handleJoinRoom()
+        }
       } catch (error) {
         const message = error instanceof Error ? error.message : '登录服务不可用，请稍后重试'
         this.setActionState('idle', message)
