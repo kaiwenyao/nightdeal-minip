@@ -144,8 +144,8 @@ Component({
         pendingGameType: pendingGameType || this.data.pendingGameType,
       })
       await this.refreshHasToken()
-      if (this.data.hasToken && this.data.pendingRoomCode) {
-        try {
+      if (this.data.pendingRoomCode) {
+        if (this.data.hasToken) {
           const roomCode = this.data.pendingRoomCode
           const consumedGameType = this.data.pendingGameType
           this.setData({ pendingRoomCode: '', pendingGameType: '' })
@@ -153,9 +153,11 @@ Component({
             this.setData({ gameType: consumedGameType })
           }
           this.setData({ roomCodeInput: roomCode })
+          wx.showToast({ title: '正在加入房间...', icon: 'loading', duration: 2000 })
           await this.handleJoinRoom()
-        } catch (e) {
-          console.warn('Auto-join from share link failed:', e)
+        } else {
+          wx.showToast({ title: '请先登录后加入房间', icon: 'none', duration: 2000 })
+          await this.handleWechatLogin()
         }
       }
     },
