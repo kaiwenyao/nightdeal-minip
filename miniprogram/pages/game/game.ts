@@ -32,6 +32,9 @@ Page({
     myRole: '',
     mySeatNo: 0,
     camp: '' as string,
+    campName: '' as string,
+    campHint: '' as string,
+    roleDesc: '' as string,
     gameType: 'AVALON' as string,
     gameTitle: '阿瓦隆' as string,
   },
@@ -197,10 +200,16 @@ Page({
       })
       this.clearRoleLoadWatchdog()
       const camp = this.inferCamp(payload.role)
+      const campName = this.getCampName(camp)
+      const campHint = this.getCampHint(camp, this.data.gameType)
+      const roleDesc = this.getRoleDesc(payload.role, this.data.gameType)
       this.setData({
         myRole: payload.role,
         mySeatNo: payload.seatNo,
         camp,
+        campName,
+        campHint,
+        roleDesc,
         pageState: 'ready',
       })
     } catch (error) {
@@ -228,6 +237,41 @@ Page({
       return 'good'
     }
     return ''
+  },
+  getCampName(camp: string): string {
+    if (camp === 'good') return '好人阵营'
+    if (camp === 'evil') return '坏人阵营'
+    return ''
+  },
+  getCampHint(camp: string, gameType: string): string {
+    if (gameType === 'SGS') {
+      return '主公和忠臣需要消灭所有反贼和内奸；反贼需要消灭主公；内奸需要成为最后的存活者。'
+    }
+    if (camp === 'good') return '好人阵营需要完成任务或找出刺客。梅林知道谁是坏人，但不能暴露身份。'
+    if (camp === 'evil') return '坏人阵营需要阻止任务成功或在任务成功后刺杀梅林。'
+    return ''
+  },
+  getRoleDesc(role: string, gameType: string): string {
+    if (gameType === 'SGS') {
+      const sgsDescs: Record<string, string> = {
+        '主公': '明身份，拥有主公技能。胜利条件：消灭所有反贼和内奸。',
+        '忠臣': '暗身份，保护主公。胜利条件：消灭所有反贼和内奸。',
+        '反贼': '暗身份，需要消灭主公。胜利条件：主公死亡。',
+        '内奸': '暗身份，独自作战。胜利条件：成为最后的存活者。',
+      }
+      return sgsDescs[role] || ''
+    }
+    const avalonDescs: Record<string, string> = {
+      '梅林': '知道所有坏人身份，但不能暴露自己，否则会被刺杀。',
+      '派西维尔': '知道梅林是谁，需要保护梅林不被暴露。',
+      '莫甘娜': '假装是梅林，迷惑派西维尔。',
+      '莫德雷德': '梅林看不到的坏人。',
+      '奥伯伦': '其他坏人不知道他是坏人，他也不知道其他坏人。',
+      '刺客': '游戏结束后可以刺杀梅林，如果成功则坏人获胜。',
+      '忠臣': '好人阵营，没有特殊能力。',
+      '爪牙': '坏人阵营，知道其他坏人身份。',
+    }
+    return avalonDescs[role] || ''
   },
   handleBackRoom() {
     setSkipNextRoomStartedNav(true)

@@ -16,9 +16,24 @@
       <view class="ornament-br"></view>
       <text class="label">你的身份</text>
       <text class="role-text">{{roleHidden ? '点击翻牌查看身份' : myRole}}</text>
+      <text wx:if="{{!roleHidden && campName}}" class="camp-text">阵营：{{campName}}</text>
       <text wx:if="{{!roleHidden}}" class="seat-text">座位号：#{{mySeatNo}}</text>
     </view>
     <text wx:if="{{roleHidden}}" class="tap-hint">轻触卡片翻开身份牌</text>
+  </ui-card>
+
+  <ui-card wx:if="{{!roleHidden && roleDesc}}">
+    <view class="card-heading">
+      <text class="section-title">角色说明</text>
+    </view>
+    <text class="role-description">{{roleDesc}}</text>
+  </ui-card>
+
+  <ui-card wx:if="{{!roleHidden && campHint}}">
+    <view class="card-heading">
+      <text class="section-title">胜利条件</text>
+    </view>
+    <text class="camp-hint">{{campHint}}</text>
   </ui-card>
 
   <ui-button variant="secondary" bind:tap="handleBackRoom">返回房间</ui-button>

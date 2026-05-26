@@ -75,6 +75,7 @@ interface SgsRoleItem {
   key: string
   label: string
   count: number
+  desc: string
 }
 
 Page({
@@ -186,10 +187,17 @@ Page({
 
   updateSgsRoleItemsFromConfig() {
     const rc = this.data.roleConfig as SgsRoleConfig
+    const sgsRoleDescs: Record<string, string> = {
+      monarch: '明身份，胜利条件：消灭所有反贼和内奸',
+      loyalist: '保护主公，胜利条件：消灭所有反贼和内奸',
+      rebel: '胜利条件：消灭主公',
+      traitor: '胜利条件：最后存活，成为唯一的胜者',
+    }
     const sgsRoleItems = SGS_ROLES.map((key) => ({
       key,
       label: ROLE_LABELS[key],
       count: rc[key] || 0,
+      desc: sgsRoleDescs[key] || '',
     }))
     const totalRoles = getSgsTotalRoles(rc)
     this.setData({ sgsRoleItems, totalRoles })

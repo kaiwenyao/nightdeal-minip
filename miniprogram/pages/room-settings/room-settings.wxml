@@ -65,8 +65,25 @@
     <block wx:if="{{gameType === 'SGS'}}">
       <view class="role-group-label">身份配置（根据人数自动调整）</view>
       <view wx:for="{{sgsRoleItems}}" wx:key="key" class="role-row">
-        <text class="role-name">{{item.label}}</text>
+        <view class="role-info">
+          <text class="role-name">{{item.label}}</text>
+          <text class="role-desc">{{item.desc}}</text>
+        </view>
         <text class="stepper-value">×{{item.count}}</text>
+      </view>
+      <view class="camp-legend">
+        <view class="camp-item camp-loyalist">
+          <text class="camp-dot"></text>
+          <text class="camp-label">主公阵营：主公 + 忠臣</text>
+        </view>
+        <view class="camp-item camp-rebel">
+          <text class="camp-dot"></text>
+          <text class="camp-label">反贼阵营：反贼</text>
+        </view>
+        <view class="camp-item camp-traitor">
+          <text class="camp-dot"></text>
+          <text class="camp-label">内奸阵营：内奸（独自作战）</text>
+        </view>
       </view>
     </block>
 
