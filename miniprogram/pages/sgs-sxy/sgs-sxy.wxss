@@ -45,7 +45,7 @@ page {
   flex-shrink: 0;
 }
 
-.clear-btn[disabled] {
+.clear-btn--disabled {
   opacity: 0.5;
   color: var(--color-text-muted);
   border-color: var(--color-border);

@@ -24,7 +24,31 @@ Page({
     selectedScrolls: [] as number[],
     selectedOption: null as number | null,
     selectedScrollText: '当前未选择锦囊。',
-    selectedOptionLabel: '未选择'
+    selectedOptionLabel: '未选择',
+    clearBtnDisabled: true,
+    scrollItems: [] as Array<{ id: number; name: string; isActive: boolean }>
+  },
+
+  onLoad() {
+    this.updateScrollItems()
+  },
+
+  updateScrollItems() {
+    const selectedSet: Record<number, boolean> = {}
+    for (const id of this.data.selectedScrolls) {
+      selectedSet[id] = true
+    }
+    const scrollItems = this.data.scrollList.map(item => ({
+      id: item.id,
+      name: item.name,
+      isActive: !!selectedSet[item.id]
+    }))
+    this.setData({ scrollItems })
+  },
+
+  updateClearBtnState() {
+    const clearBtnDisabled = this.data.selectedScrolls.length === 0 && this.data.selectedOption === null
+    this.setData({ clearBtnDisabled })
   },
 
   handleToggleScroll(e: WechatMiniprogram.TouchEvent) {
@@ -42,6 +66,8 @@ Page({
       selectedScrolls,
       selectedScrollText: this.getSelectedScrollText(selectedScrolls)
     })
+    this.updateScrollItems()
+    this.updateClearBtnState()
   },
 
   handleSelectOption(e: WechatMiniprogram.TouchEvent) {
@@ -52,6 +78,7 @@ Page({
       selectedOption: id,
       selectedOptionLabel: option?.name ?? '未选择'
     })
+    this.updateClearBtnState()
   },
 
   handleClear() {
@@ -61,6 +88,8 @@ Page({
       selectedScrollText: '当前未选择锦囊。',
       selectedOptionLabel: '未选择'
     })
+    this.updateScrollItems()
+    this.updateClearBtnState()
   },
 
   getSelectedScrollText(selectedScrolls: number[]): string {
@@ -68,16 +97,8 @@ Page({
       return '当前未选择锦囊。'
     }
     return this.data.scrollList
-      .filter(item => selectedScrolls.includes(item.id))
+      .filter(item => selectedScrolls.indexOf(item.id) > -1)
       .map(item => item.name)
       .join('、')
-  },
-
-  isScrollSelected(id: number): boolean {
-    return this.data.selectedScrolls.includes(id)
-  },
-
-  isOptionSelected(id: number): boolean {
-    return this.data.selectedOption === id
   }
 })

@@ -6,7 +6,7 @@
         <text class="card-title">神荀彧判定</text>
         <text class="card-desc">先勾选场上锦囊，再选择奇兵或正兵。</text>
       </view>
-      <button class="clear-btn" bind:tap="handleClear" disabled="{{selectedScrolls.length === 0 && selectedOption === null}}">清空</button>
+      <button class="clear-btn {{clearBtnDisabled ? 'clear-btn--disabled' : ''}}" bind:tap="handleClear">清空</button>
     </view>
     <view class="status-chips">
       <text class="chip-primary">已选锦囊 {{selectedScrolls.length}}</text>
@@ -21,9 +21,9 @@
     </view>
     <view class="scroll-grid">
       <view
-        wx:for="{{scrollList}}"
+        wx:for="{{scrollItems}}"
         wx:key="id"
-        class="scroll-btn {{selectedScrolls.includes(item.id) ? 'scroll-btn--active' : ''}}"
+        class="scroll-btn {{item.isActive ? 'scroll-btn--active' : ''}}"
         data-id="{{item.id}}"
         bind:tap="handleToggleScroll"
       >
