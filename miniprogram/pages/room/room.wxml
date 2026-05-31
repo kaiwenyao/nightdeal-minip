@@ -16,12 +16,17 @@
         </view>
       </view>
     </view>
-    <button wx:if="{{maxPlayers > 0 && players.length >= maxPlayers}}" class="share-btn share-btn--disabled" bind:tap="handleShareInvite">
-      <text class="share-btn-text">房间已满</text>
-    </button>
-    <button wx:else class="share-btn" open-type="share">
-      <text class="share-btn-text">邀请好友</text>
-    </button>
+    <view class="room-actions">
+      <button wx:if="{{maxPlayers > 0 && players.length >= maxPlayers}}" class="share-btn share-btn--disabled" bind:tap="handleShareInvite">
+        <text class="share-btn-text">房间已满</text>
+      </button>
+      <button wx:else class="share-btn" open-type="share">
+        <text class="share-btn-text">邀请好友</text>
+      </button>
+      <button wx:if="{{gameType === 'SGS'}}" class="tools-btn" bind:tap="handleOpenTools">
+        <text class="tools-btn-text">工具</text>
+      </button>
+    </view>
   </ui-card>
 
   <ui-card wx:if="{{status === 'PLAYING'}}" class="view-identity-card">

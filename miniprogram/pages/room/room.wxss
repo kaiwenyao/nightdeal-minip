@@ -40,8 +40,14 @@
   flex-shrink: 0;
 }
 
-.share-btn {
+.room-actions {
+  display: flex;
+  gap: var(--space-3);
   margin-top: var(--space-4);
+}
+
+.share-btn {
+  flex: 1;
   background: var(--color-surface);
   border: 2rpx solid var(--color-border);
   border-radius: var(--radius-md);
@@ -50,6 +56,28 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
+}
+
+.tools-btn {
+  flex: 1;
+  background: var(--color-teal);
+  border: 2rpx solid var(--color-teal);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+.tools-btn::after {
+  border: none;
+}
+
+.tools-btn-text {
+  color: white;
+  font-size: var(--font-sm);
+  font-weight: var(--font-medium);
 }
 
 .share-btn::after {
