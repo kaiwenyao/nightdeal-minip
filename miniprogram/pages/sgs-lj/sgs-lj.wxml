@@ -83,8 +83,7 @@
       </view>
 
       <button
-        class="generate-btn"
-        disabled="{{!isValid}}"
+        class="generate-btn {{!isValid ? 'generate-btn--disabled' : ''}}"
         bind:tap="handleGenerate"
       >执行随机判定</button>
     </view>

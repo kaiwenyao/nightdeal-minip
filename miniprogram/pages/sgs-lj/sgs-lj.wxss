@@ -192,7 +192,7 @@ page {
   margin-top: var(--space-2);
 }
 
-.generate-btn[disabled] {
+.generate-btn--disabled {
   background: var(--color-border);
   color: var(--color-text-muted);
 }
