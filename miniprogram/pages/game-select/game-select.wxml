@@ -19,4 +19,16 @@
       <text class="game-desc">5-10人 身份分配</text>
     </view>
   </view>
+
+  <view class="tools-section">
+    <text class="section-title">工具集</text>
+    <text class="section-desc">三国杀对局辅助工具</text>
+    <view class="tools-grid">
+      <view class="tool-card" hover-class="tool-card--pressed" bind:tap="handleOpenSgsTools">
+        <view class="tool-icon">荀</view>
+        <text class="tool-name">三国杀工具</text>
+        <text class="tool-desc">神荀彧、李傕判定</text>
+      </view>
+    </view>
+  </view>
 </scroll-view>

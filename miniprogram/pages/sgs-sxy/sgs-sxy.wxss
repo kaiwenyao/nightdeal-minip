@@ -1,0 +1,200 @@
+page {
+  background: var(--color-bg);
+}
+
+.header-card {
+  background: var(--color-surface);
+  border: 2rpx solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  margin-bottom: var(--space-4);
+}
+
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.card-title {
+  display: block;
+  font-size: var(--font-lg);
+  font-weight: var(--font-bold);
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-2);
+}
+
+.card-desc {
+  display: block;
+  font-size: var(--font-sm);
+  color: var(--color-text-secondary);
+  margin-top: var(--space-2);
+}
+
+.clear-btn {
+  min-height: 64rpx;
+  padding: 0 var(--space-4);
+  font-size: var(--font-sm);
+  font-weight: var(--font-semibold);
+  color: var(--color-accent-dark);
+  background: transparent;
+  border: 2rpx solid var(--color-accent);
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+}
+
+.clear-btn--disabled {
+  opacity: 0.5;
+  color: var(--color-text-muted);
+  border-color: var(--color-border);
+}
+
+.status-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.chip-primary {
+  font-size: var(--font-xs);
+  font-weight: var(--font-semibold);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  color: var(--color-teal);
+  background: var(--color-teal-light);
+  border: 2rpx solid rgba(15,76,75,0.2);
+}
+
+.chip {
+  font-size: var(--font-xs);
+  font-weight: var(--font-semibold);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  color: var(--color-text-secondary);
+  background: var(--color-bg-warm);
+}
+
+.section {
+  background: var(--color-surface);
+  border: 2rpx solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  margin-bottom: var(--space-4);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-4);
+}
+
+.section-title {
+  display: block;
+  font-size: var(--font-base);
+  font-weight: var(--font-bold);
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-4);
+}
+
+.section-header .section-title {
+  margin-bottom: 0;
+}
+
+.scroll-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.scroll-btn {
+  width: calc(33.333% - var(--space-2));
+  min-height: 80rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2rpx solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  transition: all 200ms ease;
+}
+
+.scroll-btn--active {
+  color: var(--color-teal);
+  border-color: var(--color-teal);
+  background: var(--color-teal-light);
+  box-shadow: 0 4rpx 12rpx rgba(15,76,75,0.12);
+}
+
+.scroll-btn-text {
+  font-size: var(--font-sm);
+  font-weight: var(--font-medium);
+  color: var(--color-text-primary);
+}
+
+.scroll-btn--active .scroll-btn-text {
+  color: var(--color-teal);
+  font-weight: var(--font-semibold);
+}
+
+.option-grid {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.option-btn {
+  flex: 1;
+  min-height: 160rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  border: 2rpx solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  transition: all 200ms ease;
+}
+
+.option-btn--active {
+  background: var(--color-teal);
+  border-color: var(--color-teal);
+  color: white;
+  box-shadow: 0 8rpx 20rpx rgba(15,76,75,0.2);
+}
+
+.option-name {
+  font-size: var(--font-2xl);
+  font-weight: var(--font-bold);
+  line-height: 1;
+}
+
+.option-btn--active .option-name {
+  color: white;
+}
+
+.option-desc {
+  font-size: var(--font-xs);
+  opacity: 0.9;
+  color: var(--color-text-secondary);
+}
+
+.option-btn--active .option-desc {
+  color: rgba(255,255,255,0.9);
+}
+
+.summary-card {
+  background: var(--color-surface);
+  border: 2rpx solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+}
+
+.summary-text {
+  display: block;
+  font-size: var(--font-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.65;
+}

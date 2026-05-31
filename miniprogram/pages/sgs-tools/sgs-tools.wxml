@@ -1,0 +1,43 @@
+<navigation-bar title="三国杀工具" back="{{true}}" color="black" background="#FFF"></navigation-bar>
+<scroll-view class="page-shell" scroll-y type="list">
+  <view class="header-card">
+    <view class="header-top">
+      <text class="badge">SGS TOOLS</text>
+      <text class="chip">工具集</text>
+    </view>
+    <text class="header-title">三国杀小工具集</text>
+    <text class="header-desc">轻量、快速、可直接点击使用的对局辅助工具。</text>
+  </view>
+
+  <view class="tools-list">
+    <view class="section-title">工具列表</view>
+    <text class="section-desc">选择一个工具，快速进入对应功能。</text>
+
+    <view
+      wx:for="{{tools}}"
+      wx:key="id"
+      class="tool-card"
+      hover-class="tool-card--pressed"
+      data-route="{{item.route}}"
+      bind:tap="handleToolTap"
+    >
+      <view class="tool-card-header">
+        <image class="tool-icon" src="{{item.icon}}" mode="aspectFill" />
+        <view class="tool-info">
+          <text class="tool-name">{{item.name}}</text>
+          <text class="tool-desc">{{item.description}}</text>
+          <text class="tool-brief">{{item.brief}}</text>
+        </view>
+        <text class="arrow-icon">›</text>
+      </view>
+      <view class="tool-card-footer">
+        <text class="chip-tag">{{item.tag}}</text>
+        <text class="enter-text">点击进入</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="footer-note">
+    <text class="footer-text">新增工具时，只需在配置里追加一项即可自动渲染。</text>
+  </view>
+</scroll-view>

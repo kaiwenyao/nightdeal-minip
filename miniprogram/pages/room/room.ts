@@ -656,6 +656,12 @@ Page({
   handleRetryLoad() {
     this.loadRoomSnapshot()
   },
+
+  handleOpenTools() {
+    wx.navigateTo({
+      url: '/pages/sgs-tools/sgs-tools',
+    })
+  },
   applyRoomState(state: RoomStatePayload) {
     const updates: Record<string, unknown> = {}
 

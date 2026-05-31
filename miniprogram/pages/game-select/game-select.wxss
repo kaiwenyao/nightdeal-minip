@@ -113,3 +113,83 @@ page {
   text-align: center;
   line-height: 1.4;
 }
+
+/* ── Tools Section ── */
+.tools-section {
+  margin-top: var(--space-8);
+  padding: var(--space-2) 0;
+}
+
+.section-title {
+  display: block;
+  font-size: var(--font-lg);
+  font-weight: var(--font-bold);
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-2);
+}
+
+.section-desc {
+  display: block;
+  font-size: var(--font-sm);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-4);
+}
+
+.tools-grid {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+}
+
+.tool-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-grow: 1;
+  flex-shrink: 1;
+  flex-basis: 0;
+  min-width: 0;
+  padding: var(--space-6) var(--space-4);
+  background: var(--color-surface);
+  border: 2rpx solid var(--color-border);
+  border-radius: var(--radius-lg);
+  transition: transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease;
+}
+
+.tool-card--pressed {
+  transform: scale(0.97);
+  border-color: var(--color-teal);
+  box-shadow: 0 4rpx 16rpx rgba(15, 76, 75, 0.15);
+}
+
+.tool-icon {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48rpx;
+  font-weight: var(--font-bold);
+  color: var(--color-teal);
+  background: var(--color-teal-light);
+  flex-shrink: 0;
+  margin-bottom: var(--space-3);
+}
+
+.tool-name {
+  display: block;
+  font-size: var(--font-base);
+  font-weight: var(--font-bold);
+  color: var(--color-text-primary);
+  text-align: center;
+  margin-bottom: var(--space-2);
+}
+
+.tool-desc {
+  display: block;
+  font-size: var(--font-xs);
+  color: var(--color-text-muted);
+  text-align: center;
+  line-height: 1.4;
+}

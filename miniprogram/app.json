@@ -5,7 +5,10 @@
     "pages/room/room",
     "pages/room-settings/room-settings",
     "pages/game/game",
-    "pages/logs/logs"
+    "pages/logs/logs",
+    "pages/sgs-tools/sgs-tools",
+    "pages/sgs-sxy/sgs-sxy",
+    "pages/sgs-lj/sgs-lj"
   ],
   "window": {
     "navigationBarTextStyle": "black",

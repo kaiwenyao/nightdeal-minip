@@ -28,4 +28,14 @@ Page({
       },
     })
   },
+  handleOpenSgsTools() {
+    if (this.data.isNavigating) return
+    this.setData({ isNavigating: true })
+    wx.navigateTo({
+      url: '/pages/sgs-tools/sgs-tools',
+      fail: () => {
+        this.setData({ isNavigating: false })
+      },
+    })
+  },
 })

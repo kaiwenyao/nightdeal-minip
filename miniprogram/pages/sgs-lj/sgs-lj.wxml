@@ -1,0 +1,98 @@
+<navigation-bar title="李傕概率判定" back="{{true}}" color="black" background="#FFF"></navigation-bar>
+<scroll-view class="page-shell" scroll-y type="list">
+  <view class="header-card">
+    <text class="card-title">李傕概率判定</text>
+    <text class="card-desc">输入三个结果概率（总和需为 100），再执行随机判定。</text>
+    <view class="preset-list">
+      <button
+        wx:for="{{presets}}"
+        wx:key="label"
+        class="preset-btn"
+        data-preset="{{item.values}}"
+        bind:tap="handlePreset"
+      >{{item.label}}</button>
+      <button class="preset-btn preset-btn--text" bind:tap="handleClear">清空</button>
+    </view>
+  </view>
+
+  <view class="input-card">
+    <view class="input-group">
+      <view class="input-wrapper">
+        <text class="input-label">0 伤害 - 羊袭 (%)</text>
+        <input
+          class="input-field {{currentSum > 100 ? 'input-field--error' : ''}}"
+          type="digit"
+          value="{{values.partA}}"
+          data-key="partA"
+          bindinput="handleInput"
+          placeholder="输入概率"
+          placeholder-class="input-placeholder"
+        />
+      </view>
+
+      <view class="input-wrapper">
+        <text class="input-label">1 伤害 - 狗袭 (%)</text>
+        <input
+          class="input-field {{currentSum > 100 ? 'input-field--error' : ''}}"
+          type="digit"
+          value="{{values.partB}}"
+          data-key="partB"
+          bindinput="handleInput"
+          placeholder="输入概率"
+          placeholder-class="input-placeholder"
+        />
+      </view>
+
+      <view class="input-wrapper">
+        <text class="input-label">2 伤害 - 狼袭 (%)</text>
+        <input
+          class="input-field {{currentSum > 100 ? 'input-field--error' : ''}}"
+          type="digit"
+          value="{{values.partC}}"
+          data-key="partC"
+          bindinput="handleInput"
+          placeholder="输入概率"
+          placeholder-class="input-placeholder"
+        />
+      </view>
+
+      <view class="alert {{isValid ? 'alert--success' : (currentSum > 100 ? 'alert--error' : 'alert--warning')}}">
+        <block wx:if="{{isValid}}">
+          <text class="alert-text">总和为 100%，可以开始判定。</text>
+        </block>
+        <block wx:else>
+          <text class="alert-text">当前总和: <text class="alert-value">{{currentSum}}%</text></text>
+          <text wx:if="{{!isAllFilled}}" class="alert-text">（请先填完三个输入项）</text>
+          <text wx:if="{{isAllFilled && currentSum < 100}}" class="alert-text">（还差 {{diff}}%）</text>
+          <text wx:if="{{isAllFilled && currentSum > 100}}" class="alert-text">（超出 {{0 - diff}}%）</text>
+        </block>
+      </view>
+
+      <view class="prob-section">
+        <text class="prob-label-title">概率分布</text>
+        <view class="prob-bar">
+          <view class="prob-segment prob-segment--a" style="width: {{numA}}%"></view>
+          <view class="prob-segment prob-segment--b" style="width: {{numB}}%"></view>
+          <view class="prob-segment prob-segment--c" style="width: {{numC}}%"></view>
+        </view>
+        <view class="prob-labels">
+          <text class="prob-label">羊袭 {{numA}}%</text>
+          <text class="prob-label">狗袭 {{numB}}%</text>
+          <text class="prob-label">狼袭 {{numC}}%</text>
+        </view>
+      </view>
+
+      <button
+        class="generate-btn {{!isValid ? 'generate-btn--disabled' : ''}}"
+        bind:tap="handleGenerate"
+      >执行随机判定</button>
+    </view>
+  </view>
+
+  <view wx:if="{{visible && result}}" class="result-card">
+    <view class="result-content">
+      <text class="result-badge">本次结果</text>
+      <text class="result-value">{{result}}</text>
+    </view>
+  </view>
+</scroll-view>

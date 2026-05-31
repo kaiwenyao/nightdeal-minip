@@ -1,0 +1,54 @@
+<navigation-bar title="神荀彧判定" back="{{true}}" color="black" background="#FFF"></navigation-bar>
+<scroll-view class="page-shell" scroll-y type="list">
+  <view class="header-card">
+    <view class="header-top">
+      <view>
+        <text class="card-title">神荀彧判定</text>
+        <text class="card-desc">先勾选场上锦囊，再选择奇兵或正兵。</text>
+      </view>
+      <button class="clear-btn {{clearBtnDisabled ? 'clear-btn--disabled' : ''}}" bind:tap="handleClear">清空</button>
+    </view>
+    <view class="status-chips">
+      <text class="chip-primary">已选锦囊 {{selectedScrolls.length}}</text>
+      <text class="chip">当前应对：{{selectedOptionLabel}}</text>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-header">
+      <text class="section-title">锦囊列表</text>
+      <text class="chip">{{scrollList.length}} 项</text>
+    </view>
+    <view class="scroll-grid">
+      <view
+        wx:for="{{scrollItems}}"
+        wx:key="id"
+        class="scroll-btn {{item.isActive ? 'scroll-btn--active' : ''}}"
+        data-id="{{item.id}}"
+        bind:tap="handleToggleScroll"
+      >
+        <text class="scroll-btn-text">{{item.name}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="section">
+    <text class="section-title">应对方式</text>
+    <view class="option-grid">
+      <view
+        wx:for="{{optionList}}"
+        wx:key="id"
+        class="option-btn {{selectedOption === item.id ? 'option-btn--active' : ''}}"
+        data-id="{{item.id}}"
+        bind:tap="handleSelectOption"
+      >
+        <text class="option-name">{{item.name}}</text>
+        <text class="option-desc">{{item.description}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="summary-card">
+    <text class="summary-text">已选锦囊：{{selectedScrollText}}</text>
+  </view>
+</scroll-view>
