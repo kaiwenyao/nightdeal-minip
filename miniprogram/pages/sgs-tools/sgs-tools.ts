@@ -7,7 +7,8 @@ Page({
         description: '奇兵 / 正兵快速决策',
         brief: '按场面选锦囊后，一键做战术判断。',
         tag: '对局中高频',
-        route: '/pages/sgs-sxy/sgs-sxy'
+        route: '/pages/sgs-sxy/sgs-sxy',
+        icon: '/assets/icons/shenxunyu.jpg'
       },
       {
         id: 'lj',
@@ -15,7 +16,8 @@ Page({
         description: '概率加权随机判定',
         brief: '输入三段概率后执行单次随机结果。',
         tag: '概率工具',
-        route: '/pages/sgs-lj/sgs-lj'
+        route: '/pages/sgs-lj/sgs-lj',
+        icon: '/assets/icons/lijue.jpg'
       }
     ]
   },

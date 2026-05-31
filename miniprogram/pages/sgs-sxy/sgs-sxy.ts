@@ -1,3 +1,5 @@
+const STORAGE_KEY = 'sgs_sxy_state'
+
 Page({
   data: {
     scrollList: [
@@ -30,7 +32,40 @@ Page({
   },
 
   onLoad() {
+    this.loadState()
     this.updateScrollItems()
+    this.updateClearBtnState()
+  },
+
+  loadState() {
+    try {
+      const saved = wx.getStorageSync(STORAGE_KEY)
+      if (saved) {
+        const selectedScrolls = saved.selectedScrolls || []
+        const selectedOption = saved.selectedOption || null
+        const option = this.data.optionList.find(item => item.id === selectedOption)
+        
+        this.setData({
+          selectedScrolls,
+          selectedOption,
+          selectedScrollText: this.getSelectedScrollText(selectedScrolls),
+          selectedOptionLabel: option?.name ?? '未选择'
+        })
+      }
+    } catch (e) {
+      console.error('Failed to load state:', e)
+    }
+  },
+
+  saveState() {
+    try {
+      wx.setStorageSync(STORAGE_KEY, {
+        selectedScrolls: this.data.selectedScrolls,
+        selectedOption: this.data.selectedOption
+      })
+    } catch (e) {
+      console.error('Failed to save state:', e)
+    }
   },
 
   updateScrollItems() {
@@ -68,6 +103,7 @@ Page({
     })
     this.updateScrollItems()
     this.updateClearBtnState()
+    this.saveState()
   },
 
   handleSelectOption(e: WechatMiniprogram.TouchEvent) {
@@ -79,6 +115,7 @@ Page({
       selectedOptionLabel: option?.name ?? '未选择'
     })
     this.updateClearBtnState()
+    this.saveState()
   },
 
   handleClear() {
@@ -90,6 +127,7 @@ Page({
     })
     this.updateScrollItems()
     this.updateClearBtnState()
+    this.saveState()
   },
 
   getSelectedScrollText(selectedScrolls: number[]): string {

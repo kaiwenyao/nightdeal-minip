@@ -22,9 +22,7 @@
       bind:tap="handleToolTap"
     >
       <view class="tool-card-header">
-        <view class="tool-icon">
-          <text class="tool-icon-text">{{item.id === 'sxy' ? '荀' : '傕'}}</text>
-        </view>
+        <image class="tool-icon" src="{{item.icon}}" mode="aspectFill" />
         <view class="tool-info">
           <text class="tool-name">{{item.name}}</text>
           <text class="tool-desc">{{item.description}}</text>
