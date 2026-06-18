@@ -96,6 +96,9 @@ page {
   height: 120rpx;
   border-radius: 50%;
   border: 2rpx solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
   background: var(--color-surface);
 }

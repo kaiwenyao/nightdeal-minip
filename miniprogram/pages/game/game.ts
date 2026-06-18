@@ -259,19 +259,6 @@ Page({
     if (camp === 'evil') return '坏人阵营需要阻止任务成功或在任务成功后刺杀梅林。'
     return ''
   },
-  getCampName(camp: string): string {
-    if (camp === 'good') return '好人阵营'
-    if (camp === 'evil') return '坏人阵营'
-    return ''
-  },
-  getCampHint(camp: string, gameType: string): string {
-    if (gameType === 'SGS') {
-      return '主公和忠臣需要消灭所有反贼和内奸；反贼需要消灭主公；内奸需要成为最后的存活者。'
-    }
-    if (camp === 'good') return '好人阵营需要完成任务或找出刺客。梅林知道谁是坏人，但不能暴露身份。'
-    if (camp === 'evil') return '坏人阵营需要阻止任务成功或在任务成功后刺杀梅林。'
-    return ''
-  },
   getRoleDesc(role: string, gameType: string): string {
     if (gameType === 'SGS') {
       const sgsDescs: Record<string, string> = {
