@@ -1,0 +1,567 @@
+/**
+ * 阿瓦隆游戏页面样式
+ * 中世纪幻想风格：深色背景、金色边框、羊皮纸质感
+ */
+
+.container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  color: #e6d5a8;
+  padding: 20rpx;
+  box-sizing: border-box;
+}
+
+/* ==================== 加载和错误状态 ==================== */
+
+.loading-state,
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 80vh;
+}
+
+.loading-spinner {
+  width: 60rpx;
+  height: 60rpx;
+  border: 4rpx solid #e6d5a8;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-text,
+.error-text {
+  margin-top: 20rpx;
+  font-size: 28rpx;
+  color: #a89b7e;
+}
+
+.btn-retry {
+  margin-top: 30rpx;
+  background: linear-gradient(135deg, #c9a84c 0%, #e6d5a8 100%);
+  color: #1a1a2e;
+  border: none;
+  border-radius: 12rpx;
+  padding: 16rpx 40rpx;
+  font-size: 28rpx;
+  font-weight: bold;
+}
+
+/* ==================== 顶部信息栏 ==================== */
+
+.top-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20rpx;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 16rpx;
+  border: 2rpx solid #c9a84c;
+  margin-bottom: 20rpx;
+}
+
+.round-info {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  margin-bottom: 16rpx;
+}
+
+.round-label {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #c9a84c;
+}
+
+.phase-label {
+  font-size: 28rpx;
+  color: #a89b7e;
+  background: rgba(201, 168, 76, 0.2);
+  padding: 6rpx 16rpx;
+  border-radius: 8rpx;
+}
+
+.score-display {
+  display: flex;
+  align-items: center;
+  gap: 30rpx;
+}
+
+.score-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.score-label {
+  font-size: 24rpx;
+  color: #a89b7e;
+}
+
+.score-value {
+  font-size: 48rpx;
+  font-weight: bold;
+}
+
+.score-item.good .score-value {
+  color: #4a90d9;
+}
+
+.score-item.evil .score-value {
+  color: #d94a4a;
+}
+
+.score-divider {
+  font-size: 24rpx;
+  color: #a89b7e;
+}
+
+.rejected-count {
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  color: #d94a4a;
+  background: rgba(217, 74, 74, 0.2);
+  padding: 6rpx 16rpx;
+  border-radius: 8rpx;
+}
+
+/* ==================== 任务历史 ==================== */
+
+.quest-history {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 20rpx;
+  padding: 16rpx;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 12rpx;
+  border: 1rpx solid #3d3d5c;
+}
+
+.quest-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.quest-round {
+  font-size: 22rpx;
+  color: #a89b7e;
+}
+
+.quest-result {
+  font-size: 32rpx;
+}
+
+.quest-item.success .quest-result {
+  color: #4caf50;
+}
+
+.quest-item.fail .quest-result {
+  color: #f44336;
+}
+
+.quest-item.pending .quest-result {
+  color: #a89b7e;
+}
+
+/* ==================== 角色信息面板 ==================== */
+
+.role-panel {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 16rpx;
+  border: 2rpx solid #c9a84c;
+  margin-bottom: 20rpx;
+  overflow: hidden;
+}
+
+.role-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20rpx;
+  background: rgba(201, 168, 76, 0.1);
+}
+
+.role-title {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #c9a84c;
+}
+
+.toggle-icon {
+  font-size: 24rpx;
+  color: #a89b7e;
+}
+
+.role-content {
+  padding: 20rpx;
+}
+
+.role-name {
+  font-size: 36rpx;
+  font-weight: bold;
+  margin-bottom: 12rpx;
+  padding: 12rpx 20rpx;
+  border-radius: 8rpx;
+  text-align: center;
+}
+
+.role-name.good {
+  background: linear-gradient(135deg, #1e3a5f 0%, #2a5298 100%);
+  color: #4a90d9;
+  border: 2rpx solid #4a90d9;
+}
+
+.role-name.evil {
+  background: linear-gradient(135deg, #5f1e1e 0%, #982a2a 100%);
+  color: #d94a4a;
+  border: 2rpx solid #d94a4a;
+}
+
+.role-desc {
+  font-size: 24rpx;
+  color: #a89b7e;
+  line-height: 1.6;
+  margin-bottom: 16rpx;
+}
+
+.visibility-info {
+  margin-top: 16rpx;
+  padding: 16rpx;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8rpx;
+  border: 1rpx solid #3d3d5c;
+}
+
+.visibility-title {
+  font-size: 24rpx;
+  color: #c9a84c;
+  margin-bottom: 12rpx;
+  display: block;
+}
+
+.player-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+}
+
+.player-tag {
+  font-size: 22rpx;
+  padding: 8rpx 16rpx;
+  border-radius: 6rpx;
+}
+
+.player-tag.evil {
+  background: rgba(217, 74, 74, 0.3);
+  color: #d94a4a;
+  border: 1rpx solid #d94a4a;
+}
+
+.player-tag.mystery {
+  background: rgba(201, 168, 76, 0.3);
+  color: #c9a84c;
+  border: 1rpx solid #c9a84c;
+}
+
+/* ==================== 玩家列表 ==================== */
+
+.player-list {
+  margin-bottom: 20rpx;
+}
+
+.player-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16rpx 20rpx;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8rpx;
+  margin-bottom: 8rpx;
+  border: 2rpx solid transparent;
+  transition: all 0.3s ease;
+}
+
+.player-item.leader {
+  border-color: #c9a84c;
+  background: rgba(201, 168, 76, 0.1);
+}
+
+.player-item.offline {
+  opacity: 0.5;
+}
+
+.player-item.selected {
+  border-color: #4a90d9;
+  background: rgba(74, 144, 217, 0.2);
+}
+
+.player-item.in-team {
+  border-color: #4caf50;
+  background: rgba(76, 175, 80, 0.1);
+}
+
+.player-info {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.player-seat {
+  font-size: 22rpx;
+  color: #a89b7e;
+  background: rgba(201, 168, 76, 0.2);
+  padding: 4rpx 10rpx;
+  border-radius: 4rpx;
+  min-width: 36rpx;
+  text-align: center;
+}
+
+.player-name {
+  font-size: 28rpx;
+  color: #e6d5a8;
+}
+
+.leader-badge,
+.host-badge,
+.offline-badge,
+.self-badge {
+  font-size: 20rpx;
+  padding: 4rpx 10rpx;
+  border-radius: 4rpx;
+}
+
+.leader-badge {
+  background: rgba(201, 168, 76, 0.3);
+  color: #c9a84c;
+}
+
+.host-badge {
+  background: rgba(74, 144, 217, 0.3);
+  color: #4a90d9;
+}
+
+.offline-badge {
+  background: rgba(168, 155, 126, 0.3);
+  color: #a89b7e;
+}
+
+.self-badge {
+  background: rgba(76, 175, 80, 0.3);
+  color: #4caf50;
+}
+
+/* ==================== 操作面板 ==================== */
+
+.action-panel,
+.waiting-panel {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 16rpx;
+  border: 2rpx solid #c9a84c;
+  padding: 24rpx;
+  margin-bottom: 20rpx;
+}
+
+.panel-title {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #c9a84c;
+  margin-bottom: 20rpx;
+  display: block;
+  text-align: center;
+}
+
+.waiting-panel {
+  text-align: center;
+  color: #a89b7e;
+  font-size: 26rpx;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 20rpx;
+  justify-content: center;
+}
+
+.action-buttons button {
+  flex: 1;
+  padding: 20rpx;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+  font-weight: bold;
+  border: none;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #c9a84c 0%, #e6d5a8 100%);
+  color: #1a1a2e;
+}
+
+.btn-primary[disabled] {
+  background: #3d3d5c;
+  color: #666;
+}
+
+.btn-approve {
+  background: linear-gradient(135deg, #2e7d32 0%, #4caf50 100%);
+  color: white;
+}
+
+.btn-reject {
+  background: linear-gradient(135deg, #c62828 0%, #f44336 100%);
+  color: white;
+}
+
+.btn-success {
+  background: linear-gradient(135deg, #1565c0 0%, #42a5f5 100%);
+  color: white;
+}
+
+.btn-fail {
+  background: linear-gradient(135deg, #c62828 0%, #f44336 100%);
+  color: white;
+}
+
+.btn-assassinate {
+  background: linear-gradient(135deg, #4a148c 0%, #7b1fa2 100%);
+  color: white;
+  margin-top: 20rpx;
+}
+
+.btn-assassinate[disabled] {
+  background: #3d3d5c;
+  color: #666;
+}
+
+.btn-back {
+  background: linear-gradient(135deg, #c9a84c 0%, #e6d5a8 100%);
+  color: #1a1a2e;
+  margin-top: 30rpx;
+}
+
+/* ==================== 队伍显示 ==================== */
+
+.team-display {
+  margin-bottom: 20rpx;
+  padding: 16rpx;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8rpx;
+}
+
+.team-members {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-top: 12rpx;
+}
+
+.team-member {
+  font-size: 24rpx;
+  padding: 8rpx 16rpx;
+  background: rgba(76, 175, 80, 0.3);
+  color: #4caf50;
+  border-radius: 6rpx;
+  border: 1rpx solid #4caf50;
+}
+
+/* ==================== 投票状态 ==================== */
+
+.voted-status {
+  text-align: center;
+  color: #a89b7e;
+}
+
+.waiting-text {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  color: #666;
+}
+
+/* ==================== 刺杀阶段 ==================== */
+
+.assassination-content {
+  text-align: center;
+}
+
+.assassination-hint {
+  font-size: 26rpx;
+  color: #a89b7e;
+  margin-bottom: 20rpx;
+  display: block;
+}
+
+.assassination-targets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  justify-content: center;
+  margin-bottom: 20rpx;
+}
+
+.target-item {
+  padding: 16rpx 24rpx;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8rpx;
+  border: 2rpx solid #3d3d5c;
+  font-size: 26rpx;
+  color: #e6d5a8;
+  transition: all 0.3s ease;
+}
+
+.target-item.selected {
+  border-color: #7b1fa2;
+  background: rgba(123, 31, 162, 0.3);
+  color: #ce93d8;
+}
+
+/* ==================== 游戏结果 ==================== */
+
+.game-result {
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 16rpx;
+  border: 2rpx solid #c9a84c;
+  padding: 30rpx;
+  text-align: center;
+}
+
+.result-header {
+  padding: 20rpx;
+  border-radius: 12rpx;
+  margin-bottom: 20rpx;
+}
+
+.result-header.good {
+  background: linear-gradient(135deg, #1e3a5f 0%, #2a5298 100%);
+  border: 2rpx solid #4a90d9;
+}
+
+.result-header.evil {
+  background: linear-gradient(135deg, #5f1e1e 0%, #982a2a 100%);
+  border: 2rpx solid #d94a4a;
+}
+
+.result-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #e6d5a8;
+}
+
+.result-reason {
+  font-size: 28rpx;
+  color: #a89b7e;
+  margin-bottom: 16rpx;
+}
+
+.assassination-result {
+  font-size: 26rpx;
+  color: #c9a84c;
+  margin-bottom: 20rpx;
+}

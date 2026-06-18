@@ -569,8 +569,13 @@ Page({
     this.navigatingToGame = true
     this.setData({ startingGame: true })
 
+    // 根据游戏类型选择不同的游戏页面
+    const gamePage = this.data.gameType === 'AVALON'
+      ? '/pages/avalon/avalon'
+      : '/pages/game/game'
+
     wx.navigateTo({
-      url: `/pages/game/game?roomCode=${this.data.roomCode}&gameType=${this.data.gameType}`,
+      url: `${gamePage}?roomCode=${this.data.roomCode}&gameType=${this.data.gameType}`,
       fail: (error) => {
         this.navigatingToGame = false
         this.setData({ startingGame: false })

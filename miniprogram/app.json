@@ -5,6 +5,7 @@
     "pages/room/room",
     "pages/room-settings/room-settings",
     "pages/game/game",
+    "pages/avalon/avalon",
     "pages/logs/logs",
     "pages/sgs-tools/sgs-tools",
     "pages/sgs-sxy/sgs-sxy",

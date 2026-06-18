@@ -1,0 +1,202 @@
+<!--
+  阿瓦隆游戏页面
+  支持完整的游戏流程：身份查看、组队、投票、任务执行、刺杀
+-->
+
+<view class="container">
+  <!-- 加载状态 -->
+  <view wx:if="{{pageState === 'loading'}}" class="loading-state">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <!-- 错误状态 -->
+  <view wx:elif="{{pageState === 'error'}}" class="error-state">
+    <text class="error-text">{{pageError}}</text>
+    <button class="btn-retry" bindtap="handleBackRoom">返回房间</button>
+  </view>
+
+  <!-- 游戏主界面 -->
+  <view wx:else class="game-container">
+    <!-- 顶部信息栏 -->
+    <view class="top-bar">
+      <view class="round-info">
+        <text class="round-label">第 {{round}} 轮</text>
+        <text class="phase-label">{{phaseName}}</text>
+      </view>
+      <view class="score-display">
+        <view class="score-item good">
+          <text class="score-label">好人</text>
+          <text class="score-value">{{goodScore}}</text>
+        </view>
+        <view class="score-divider">VS</view>
+        <view class="score-item evil">
+          <text class="score-label">坏人</text>
+          <text class="score-value">{{evilScore}}</text>
+        </view>
+      </view>
+      <view wx:if="{{rejectedTeamVoteCount > 0}}" class="rejected-count">
+        <text>连续否决: {{rejectedTeamVoteCount}}/5</text>
+      </view>
+    </view>
+
+    <!-- 任务历史 -->
+    <view class="quest-history">
+      <view wx:for="{{questHistoryDisplay}}" wx:key="round" class="quest-item {{item.succeeded ? 'success' : 'fail'}}">
+        <text class="quest-round">R{{item.round}}</text>
+        <text class="quest-result">{{item.resultIcon}}</text>
+      </view>
+      <view wx:for="{{pendingQuests}}" wx:key="round" class="quest-item pending">
+        <text class="quest-round">R{{item.round}}</text>
+        <text class="quest-result">{{item.resultIcon}}</text>
+      </view>
+    </view>
+
+    <!-- 角色信息面板 -->
+    <view class="role-panel" bindtap="handleToggleRole">
+      <view class="role-header">
+        <text class="role-title">我的身份</text>
+        <text class="toggle-icon">{{showRoleInfo ? '▼' : '▶'}}</text>
+      </view>
+      <view wx:if="{{showRoleInfo}}" class="role-content">
+        <view class="role-name {{myFaction}}">
+          <text>{{myRole}}</text>
+        </view>
+        <text class="role-desc">{{myRoleDesc}}</text>
+
+        <!-- 梅林看到的坏人 -->
+        <view wx:if="{{merlinSeeNames.length > 0}}" class="visibility-info">
+          <text class="visibility-title">你知道以下玩家是坏人：</text>
+          <view class="player-tags">
+            <text wx:for="{{merlinSeeNames}}" wx:key="*this" class="player-tag evil">
+              {{item}}
+            </text>
+          </view>
+        </view>
+
+        <!-- 派西维尔看到的梅林候选人 -->
+        <view wx:if="{{percivalSeeNames.length > 0}}" class="visibility-info">
+          <text class="visibility-title">以下玩家可能是梅林：</text>
+          <view class="player-tags">
+            <text wx:for="{{percivalSeeNames}}" wx:key="*this" class="player-tag mystery">
+              {{item}}
+            </text>
+          </view>
+        </view>
+
+        <!-- 邪恶阵营看到的同伴 -->
+        <view wx:if="{{evilCompanionNames.length > 0}}" class="visibility-info">
+          <text class="visibility-title">你的邪恶同伴：</text>
+          <view class="player-tags">
+            <text wx:for="{{evilCompanionNames}}" wx:key="*this" class="player-tag evil">
+              {{item}}
+            </text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 玩家列表 -->
+    <view class="player-list">
+      <scroll-view scroll-y class="player-scroll" style="max-height: 600rpx;">
+        <view wx:for="{{playersWithState}}" wx:key="id" class="player-item {{item.isLeader ? 'leader' : ''}} {{!item.isConnected ? 'offline' : ''}} {{item.isSelected ? 'selected' : ''}} {{item.isInTeam ? 'in-team' : ''}}"
+              bindtap="handleSelectPlayer" data-player-id="{{item.id}}">
+          <view class="player-info">
+            <text class="player-seat">{{item.seatNo}}</text>
+            <text class="player-name">{{item.name}}</text>
+            <view wx:if="{{item.isLeader}}" class="leader-badge">👑</view>
+            <view wx:if="{{item.isHost}}" class="host-badge">房主</view>
+            <view wx:if="{{!item.isConnected}}" class="offline-badge">离线</view>
+          </view>
+          <view wx:if="{{item.id === myId}}" class="self-badge">我</view>
+        </view>
+      </scroll-view>
+    </view>
+
+    <!-- 组队阶段 -->
+    <view wx:if="{{phase === 'team_building' && canProposeTeam}}" class="action-panel team-building">
+      <text class="panel-title">选择任务队员 ({{selectedPlayers.length}}/{{teamSize}})</text>
+      <view class="action-buttons">
+        <button class="btn-primary" bindtap="handleProposeTeam" disabled="{{selectedPlayers.length !== teamSize}}">
+          确认队伍
+        </button>
+      </view>
+    </view>
+
+    <view wx:elif="{{phase === 'team_building' && !canProposeTeam}}" class="waiting-panel">
+      <text>等待队长选择队伍...</text>
+    </view>
+
+    <!-- 投票阶段 -->
+    <view wx:if="{{phase === 'team_voting'}}" class="action-panel voting">
+      <text class="panel-title">投票决定是否通过队伍</text>
+      <view wx:if="{{proposedTeamNames.length > 0}}" class="team-display">
+        <text>队伍成员：</text>
+        <view class="team-members">
+          <text wx:for="{{proposedTeamNames}}" wx:key="*this" class="team-member">
+            {{item}}
+          </text>
+        </view>
+      </view>
+      <view wx:if="{{!hasVoted}}" class="action-buttons">
+        <button class="btn-approve" bindtap="handleTeamVote" data-vote="approve">同意</button>
+        <button class="btn-reject" bindtap="handleTeamVote" data-vote="reject">反对</button>
+      </view>
+      <view wx:else class="voted-status">
+        <text>你已投票：{{myVote === 'approve' ? '同意' : '反对'}}</text>
+        <text class="waiting-text">等待其他玩家投票...</text>
+      </view>
+    </view>
+
+    <!-- 任务执行阶段 -->
+    <view wx:if="{{phase === 'quest_action'}}" class="action-panel quest">
+      <text class="panel-title">执行任务</text>
+      <view wx:if="{{canPerformQuest && !hasPerformedQuest}}" class="action-buttons">
+        <button class="btn-success" bindtap="handleQuestAction" data-action="success">任务成功</button>
+        <button wx:if="{{myFaction === 'evil'}}" class="btn-fail" bindtap="handleQuestAction" data-action="fail">任务失败</button>
+      </view>
+      <view wx:elif="{{hasPerformedQuest}}" class="voted-status">
+        <text>你已提交任务票</text>
+        <text class="waiting-text">等待其他队员提交...</text>
+      </view>
+      <view wx:else class="waiting-panel">
+        <text>等待任务队员执行...</text>
+      </view>
+    </view>
+
+    <!-- 刺杀阶段 -->
+    <view wx:if="{{phase === 'assassination'}}" class="action-panel assassination">
+      <text class="panel-title">刺杀梅林</text>
+      <view wx:if="{{canAssassinate}}" class="assassination-content">
+        <text class="assassination-hint">选择你认为是梅林的玩家进行刺杀：</text>
+        <view class="assassination-targets">
+          <view wx:for="{{players}}" wx:key="id" wx:if="{{item.id !== myId}}"
+                class="target-item {{assassinationTarget === item.id ? 'selected' : ''}}"
+                bindtap="handleSelectAssassinationTarget" data-player-id="{{item.id}}">
+            <text>{{item.name}}</text>
+          </view>
+        </view>
+        <button class="btn-assassinate" bindtap="handleAssassinate" disabled="{{!assassinationTarget}}">
+          确认刺杀
+        </button>
+      </view>
+      <view wx:else class="waiting-panel">
+        <text>等待刺客选择目标...</text>
+      </view>
+    </view>
+
+    <!-- 游戏结束 -->
+    <view wx:if="{{phase === 'finished' && gameResult}}" class="game-result">
+      <view class="result-header {{gameResult.winner}}">
+        <text class="result-title">{{gameResult.winner === 'good' ? '好人阵营获胜！' : '邪恶阵营获胜！'}}</text>
+      </view>
+      <view class="result-reason">
+        <text>{{gameResultReasonText}}</text>
+      </view>
+      <view wx:if="{{assassinatedPlayerName}}" class="assassination-result">
+        <text>被刺杀的玩家：{{assassinatedPlayerName}}</text>
+      </view>
+      <button class="btn-back" bindtap="handleBackRoom">返回房间</button>
+    </view>
+  </view>
+</view>
