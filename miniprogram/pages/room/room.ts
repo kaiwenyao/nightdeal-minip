@@ -441,10 +441,17 @@ Page({
       }
     })
 
-    this.bindRoomSocketEvent('room:started', () => {
+    this.bindRoomSocketEvent('room:started', (data: unknown) => {
       if (getSkipNextRoomStartedNav()) {
         setSkipNextRoomStartedNav(false)
         return
+      }
+      // Use gameType from the event payload to ensure correct navigation
+      // even if local gameType is stale (e.g. joined via share link with wrong param).
+      if (isRecord(data) && typeof data.gameType === 'string' && data.gameType) {
+        const gameType = data.gameType
+        const gameTitle = gameType === 'SGS' ? '三国杀' : gameType === 'AVALON' ? '阿瓦隆' : '房间'
+        this.setData({ gameType, gameTitle })
       }
       if (this.data.status === 'PLAYING') {
         return
