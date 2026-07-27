@@ -1,4 +1,4 @@
-import { requireAuth } from '../../utils/auth-guard'
+import { requireAuth, handleSessionExpired } from '../../utils/auth-guard'
 import { request } from '../../utils/request'
 import { connectSocket, isSocketDomainListError, setSkipNextRoomStartedNav, SocketLike } from '../../utils/socket'
 
@@ -41,6 +41,8 @@ Page({
   socket: null as SocketLike | null,
   gameSocketBindings: [] as Array<{ event: string; listener: (...args: unknown[]) => void }>,
   loadRoleWatchdog: null as number | null,
+  // 本局是否已被房主结束（room:ended）；结束后返回房间不应设置 skip 标志，否则会误吞新局的 room:started
+  gameEnded: false,
   async onLoad(query: Record<string, string>) {
     const auth = await requireAuth()
     if (!auth) return
@@ -64,7 +66,11 @@ Page({
     this.initSocket()
   },
   onUnload() {
-    setSkipNextRoomStartedNav(true)
+    // 仅"游戏进行中手动离开"才置位 skip：同一局内回到房间后不再被 room:started 拉走。
+    // 若是 room:ended 触发的返回（gameEnded），skip 已由 socket 层在 room:ended 时清除。
+    if (!this.gameEnded) {
+      setSkipNextRoomStartedNav(true)
+    }
     // 房间生命周期由 room 页持有：game→room（navigateBack）时不应 leave/disconnect，
     // 否则会把仍在房间页面栈上的用户从房间踢出，且 room 页只跑 onShow，不会重连。
     this.clearRoleLoadWatchdog()
@@ -122,8 +128,8 @@ Page({
     })
 
     this.bindGameSocketEvent('room:ended', () => {
+      this.gameEnded = true
       wx.showToast({ title: '房主已结束游戏', icon: 'none' })
-      setSkipNextRoomStartedNav(true)
       wx.navigateBack()
     })
 
@@ -159,7 +165,14 @@ Page({
     })
 
     this.bindGameSocketEvent('room:error', (data: unknown) => {
-      if (!isRecord(data) || typeof data.message !== 'string' || !data.message) {
+      if (!isRecord(data)) {
+        return
+      }
+      if (data.code === 'UNAUTHORIZED') {
+        void handleSessionExpired()
+        return
+      }
+      if (typeof data.message !== 'string' || !data.message) {
         return
       }
       const kicked = data.code === 'KICKED' || data.message === '你已被房主踢出房间'

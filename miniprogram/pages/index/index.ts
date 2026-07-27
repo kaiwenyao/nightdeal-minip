@@ -508,6 +508,17 @@ Component({
         wx.showToast({ title: `请输入${ROOM_CODE_LENGTH}位房间码`, icon: 'none' })
         return
       }
+      // 分享链接自动加入与建房路径一致：已在其他房间时需先确认
+      if (fromShareLink && this.data.currentRoomCode && this.data.currentRoomCode !== code) {
+        const { confirm } = await wx.showModal({
+          title: '确认加入新房间',
+          content: '你已在一个房间中，加入新房间将离开之前的房间',
+        })
+        if (!confirm) {
+          this.setActionState('idle')
+          return
+        }
+      }
       this.setActionState('joiningRoom')
       try {
         const payload = await request<JoinRoomResponse>({
@@ -537,15 +548,16 @@ Component({
 
       this.setData({ actionState: 'idle', pageError: '', isNavigatingToRoom: true })
       const url = `/pages/room/room?roomCode=${roomCode}&isHost=${isHost ? '1' : '0'}&gameType=${this.data.gameType}`
-      const navigateFn = replace ? wx.redirectTo : wx.navigateTo
-      navigateFn({
-        url,
-        fail: (error) => {
-          this.setData({ isNavigatingToRoom: false, actionState: 'idle' })
-          const message = error.errMsg.includes('already exist webviewId') ? '正在进入房间' : '进入房间失败'
-          wx.showToast({ title: message, icon: 'none' })
-        },
-      })
+      const fail = (error: { errMsg: string }) => {
+        this.setData({ isNavigatingToRoom: false, actionState: 'idle' })
+        const message = error.errMsg.includes('already exist webviewId') ? '正在进入房间' : '进入房间失败'
+        wx.showToast({ title: message, icon: 'none' })
+      }
+      if (replace) {
+        wx.redirectTo({ url, fail })
+      } else {
+        wx.navigateTo({ url, fail })
+      }
     },
     async handleReturnToRoom() {
       if (this.isBusy()) {

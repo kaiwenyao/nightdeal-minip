@@ -28,6 +28,18 @@ interface ApiEnvelope<T> {
   data: T
 }
 
+function isApiEnvelope<T>(payload: unknown): payload is ApiEnvelope<T> {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    return false
+  }
+  const record = payload as Record<string, unknown>
+  return (
+    typeof record.code === 'number'
+    && record.data !== null
+    && typeof record.data === 'object'
+  )
+}
+
 interface RequestOptions<TBody extends WechatMiniprogram.IAnyObject | string | ArrayBuffer> {
   url: string
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE'
@@ -159,8 +171,10 @@ export async function request<
         const body = normalizeWxResponseBody(res.data)
         if (res.statusCode >= 200 && res.statusCode < 300) {
           const payload = body as ApiEnvelope<TResponse> | TResponse
-          if (payload && typeof payload === 'object' && 'code' in payload && 'data' in payload) {
-            const envelope = payload as ApiEnvelope<TResponse>
+          // 信封判定加严：code 必须为数字、data 必须为对象/数组，
+          // 避免真实数据恰好同时含 code 和 data 字段时被误拆包
+          if (isApiEnvelope(payload)) {
+            const envelope = payload
             if (envelope.code === 0) {
               resolve(envelope.data)
               return

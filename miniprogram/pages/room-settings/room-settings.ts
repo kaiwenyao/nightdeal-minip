@@ -15,9 +15,10 @@ import {
   SGS_MAX_PLAYERS,
   ROOM_MAX_PLAYERS,
 } from '../../utils/role-config'
-import { requireAuth } from '../../utils/auth-guard'
+import { requireAuth, handleSessionExpired } from '../../utils/auth-guard'
 import { getUserProfile } from '../../utils/auth'
 import { request } from '../../utils/request'
+import { connectSocket, SocketLike } from '../../utils/socket'
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null && !Array.isArray(v)
@@ -98,9 +99,14 @@ Page({
     isRandomSeat: false,
   },
 
+  socket: null as SocketLike | null,
+  socketBindings: [] as Array<{ event: string; listener: (...args: unknown[]) => void }>,
+
   async onLoad(query: Record<string, string>) {
     const auth = await requireAuth()
     if (!auth) return
+
+    this.initSocket()
 
     const roomCode = query.roomCode || ''
     const gameType = query.gameType || 'AVALON'
@@ -113,6 +119,52 @@ Page({
       return
     }
     await this.loadRoomData(roomCode.trim())
+  },
+
+  onUnload() {
+    this.detachSocketListeners()
+    this.socket = null
+  },
+
+  /** 复用 room 页已建立的共享 socket，仅监听房间级错误（被踢 / 登录态失效） */
+  initSocket() {
+    const socket = connectSocket(false)
+    this.socket = socket
+    const listener = (data: unknown) => {
+      if (!isRecord(data)) {
+        return
+      }
+      if (data.code === 'UNAUTHORIZED') {
+        void handleSessionExpired()
+        return
+      }
+      const kicked = data.code === 'KICKED' || data.message === '你已被房主踢出房间'
+      if (kicked) {
+        wx.showModal({
+          title: '被踢出房间',
+          content: '你已被房主踢出',
+          confirmText: '返回首页',
+          showCancel: false,
+          success: () => {
+            wx.reLaunch({ url: '/pages/index/index' })
+          },
+        })
+      }
+    }
+    socket.on('room:error', listener)
+    this.socketBindings.push({ event: 'room:error', listener })
+  },
+
+  detachSocketListeners() {
+    const socket = this.socket
+    if (!socket) {
+      this.socketBindings = []
+      return
+    }
+    for (const { event, listener } of this.socketBindings) {
+      socket.off(event, listener)
+    }
+    this.socketBindings = []
   },
 
   async loadRoomData(roomCode: string) {
@@ -368,6 +420,9 @@ Page({
   },
 
   async handleSave() {
+    if (this.data.saving) {
+      return
+    }
     if (this.data.saveBlocked) {
       wx.showToast({ title: this.data.blockReason, icon: 'none' })
       return
