@@ -1,0 +1,44 @@
+<navigation-bar title="星董卓镇边" back="{{true}}" color="black" background="#FFF"></navigation-bar>
+<scroll-view class="page-shell" scroll-y type="list">
+  <view class="header-card">
+    <view class="header-top">
+      <view>
+        <text class="card-title">星董卓镇边</text>
+        <text class="card-desc">锁定技：当有牌不因使用置入弃牌堆时，你记录这些牌的花色；记录四种花色且体力上限小于8时，清除记录并加1点体力上限。</text>
+      </view>
+      <button class="clear-btn {{clearBtnDisabled ? 'clear-btn--disabled' : ''}}" bind:tap="handleClear">清空</button>
+    </view>
+    <view class="status-chips">
+      <text class="chip-primary">已记录 {{recordedCount}} / {{suits.length}}</text>
+      <text wx:if="{{isComplete}}" class="chip-success">集齐！体力上限+1</text>
+      <text wx:elif="{{recordedCount === 0}}" class="chip">未记录花色</text>
+      <text wx:else class="chip">还差 {{suits.length - recordedCount}} 种</text>
+    </view>
+  </view>
+
+  <view class="section">
+    <text class="section-title">花色记录</text>
+    <text class="section-desc">点击切换花色的记录状态。集齐四种后自动清空。</text>
+    <view class="suit-grid">
+      <view
+        wx:for="{{suits}}"
+        wx:key="key"
+        class="suit-btn {{recorded[item.key] ? 'suit-btn--active' : ''}}"
+        data-key="{{item.key}}"
+        bind:tap="handleToggleSuit"
+      >
+        <text class="suit-symbol" style="color: {{item.color}};">{{item.symbol}}</text>
+        <text class="suit-name">{{item.name}}</text>
+        <view wx:if="{{recorded[item.key]}}" class="suit-check">
+          <text class="suit-check-icon">✓</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="summary-card">
+    <text wx:if="{{isComplete}}" class="summary-text summary-text--complete">四种花色已集齐！镇边触发，体力上限+1，记录已重置。</text>
+    <text wx:elif="{{recordedCount === 0}}" class="summary-text">当前未记录任何花色。当未使用的牌进入弃牌堆时，点击对应花色进行记录。</text>
+    <text wx:else class="summary-text">已记录花色：{{recordedNames}}</text>
+  </view>
+</scroll-view>

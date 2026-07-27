@@ -23,7 +23,7 @@
     >
       <view class="tool-card-header">
         <view class="tool-icon">
-          <text class="tool-icon-text">{{item.id === 'sxy' ? '荀' : '傕'}}</text>
+          <text class="tool-icon-text">{{item.icon}}</text>
         </view>
         <view class="tool-info">
           <text class="tool-name">{{item.name}}</text>
