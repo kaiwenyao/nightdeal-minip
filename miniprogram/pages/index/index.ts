@@ -160,11 +160,14 @@ Component({
       const pageTitle = getGamePageTitle(gameType)
       const currentRoomCode = getLastRoomCode() || ''
       // Only read share params from page options once; clear after consuming
-      // to prevent repeated auto-join on subsequent show() calls
+      // to prevent repeated auto-join on subsequent show() calls.
+      // gameType must be cleared even without roomCode: otherwise the page keeps
+      // the stale query (e.g. game-select 的 ?gameType=AVALON)，每次 show() 都会把
+      // 本地记忆覆写，导致加入 SGS 房间再返回后被写回阿瓦隆、建房类型错误。
       const pendingRoomCode = page?.options?.roomCode || ''
       const pendingGameType = page?.options?.gameType || ''
-      if (pendingRoomCode && page?.options) {
-        // Clear consumed share params to prevent re-triggering
+      if (page?.options) {
+        // Clear consumed params to prevent re-triggering / re-persisting
         delete page.options.roomCode
         delete page.options.gameType
       }
