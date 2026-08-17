@@ -9,7 +9,8 @@
     "pages/logs/logs",
     "pages/sgs-tools/sgs-tools",
     "pages/sgs-sxy/sgs-sxy",
-    "pages/sgs-lj/sgs-lj"
+    "pages/sgs-lj/sgs-lj",
+    "pages/sgs-xdz/sgs-xdz"
   ],
   "window": {
     "navigationBarTextStyle": "black",
