@@ -70,6 +70,28 @@ interface QuestHistoryItem {
   succeeded: boolean
 }
 
+type PlayerWithState = PlayerInfo & {
+  isSelected: boolean
+  isInTeam: boolean
+  isLeader: boolean
+}
+
+function computePlayersWithState(
+  players: PlayerInfo[],
+  selectedPlayers: string[],
+  proposedTeam: string[],
+  leaderId: string,
+): PlayerWithState[] {
+  const selectedSet = new Set(selectedPlayers)
+  const proposedSet = new Set(proposedTeam)
+  return players.map(p => ({
+    ...p,
+    isSelected: selectedSet.has(p.id),
+    isInTeam: proposedSet.has(p.id),
+    isLeader: p.id === leaderId,
+  }))
+}
+
 // ==================== 页面定义 ====================
 
 Page({
@@ -96,11 +118,7 @@ Page({
     isHost: false,
     players: [] as PlayerInfo[],
     // 预计算的玩家状态（用于 WXML 渲染）
-    playersWithState: [] as Array<PlayerInfo & {
-      isSelected: boolean
-      isInTeam: boolean
-      isLeader: boolean
-    }>,
+    playersWithState: [] as PlayerWithState[],
 
     // 组队相关
     proposedTeam: [] as string[],
@@ -212,6 +230,12 @@ Page({
           myVote: '',
           myQuestAction: '',
           selectedPlayers: [],
+          playersWithState: computePlayersWithState(
+            this.data.players,
+            [],
+            this.data.proposedTeam,
+            this.data.leaderId,
+          ),
         })
         this.updateUIState()
       }
@@ -369,15 +393,12 @@ Page({
       : { round: 1, teamSize: 0, requiredFailCount: 1 }
     const phase = typeof state.phase === 'string' ? state.phase : ''
 
-    // 预计算玩家状态（用于 WXML 渲染）
-    const selectedSet = new Set(this.data.selectedPlayers)
-    const proposedSet = new Set(proposedTeam)
-    const playersWithState = players.map(p => ({
-      ...p,
-      isSelected: selectedSet.has(p.id),
-      isInTeam: proposedSet.has(p.id),
-      isLeader: p.id === state.leaderId,
-    }))
+    const playersWithState = computePlayersWithState(
+      players,
+      this.data.selectedPlayers,
+      proposedTeam,
+      state.leaderId,
+    )
 
     // 预计算可见信息名称
     const visibleInfo = state.visibleInfo || {}
@@ -456,21 +477,28 @@ Page({
   handleSelectPlayer(e: WechatMiniprogram.TouchEvent) {
     const playerId = e.currentTarget.dataset.playerId as string
     if (!playerId) return
+    if (this.data.phase !== 'team_building' || !this.data.canProposeTeam) {
+      return
+    }
 
-    const { selectedPlayers, teamSize } = this.data
+    const { selectedPlayers, teamSize, players, proposedTeam, leaderId } = this.data
     const index = selectedPlayers.indexOf(playerId)
+    let newSelected: string[]
 
     if (index > -1) {
-      // 取消选择
-      const newSelected = [...selectedPlayers]
+      newSelected = [...selectedPlayers]
       newSelected.splice(index, 1)
-      this.setData({ selectedPlayers: newSelected })
     } else if (selectedPlayers.length < teamSize) {
-      // 选择
-      this.setData({ selectedPlayers: [...selectedPlayers, playerId] })
+      newSelected = [...selectedPlayers, playerId]
     } else {
       wx.showToast({ title: `只能选择 ${teamSize} 名队员`, icon: 'none' })
+      return
     }
+
+    this.setData({
+      selectedPlayers: newSelected,
+      playersWithState: computePlayersWithState(players, newSelected, proposedTeam, leaderId),
+    })
   },
 
   handleProposeTeam() {
@@ -600,14 +628,6 @@ Page({
     const list = players || this.data.players
     const player = list.find(p => p.id === playerId)
     return player ? player.name : '未知'
-  },
-
-  isPlayerSelected(playerId: string): boolean {
-    return this.data.selectedPlayers.includes(playerId)
-  },
-
-  isPlayerInTeam(playerId: string): boolean {
-    return this.data.proposedTeam.includes(playerId)
   },
 
   getPhaseName(phase: string): string {

@@ -1,5 +1,14 @@
 const STORAGE_KEY = 'sgs_sxy_state'
 
+/** WeChat dataset may stringify numeric data-* values on some runtimes. */
+function parseItemId(raw: unknown): number | null {
+  const id = typeof raw === 'number' ? raw : Number(raw)
+  if (!Number.isInteger(id) || id <= 0) {
+    return null
+  }
+  return id
+}
+
 Page({
   data: {
     scrollList: [
@@ -41,8 +50,12 @@ Page({
     try {
       const saved = wx.getStorageSync(STORAGE_KEY)
       if (saved) {
-        const selectedScrolls = saved.selectedScrolls || []
-        const selectedOption = saved.selectedOption || null
+        const selectedScrolls = Array.isArray(saved.selectedScrolls)
+          ? (saved.selectedScrolls as unknown[])
+            .map(parseItemId)
+            .filter((id): id is number => id !== null)
+          : []
+        const selectedOption = parseItemId(saved.selectedOption)
         const option = this.data.optionList.find(item => item.id === selectedOption)
         
         this.setData({
@@ -87,7 +100,10 @@ Page({
   },
 
   handleToggleScroll(e: WechatMiniprogram.TouchEvent) {
-    const id = e.currentTarget.dataset.id
+    const id = parseItemId(e.currentTarget.dataset.id)
+    if (id === null || !this.data.scrollList.some(item => item.id === id)) {
+      return
+    }
     const selectedScrolls = [...this.data.selectedScrolls]
     const index = selectedScrolls.indexOf(id)
     
@@ -107,12 +123,15 @@ Page({
   },
 
   handleSelectOption(e: WechatMiniprogram.TouchEvent) {
-    const id = e.currentTarget.dataset.id
-    const option = this.data.optionList.find(item => item.id === id)
-    
+    const id = parseItemId(e.currentTarget.dataset.id)
+    const option = id === null ? undefined : this.data.optionList.find(item => item.id === id)
+    if (!option || id === null) {
+      return
+    }
+
     this.setData({
       selectedOption: id,
-      selectedOptionLabel: option?.name ?? '未选择'
+      selectedOptionLabel: option.name
     })
     this.updateClearBtnState()
     this.saveState()

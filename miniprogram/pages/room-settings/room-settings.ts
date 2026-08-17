@@ -253,7 +253,11 @@ Page({
     const roleConfigMismatch = totalRoles !== this.data.maxPlayers
     const roleMismatch = roleConfigMismatch
     const saveBlocked = this.data.maxPlayers < this.data.playerCount
-    const blockReason = saveBlocked ? '房间人数不能少于当前玩家数' : ''
+    const blockReason = saveBlocked
+      ? '房间人数不能少于当前玩家数'
+      : roleMismatch
+        ? '角色配置与房间人数不一致，请调整后保存'
+        : ''
     this.setData({ totalRoles, roleMismatch, saveBlocked, blockReason })
   },
 
@@ -316,19 +320,32 @@ Page({
       wx.showToast({ title: '房间人数不能少于当前玩家数', icon: 'none' })
       return
     }
-    this.setData({ maxPlayers: max })
-    this.syncRoleConfigWithMaxPlayers()
-    if (this.data.gameType === 'SGS') {
-      this.updateSgsRoleItemsFromConfig()
-    } else {
-      this.updateRoleItemsFromConfig()
+    if (this.data.gameType !== 'SGS' && this.wouldResetSpecialRoles(max)) {
+      wx.showModal({
+        title: '角色配置将重置',
+        content: '特殊角色过多，减少人数将恢复该人数的默认角色配置。是否继续？',
+        success: (res) => {
+          if (!res.confirm) return
+          this.commitMaxPlayers(max)
+        },
+      })
+      return
     }
-    this.updateValidationState()
+    this.commitMaxPlayers(max)
   },
 
   increaseMax() {
     if (this.data.maxPlayers >= this.data.maxRoomPlayers) return
-    const max = this.data.maxPlayers + 1
+    this.commitMaxPlayers(this.data.maxPlayers + 1)
+  },
+
+  wouldResetSpecialRoles(targetCount: number): boolean {
+    const currentConfig = this.data.roleConfig as RoleConfig
+    const specialCount = SPECIAL_ROLES.reduce((sum, role) => sum + (currentConfig[role] ? 1 : 0), 0)
+    return targetCount - specialCount < 2
+  },
+
+  commitMaxPlayers(max: number) {
     this.setData({ maxPlayers: max })
     this.syncRoleConfigWithMaxPlayers()
     if (this.data.gameType === 'SGS') {
@@ -410,12 +427,8 @@ Page({
     if (this.data.saving) {
       return
     }
-    if (this.data.saveBlocked) {
+    if (this.data.saveBlocked || this.data.roleMismatch) {
       wx.showToast({ title: this.data.blockReason, icon: 'none' })
-      return
-    }
-    if (this.data.roleMismatch) {
-      wx.showToast({ title: '角色配置与房间人数不一致，请调整后保存', icon: 'none' })
       return
     }
     this.setData({ saving: true })

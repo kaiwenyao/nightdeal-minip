@@ -79,7 +79,7 @@
       <text class="section-title">房主操作</text>
       <text class="game-tag">{{gameTitle}}</text>
     </view>
-    <ui-button variant="secondary" size="small" block="{{false}}" bind:tap="handleOpenSettings" class="settings-btn">房间设置</ui-button>
+    <ui-button wx:if="{{status !== 'PLAYING'}}" variant="secondary" size="small" block="{{false}}" bind:tap="handleOpenSettings" class="settings-btn">房间设置</ui-button>
     <ui-button wx:if="{{status === 'WAITING'}}" loading="{{startingGame}}" disabled="{{startingGame}}" bind:tap="handleStartGame">开始游戏</ui-button>
     <ui-button wx:if="{{status === 'PLAYING'}}" loading="{{endingGame}}" disabled="{{endingGame}}" variant="secondary" bind:tap="handleEndGame">结束游戏</ui-button>
   </ui-card>

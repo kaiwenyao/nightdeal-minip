@@ -666,6 +666,10 @@ Page({
     if (!this.data.isHost || this.data.pageState !== 'ready') {
       return
     }
+    if (this.data.status === 'PLAYING') {
+      wx.showToast({ title: '游戏进行中无法修改设置', icon: 'none' })
+      return
+    }
     wx.navigateTo({
       url: `/pages/room-settings/room-settings?roomCode=${this.data.roomCode}&gameType=${this.data.gameType}`,
     })
