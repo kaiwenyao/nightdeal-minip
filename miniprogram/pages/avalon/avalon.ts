@@ -3,8 +3,12 @@
  * 支持完整的游戏流程：身份查看、组队、投票、任务执行、刺杀
  */
 
-import { requireAuth } from '../../utils/auth-guard'
-import { connectSocket, SocketLike } from '../../utils/socket'
+import { requireAuth, handleSessionExpired, handleKicked, isKickedRoomError } from '../../utils/auth-guard'
+import { connectSocket, setSkipNextRoomStartedNav, SocketLike } from '../../utils/socket'
+
+function isRecord(v: unknown): v is Record<string, unknown> {
+  return typeof v === 'object' && v !== null && !Array.isArray(v)
+}
 
 // ==================== 类型定义 ====================
 
@@ -89,6 +93,7 @@ Page({
     myRole: '',
     myFaction: '',
     myRoleDesc: '',
+    isHost: false,
     players: [] as PlayerInfo[],
     // 预计算的玩家状态（用于 WXML 渲染）
     playersWithState: [] as Array<PlayerInfo & {
@@ -144,6 +149,8 @@ Page({
 
   socket: null as SocketLike | null,
   socketBindings: [] as Array<{ event: string; listener: (...args: unknown[]) => void }>,
+  // 本局是否已被房主结束（room:ended）；结束后返回房间不应设置 skip 标志，与 game.ts 行为对齐
+  gameEnded: false,
 
   // ==================== 生命周期 ====================
 
@@ -165,6 +172,11 @@ Page({
   },
 
   onUnload() {
+    // 仅"游戏进行中手动离开"才置位 skip：同一局内回到房间后不再被 room:started 拉走。
+    // 若是 room:ended 触发的返回（gameEnded），skip 已由 socket 层在 room:ended 时清除。
+    if (!this.gameEnded) {
+      setSkipNextRoomStartedNav(true)
+    }
     this.detachSocketListeners()
     if (this.socket) {
       this.socket.emit('avalon:leave', { roomCode: this.data.roomCode })
@@ -179,6 +191,8 @@ Page({
     this.socket = socket
 
     this.bindSocketEvent('connect', () => {
+      // 同时加入房间频道：断线重连后才能继续收到 room:ended / room:state / 踢人事件
+      socket.emit('room:join', { roomCode: this.data.roomCode })
       socket.emit('avalon:join', { roomCode: this.data.roomCode })
     })
 
@@ -201,10 +215,6 @@ Page({
         })
         this.updateUIState()
       }
-    })
-
-    this.bindSocketEvent('avalon:vote-updated', () => {
-      wx.showToast({ title: '有玩家完成了投票', icon: 'none' })
     })
 
     this.bindSocketEvent('avalon:vote-resolved', (data: unknown) => {
@@ -238,8 +248,15 @@ Page({
 
     this.bindSocketEvent('avalon:assassination-resolved', (data: unknown) => {
       if (typeof data === 'object' && data !== null) {
-        const result = data as { winner: string; reason: string }
-        this.setData({ gameResult: result })
+        const result = data as GameResult
+        // 与 updateGameState 保持一致：同时更新结果文案与被刺杀玩家名
+        this.setData({
+          gameResult: result,
+          gameResultReasonText: this.getResultReasonText(result.reason),
+          assassinatedPlayerName: result.assassinatedPlayerId
+            ? this.getPlayerName(result.assassinatedPlayerId)
+            : '',
+        })
       }
     })
 
@@ -256,13 +273,59 @@ Page({
     })
 
     this.bindSocketEvent('avalon:error', (data: unknown) => {
-      if (typeof data === 'object' && data !== null) {
-        const { message } = data as { message: string }
-        wx.showToast({ title: message, icon: 'none' })
+      if (!isRecord(data)) {
+        return
+      }
+      if (data.code === 'UNAUTHORIZED') {
+        void handleSessionExpired()
+        return
+      }
+      if (typeof data.message === 'string' && data.message) {
+        wx.showToast({ title: data.message, icon: 'none' })
       }
     })
 
+    // ==================== 房间生命周期事件（与 game.ts 对齐） ====================
+
+    this.bindSocketEvent('room:ended', () => {
+      this.gameEnded = true
+      wx.showToast({ title: '房主已结束游戏', icon: 'none' })
+      wx.navigateBack()
+    })
+
+    this.bindSocketEvent('room:error', (data: unknown) => {
+      if (!isRecord(data)) {
+        return
+      }
+      if (data.code === 'UNAUTHORIZED') {
+        void handleSessionExpired()
+        return
+      }
+      if (typeof data.message !== 'string' || !data.message) {
+        return
+      }
+      if (isKickedRoomError(data)) {
+        handleKicked(data.message)
+        return
+      }
+      wx.showToast({ title: data.message, icon: 'none' })
+    })
+
+    this.bindSocketEvent('reconnect_failed', () => {
+      wx.showModal({
+        title: '连接已断开',
+        content: '无法重新连接到房间服务器，请返回房间重试',
+        confirmText: '返回房间',
+        showCancel: false,
+        success: () => {
+          setSkipNextRoomStartedNav(true)
+          wx.navigateBack()
+        },
+      })
+    })
+
     if (socket.connected) {
+      socket.emit('room:join', { roomCode: this.data.roomCode })
       socket.emit('avalon:join', { roomCode: this.data.roomCode })
     } else {
       socket.connect()
@@ -287,11 +350,29 @@ Page({
 
   // ==================== 状态更新 ====================
 
+  /** 阶段切换后按当前操作权限刷新面板显隐 */
+  updateUIState() {
+    this.setData({
+      showVotingPanel: this.data.canVote,
+      showQuestPanel: this.data.canPerformQuest,
+      showAssassinationPanel: this.data.canAssassinate,
+    })
+  },
+
   updateGameState(state: PlayerView) {
+    // 入口判空兜底：一条缺字段的推送不应让整页崩溃
+    const players = Array.isArray(state.players) ? state.players : []
+    const proposedTeam = Array.isArray(state.proposedTeam) ? state.proposedTeam : []
+    const questHistory = Array.isArray(state.questHistory) ? state.questHistory : []
+    const questConfig = state.currentQuestConfig && typeof state.currentQuestConfig.teamSize === 'number'
+      ? state.currentQuestConfig
+      : { round: 1, teamSize: 0, requiredFailCount: 1 }
+    const phase = typeof state.phase === 'string' ? state.phase : ''
+
     // 预计算玩家状态（用于 WXML 渲染）
     const selectedSet = new Set(this.data.selectedPlayers)
-    const proposedSet = new Set(state.proposedTeam)
-    const playersWithState = state.players.map(p => ({
+    const proposedSet = new Set(proposedTeam)
+    const playersWithState = players.map(p => ({
       ...p,
       isSelected: selectedSet.has(p.id),
       isInTeam: proposedSet.has(p.id),
@@ -300,20 +381,20 @@ Page({
 
     // 预计算可见信息名称
     const visibleInfo = state.visibleInfo || {}
-    const merlinSeeNames = (visibleInfo.merlinSees || []).map(id => this.getPlayerName(id, state.players))
-    const percivalSeeNames = (visibleInfo.percivalSees || []).map(id => this.getPlayerName(id, state.players))
-    const evilCompanionNames = (visibleInfo.evilCompanions || []).map(id => this.getPlayerName(id, state.players))
+    const merlinSeeNames = (visibleInfo.merlinSees || []).map(id => this.getPlayerName(id, players))
+    const percivalSeeNames = (visibleInfo.percivalSees || []).map(id => this.getPlayerName(id, players))
+    const evilCompanionNames = (visibleInfo.evilCompanions || []).map(id => this.getPlayerName(id, players))
 
     // 预计算组队成员名称
-    const proposedTeamNames = state.proposedTeam.map(id => this.getPlayerName(id, state.players))
+    const proposedTeamNames = proposedTeam.map(id => this.getPlayerName(id, players))
 
     // 预计算任务历史显示
-    const questHistoryDisplay = state.questHistory.map(q => ({
+    const questHistoryDisplay = questHistory.map(q => ({
       ...q,
       resultIcon: q.succeeded ? '✅' : '❌',
     }))
-    const pendingQuests = Array.from({ length: 5 - state.questHistory.length }, (_, i) => ({
-      round: state.questHistory.length + i + 1,
+    const pendingQuests = Array.from({ length: 5 - questHistory.length }, (_, i) => ({
+      round: questHistory.length + i + 1,
       resultIcon: '?',
     }))
 
@@ -323,26 +404,29 @@ Page({
     if (state.gameResult) {
       gameResultReasonText = this.getResultReasonText(state.gameResult.reason)
       if (state.gameResult.assassinatedPlayerId) {
-        assassinatedPlayerName = this.getPlayerName(state.gameResult.assassinatedPlayerId, state.players)
+        assassinatedPlayerName = this.getPlayerName(state.gameResult.assassinatedPlayerId, players)
       }
     }
+
+    const me = players.find(p => p.id === state.myId)
 
     this.setData({
       myId: state.myId,
       myRole: state.myRole || '',
       myFaction: state.myFaction || '',
-      phase: state.phase,
-      phaseName: this.getPhaseName(state.phase),
+      isHost: me ? !!me.isHost : false,
+      phase,
+      phaseName: this.getPhaseName(phase),
       round: state.round,
       leaderId: state.leaderId,
       goodScore: state.goodScore,
       evilScore: state.evilScore,
       rejectedTeamVoteCount: state.rejectedTeamVoteCount,
-      players: state.players,
+      players,
       playersWithState,
-      proposedTeam: state.proposedTeam,
+      proposedTeam,
       proposedTeamNames,
-      teamSize: state.currentQuestConfig.teamSize,
+      teamSize: questConfig.teamSize,
       merlinSeeNames,
       percivalSeeNames,
       evilCompanionNames,
@@ -351,15 +435,15 @@ Page({
       assassinatedPlayerName,
       questHistoryDisplay,
       pendingQuests,
-      canProposeTeam: state.canProposeTeam,
-      canVote: state.canVote,
-      canPerformQuest: state.canPerformQuest,
-      canAssassinate: state.canAssassinate,
+      canProposeTeam: !!state.canProposeTeam,
+      canVote: !!state.canVote,
+      canPerformQuest: !!state.canPerformQuest,
+      canAssassinate: !!state.canAssassinate,
       pageState: 'ready',
       myRoleDesc: this.getRoleDesc(state.myRole || ''),
-      showVotingPanel: state.canVote,
-      showQuestPanel: state.canPerformQuest,
-      showAssassinationPanel: state.canAssassinate,
+      showVotingPanel: !!state.canVote,
+      showQuestPanel: !!state.canPerformQuest,
+      showAssassinationPanel: !!state.canAssassinate,
     })
   },
 
@@ -397,20 +481,38 @@ Page({
       return
     }
 
-    this.socket?.emit('avalon:propose-team', {
+    const sent = this.socket?.emit('avalon:propose-team', {
       roomCode,
       selectedPlayerIds: selectedPlayers,
     })
+    if (!sent) {
+      wx.showToast({ title: '连接已断开，请稍后再试', icon: 'none' })
+    }
+  },
+
+  handleBeginGame() {
+    if (this.data.phase !== 'role_reveal' || !this.data.isHost) {
+      return
+    }
+    const sent = this.socket?.emit('avalon:begin', { roomCode: this.data.roomCode })
+    if (!sent) {
+      wx.showToast({ title: '连接已断开，请稍后再试', icon: 'none' })
+    }
   },
 
   handleTeamVote(e: WechatMiniprogram.TouchEvent) {
     const vote = e.currentTarget.dataset.vote as string
     if (!vote || this.data.hasVoted) return
 
-    this.socket?.emit('avalon:team-vote', {
+    // 先 emit 成功再锁定 UI：断线时不能乐观置位，否则票没发出去 UI 却锁死，该轮卡死
+    const sent = this.socket?.emit('avalon:team-vote', {
       roomCode: this.data.roomCode,
       vote,
     })
+    if (!sent) {
+      wx.showToast({ title: '连接已断开，请稍后再试', icon: 'none' })
+      return
+    }
 
     this.setData({
       hasVoted: true,
@@ -422,10 +524,15 @@ Page({
     const action = e.currentTarget.dataset.action as string
     if (!action || this.data.hasPerformedQuest) return
 
-    this.socket?.emit('avalon:quest-action', {
+    // 同 handleTeamVote：emit 失败不置位，避免任务票丢失且 UI 锁死
+    const sent = this.socket?.emit('avalon:quest-action', {
       roomCode: this.data.roomCode,
       action,
     })
+    if (!sent) {
+      wx.showToast({ title: '连接已断开，请稍后再试', icon: 'none' })
+      return
+    }
 
     this.setData({
       hasPerformedQuest: true,
@@ -455,16 +562,21 @@ Page({
       content: `确定要刺杀 ${assassinationTargetName} 吗？`,
       success: (res) => {
         if (res.confirm) {
-          this.socket?.emit('avalon:assassinate', {
+          const sent = this.socket?.emit('avalon:assassinate', {
             roomCode,
             targetPlayerId: assassinationTarget,
           })
+          if (!sent) {
+            wx.showToast({ title: '连接已断开，请稍后再试', icon: 'none' })
+          }
         }
       },
     })
   },
 
   handleBackRoom() {
+    // 手动返回房间：同一局内的 room:started（如重连补发）不再自动跳回游戏页
+    setSkipNextRoomStartedNav(true)
     wx.navigateBack()
   },
 

@@ -1,6 +1,6 @@
-import { requireAuth } from '../../utils/auth-guard'
+import { requireAuth, handleSessionExpired, handleKicked, isKickedRoomError } from '../../utils/auth-guard'
 import { request } from '../../utils/request'
-import { connectSocket, disconnectSocket, isSocketDomainListError, setLastRoomCode, getSkipNextRoomStartedNav, setSkipNextRoomStartedNav, SocketLike } from '../../utils/socket'
+import { connectSocket, disconnectSocket, isSocketDomainListError, setLastRoomCode, getSkipNextRoomStartedNav, setSkipNextRoomStartedNav, getRoomStartedNavConsumed, setRoomStartedNavConsumed, SocketLike } from '../../utils/socket'
 import { formatRoleSummary, formatSgsRoleSummary, RoleConfig, SgsRoleConfig } from '../../utils/role-config'
 import { getRoomLoadErrorMessage, isRoomMissingError, isPermissionError } from '../../utils/room-errors'
 
@@ -45,12 +45,10 @@ interface RoomStatePayload {
     roleConfig?: unknown
     status?: string
     gameType?: string
+    isRandomSeat?: boolean
   }
   players?: Player[]
 }
-
-/** 与后端 `room:error` 踢人文案保持一致；优先使用 payload.code === 'KICKED'。 */
-const ROOM_ERROR_KICKED_MESSAGE = '你已被房主踢出房间'
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null && !Array.isArray(v)
@@ -242,7 +240,13 @@ Page({
       if (this.roomSocketBindings.length === 0) {
         this.initSocket()
       } else if (this.socket && !this.socket.connected) {
-        this.setConnectionStatus('reconnecting')
+        if (this.socket.reconnectPending) {
+          // socket 正在自动重连退避中，只需更新状态展示
+          this.setConnectionStatus('reconnecting')
+        } else {
+          // socket 已断开且无重连定时器（如重连已失败/被中止），重新建立连接
+          this.initSocket()
+        }
       }
     }
     wx.showShareMenu({
@@ -279,6 +283,10 @@ Page({
   },
   onUnload() {
     this.detachRoomSocketListeners()
+    // 房间页销毁后不应把上一局的 skip/consumed 带到下一间房。
+    // 从游戏页被踢时 game onUnload 会先把 skip 置回 true，这里一并清掉。
+    setSkipNextRoomStartedNav(false)
+    setRoomStartedNavConsumed(false)
     // 跳转游戏页或返回首页：均只断开 socket，保留 lastRoomCode
     // 后端会将用户标记为 offline，用户可通过首页"返回房间"重新加入
     disconnectSocket()
@@ -452,8 +460,16 @@ Page({
     })
 
     this.bindRoomSocketEvent('room:started', (data: unknown) => {
+      // 按局跟踪：本局 room:started 只处理一次。
+      // 不用全局 status 做守卫——后端先广播 room:state(PLAYING) 再发 room:started，
+      // 用 status 判断会让非房主玩家永远跳过跳转。
       if (getSkipNextRoomStartedNav()) {
+        // 用户从游戏页手动返回房间后，同一局内的 room:started（如重连补发）不再跳转
         setSkipNextRoomStartedNav(false)
+        setRoomStartedNavConsumed(true)
+        return
+      }
+      if (getRoomStartedNavConsumed()) {
         return
       }
       // Use gameType from the event payload to ensure correct navigation
@@ -462,9 +478,6 @@ Page({
         const gameType = data.gameType
         const gameTitle = titleForGameType(gameType)
         this.setData({ gameType, gameTitle })
-      }
-      if (this.data.status === 'PLAYING') {
-        return
       }
       this.navigateToGame()
     })
@@ -496,21 +509,22 @@ Page({
     })
 
     this.bindRoomSocketEvent('room:error', (data: unknown) => {
-      if (!isRecord(data) || typeof data.message !== 'string' || !data.message) {
+      if (!isRecord(data)) {
+        return
+      }
+      if (data.code === 'UNAUTHORIZED') {
+        // token 失效：清登录态、停止重连、回首页重新登录
+        void handleSessionExpired()
+        return
+      }
+      if (typeof data.message !== 'string' || !data.message) {
+        return
+      }
+      if (isKickedRoomError(data)) {
+        handleKicked(data.message)
         return
       }
       wx.showToast({ title: data.message, icon: 'none' })
-      const kicked = data.code === 'KICKED' || data.message === ROOM_ERROR_KICKED_MESSAGE
-      if (kicked) {
-        setLastRoomCode(null)
-        setTimeout(() => {
-          wx.navigateBack({
-            fail: () => {
-              wx.reLaunch({ url: '/pages/index/index' })
-            },
-          })
-        }, 1500)
-      }
     })
 
     if (socket.connected) {
@@ -584,6 +598,7 @@ Page({
 
     this.detachRoomSocketListeners()
     this.navigatingToGame = true
+    setRoomStartedNavConsumed(true)
     this.setData({ startingGame: true })
 
     // 根据游戏类型选择不同的游戏页面
@@ -596,7 +611,11 @@ Page({
       fail: (error) => {
         this.navigatingToGame = false
         this.setData({ startingGame: false })
-        const message = error.errMsg.includes('already exist webviewId') ? '正在进入游戏' : '进入游戏失败'
+        const alreadyOpen = error.errMsg.includes('already exist webviewId')
+        if (!alreadyOpen) {
+          setRoomStartedNavConsumed(false)
+        }
+        const message = alreadyOpen ? '正在进入游戏' : '进入游戏失败'
         wx.showToast({ title: message, icon: 'none' })
         if (this.data.roomCode && this.data.pageState === 'ready') {
           this.initSocket()
@@ -697,6 +716,11 @@ Page({
       if (typeof state.room.roleConfig !== 'undefined') updates.roleConfig = state.room.roleConfig
       if (typeof state.room.status === 'string' && state.room.status) {
         updates.status = state.room.status
+        if (state.room.status === 'WAITING') {
+          // 房间回到等待态（可能错过了 room:ended）：复位按局导航标志，让新局可正常跳转
+          setSkipNextRoomStartedNav(false)
+          setRoomStartedNavConsumed(false)
+        }
       }
       if (typeof state.room.gameType === 'string' && state.room.gameType) {
         updates.gameType = state.room.gameType

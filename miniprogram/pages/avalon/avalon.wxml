@@ -113,6 +113,18 @@
       </scroll-view>
     </view>
 
+    <!-- 身份揭示阶段 -->
+    <view wx:if="{{phase === 'role_reveal' && isHost}}" class="action-panel role-reveal">
+      <text class="panel-title">请所有玩家查看自己的身份</text>
+      <view class="action-buttons">
+        <button class="btn-primary" bindtap="handleBeginGame">开始组队</button>
+      </view>
+    </view>
+
+    <view wx:elif="{{phase === 'role_reveal' && !isHost}}" class="waiting-panel">
+      <text>查看你的身份，等待房主开始组队...</text>
+    </view>
+
     <!-- 组队阶段 -->
     <view wx:if="{{phase === 'team_building' && canProposeTeam}}" class="action-panel team-building">
       <text class="panel-title">选择任务队员 ({{selectedPlayers.length}}/{{teamSize}})</text>

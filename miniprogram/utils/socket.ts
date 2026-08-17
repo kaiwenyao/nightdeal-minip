@@ -16,9 +16,12 @@ interface EngineHandshake {
 
 export interface SocketLike {
   connected: boolean
+  /** 是否有自动重连定时器存活（断线后处于退避等待中） */
+  reconnectPending: boolean
   on: (event: string, listener: Listener) => void
   off: (event: string, listener?: Listener) => void
-  emit: (event: string, payload?: unknown) => void
+  /** 返回 false 表示当前未连接、消息被丢弃，调用方应提示用户或回滚乐观状态 */
+  emit: (event: string, payload?: unknown) => boolean
   connect: () => void
   disconnect: () => void
 }
@@ -127,6 +130,10 @@ class WeappSocket implements SocketLike {
     return this.isConnected
   }
 
+  get reconnectPending(): boolean {
+    return this.reconnectTimer !== null
+  }
+
   on(event: string, listener: Listener): void {
     const list = this.listeners[event] || []
     list.push(listener)
@@ -141,13 +148,14 @@ class WeappSocket implements SocketLike {
     this.listeners[event] = (this.listeners[event] || []).filter((cb) => cb !== listener)
   }
 
-  emit(event: string, payload?: unknown): void {
+  emit(event: string, payload?: unknown): boolean {
     if (!this.task || !this.isConnected) {
-      return
+      return false
     }
 
     const args = payload === undefined ? [event] : [event, payload]
     this.sendSocketPacket('2', JSON.stringify(args))
+    return true
   }
 
   connect(): void {
@@ -319,9 +327,19 @@ class WeappSocket implements SocketLike {
   }
 
   private emitLocal(event: string, ...args: unknown[]): void {
+    // 一局结束：复位跨局导航标志，避免上一局的 skip/consumed 状态误吞新局的 room:started
+    if (event === 'room:ended') {
+      skipNextRoomStartedNav = false
+      roomStartedNavConsumed = false
+    }
     const callbacks = this.listeners[event] || []
     for (const cb of callbacks.slice()) {
-      cb(...args)
+      try {
+        cb(...args)
+      } catch (error) {
+        // 单个 listener 异常不应中断其余 listener 的事件分发
+        console.error(`[socket] listener for "${event}" threw:`, error)
+      }
     }
   }
 
@@ -411,6 +429,8 @@ function safeJsonParse(value: string): unknown {
 let socket: SocketLike | null = null
 let lastRoomCode: string | null = null
 let skipNextRoomStartedNav = false
+// 本局 room:started 是否已处理（已跳转或已被 skip 消费）；room:ended / 房间回到 WAITING 时复位
+let roomStartedNavConsumed = false
 
 const LAST_ROOM_CODE_KEY = 'nd_last_room_code'
 
@@ -444,6 +464,14 @@ export function getSkipNextRoomStartedNav(): boolean {
 
 export function setSkipNextRoomStartedNav(value: boolean): void {
   skipNextRoomStartedNav = value
+}
+
+export function getRoomStartedNavConsumed(): boolean {
+  return roomStartedNavConsumed
+}
+
+export function setRoomStartedNavConsumed(value: boolean): void {
+  roomStartedNavConsumed = value
 }
 
 export function connectSocket(autoConnect = true): SocketLike {
