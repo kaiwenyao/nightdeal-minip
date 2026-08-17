@@ -253,7 +253,11 @@ Page({
     const roleConfigMismatch = totalRoles !== this.data.maxPlayers
     const roleMismatch = roleConfigMismatch
     const saveBlocked = this.data.maxPlayers < this.data.playerCount
-    const blockReason = saveBlocked ? '房间人数不能少于当前玩家数' : ''
+    const blockReason = saveBlocked
+      ? '房间人数不能少于当前玩家数'
+      : roleMismatch
+        ? '角色配置与房间人数不一致，请调整后保存'
+        : ''
     this.setData({ totalRoles, roleMismatch, saveBlocked, blockReason })
   },
 
@@ -410,12 +414,8 @@ Page({
     if (this.data.saving) {
       return
     }
-    if (this.data.saveBlocked) {
+    if (this.data.saveBlocked || this.data.roleMismatch) {
       wx.showToast({ title: this.data.blockReason, icon: 'none' })
-      return
-    }
-    if (this.data.roleMismatch) {
-      wx.showToast({ title: '角色配置与房间人数不一致，请调整后保存', icon: 'none' })
       return
     }
     this.setData({ saving: true })

@@ -95,6 +95,29 @@ function getGamePageTitle(gameType: string): string {
   return gameType === 'SGS' ? '三国杀房间助手' : '阿瓦隆房间助手'
 }
 
+const LAST_GAME_TYPE_KEY = 'nd_last_game_type'
+
+function normalizeGameType(value: unknown): 'AVALON' | 'SGS' {
+  return value === 'SGS' ? 'SGS' : 'AVALON'
+}
+
+function persistLastGameType(gameType: 'AVALON' | 'SGS'): void {
+  try {
+    wx.setStorageSync(LAST_GAME_TYPE_KEY, gameType)
+  } catch {
+    // Storage failure is non-fatal
+  }
+}
+
+function getLastGameType(): 'AVALON' | 'SGS' {
+  try {
+    const stored = wx.getStorageSync(LAST_GAME_TYPE_KEY)
+    return stored === 'SGS' ? 'SGS' : 'AVALON'
+  } catch {
+    return 'AVALON'
+  }
+}
+
 Component({
   data: {
     userInfo: {
@@ -128,7 +151,12 @@ Component({
   pageLifetimes: {
     async show() {
       const page = getCurrentPages().pop()
-      const gameType = page?.options?.gameType || 'AVALON'
+      const optionGameType = page?.options?.gameType
+      const hasOptionGameType = optionGameType === 'SGS' || optionGameType === 'AVALON'
+      const gameType = hasOptionGameType ? optionGameType : getLastGameType()
+      if (hasOptionGameType) {
+        persistLastGameType(gameType)
+      }
       const pageTitle = getGamePageTitle(gameType)
       const currentRoomCode = getLastRoomCode() || ''
       // Only read share params from page options once; clear after consuming
@@ -156,7 +184,7 @@ Component({
           const consumedGameType = this.data.pendingGameType
           this.setData({ pendingRoomCode: '', pendingGameType: '' })
           if (consumedGameType) {
-            this.setData({ gameType: consumedGameType })
+            this.applyGameType(consumedGameType)
           }
           this.setData({ roomCodeInput: roomCode })
           wx.showToast({ title: '正在加入房间...', icon: 'loading', duration: 2000 })
@@ -178,6 +206,11 @@ Component({
     },
     setActionState(actionState: ActionState, pageError = '') {
       this.setData({ actionState, pageError })
+    },
+    applyGameType(raw: unknown) {
+      const gameType = normalizeGameType(raw)
+      persistLastGameType(gameType)
+      this.setData({ gameType, pageTitle: getGamePageTitle(gameType) })
     },
     onInputChange(e: WechatMiniprogram.Input) {
       const nickName = normalizeNickName(e.detail.value)
@@ -385,7 +418,7 @@ Component({
           const pendingGameType = this.data.pendingGameType
           this.setData({ pendingRoomCode: '', pendingGameType: '' })
           if (pendingGameType) {
-            this.setData({ gameType: pendingGameType })
+            this.applyGameType(pendingGameType)
           }
           this.setData({ roomCodeInput: roomCode })
           await this.handleJoinRoom(true)
@@ -532,9 +565,7 @@ Component({
         // Use gameType from server response to correct stale local value
         // (e.g. when joining via share link with missing/wrong gameType param).
         if (payload.gameType) {
-          const gameType = payload.gameType
-          const pageTitle = getGamePageTitle(gameType)
-          this.setData({ gameType, pageTitle })
+          this.applyGameType(payload.gameType)
         }
         this.goRoomPage(payload.code, false, fromShareLink)
       } catch (error) {
@@ -578,9 +609,7 @@ Component({
         })
         // Use gameType from server response to ensure correct game type
         if (roomInfo.gameType) {
-          const gameType = roomInfo.gameType
-          const pageTitle = getGamePageTitle(gameType)
-          this.setData({ gameType, pageTitle })
+          this.applyGameType(roomInfo.gameType)
         }
         this.goRoomPage(roomCode, false)
       } catch (error) {

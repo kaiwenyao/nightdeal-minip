@@ -22,26 +22,53 @@ Page({
     numC: 0
   },
 
-  hideTimer: null as any,
+  hideTimer: null as ReturnType<typeof setTimeout> | null,
+
+  onUnload() {
+    this.clearHideTimer()
+  },
+
+  clearHideTimer() {
+    if (this.hideTimer) {
+      clearTimeout(this.hideTimer)
+      this.hideTimer = null
+    }
+  },
+
+  clearResult() {
+    this.clearHideTimer()
+    this.setData({ result: null, visible: false })
+  },
 
   handleInput(e: WechatMiniprogram.Input) {
     const key = e.currentTarget.dataset.key
     const value = e.detail.value
 
-    if (value === '' || /^\d{0,3}(\.\d{0,2})?$/.test(value)) {
-      const values = { ...this.data.values, [key]: value }
-      this.updateValues(values)
+    if (value !== '' && !/^\d{0,3}(\.\d{0,2})?$/.test(value)) {
+      return
     }
+
+    if (value !== '') {
+      const parsed = parseFloat(value)
+      if (isFinite(parsed) && parsed > 100) {
+        wx.showToast({ title: '单项概率不能超过 100', icon: 'none' })
+        this.updateValues({ ...this.data.values, [key]: '100' })
+        return
+      }
+    }
+
+    this.updateValues({ ...this.data.values, [key]: value })
   },
 
   handlePreset(e: WechatMiniprogram.TouchEvent) {
     const preset = e.currentTarget.dataset.preset
+    this.clearResult()
     this.updateValues(preset)
   },
 
   handleClear() {
+    this.clearResult()
     this.updateValues({ partA: '', partB: '', partC: '' })
-    this.setData({ result: null, visible: false })
   },
 
   handleGenerate() {
@@ -64,7 +91,7 @@ Page({
       visible: true
     })
 
-    if (this.hideTimer) clearTimeout(this.hideTimer)
+    this.clearHideTimer()
     this.hideTimer = setTimeout(() => {
       this.setData({ visible: false })
     }, 2200)

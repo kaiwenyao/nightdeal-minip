@@ -109,9 +109,9 @@
   <ui-button
     variant="primary"
     loading="{{saving}}"
-    disabled="{{saveBlocked || saving}}"
+    disabled="{{saveBlocked || roleMismatch || saving}}"
     bind:tap="handleSave"
   >
-    {{saveBlocked ? blockReason : '保存设置'}}
+    {{saveBlocked || roleMismatch ? blockReason : '保存设置'}}
   </ui-button>
 </scroll-view>
