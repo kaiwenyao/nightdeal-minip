@@ -177,18 +177,10 @@ Page({
       }
       const kicked = data.code === 'KICKED' || data.message === '你已被房主踢出房间'
       if (kicked) {
-        wx.showModal({
-          title: '被踢出房间',
-          content: '你已被房主踢出',
-          confirmText: '返回首页',
-          showCancel: false,
-          success: () => {
-            wx.reLaunch({ url: '/pages/index/index' })
-          },
-        })
-      } else {
-        wx.showToast({ title: data.message, icon: 'none' })
+        // 被踢由底下的 room 页统一 toast + reLaunch，避免与 1500ms 定时器抢导航
+        return
       }
+      wx.showToast({ title: data.message, icon: 'none' })
     })
 
     if (socket.connected) {

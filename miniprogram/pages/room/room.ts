@@ -513,6 +513,7 @@ Page({
       const kicked = data.code === 'KICKED' || data.message === ROOM_ERROR_KICKED_MESSAGE
       if (kicked) {
         setLastRoomCode(null)
+        setRoomStartedNavConsumed(false)
         setTimeout(() => {
           // 用 reLaunch 清空页面栈：room-settings 等页面可能压在 room 页上，
           // navigateBack 只弹一层会落回僵尸房间页

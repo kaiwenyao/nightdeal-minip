@@ -126,7 +126,7 @@ Page({
     this.socket = null
   },
 
-  /** 复用 room 页已建立的共享 socket，仅监听房间级错误（被踢 / 登录态失效） */
+  /** 复用 room 页已建立的共享 socket；被踢由 room 页统一 reLaunch，这里只处理登录态失效 */
   initSocket() {
     const socket = connectSocket(false)
     this.socket = socket
@@ -136,19 +136,6 @@ Page({
       }
       if (data.code === 'UNAUTHORIZED') {
         void handleSessionExpired()
-        return
-      }
-      const kicked = data.code === 'KICKED' || data.message === '你已被房主踢出房间'
-      if (kicked) {
-        wx.showModal({
-          title: '被踢出房间',
-          content: '你已被房主踢出',
-          confirmText: '返回首页',
-          showCancel: false,
-          success: () => {
-            wx.reLaunch({ url: '/pages/index/index' })
-          },
-        })
       }
     }
     socket.on('room:error', listener)
