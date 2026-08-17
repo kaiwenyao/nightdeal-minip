@@ -35,6 +35,7 @@ interface CreateRoomResponse {
   id: string
   code: string
   status: string
+  gameType?: string
   roleConfig: unknown
   maxPlayers: number
   createdAt: string
@@ -44,6 +45,7 @@ interface JoinRoomResponse {
   id: string
   code: string
   status: string
+  gameType?: string
   roleConfig: unknown
   maxPlayers: number
   host: { id: string; nickName: string; avatarUrl: string } | null
@@ -89,6 +91,10 @@ function getBackendAvatarUrl(avatarUrl: string): string {
   return avatarUrl
 }
 
+function getGamePageTitle(gameType: string): string {
+  return gameType === 'SGS' ? '三国杀房间助手' : '阿瓦隆房间助手'
+}
+
 Component({
   data: {
     userInfo: {
@@ -123,7 +129,7 @@ Component({
     async show() {
       const page = getCurrentPages().pop()
       const gameType = page?.options?.gameType || 'AVALON'
-      const pageTitle = gameType === 'SGS' ? '三国杀房间助手' : '阿瓦隆房间助手'
+      const pageTitle = getGamePageTitle(gameType)
       const currentRoomCode = getLastRoomCode() || ''
       // Only read share params from page options once; clear after consuming
       // to prevent repeated auto-join on subsequent show() calls
@@ -512,6 +518,13 @@ Component({
           url: `/api/rooms/${code}/join`,
           method: 'POST',
         })
+        // Use gameType from server response to correct stale local value
+        // (e.g. when joining via share link with missing/wrong gameType param).
+        if (payload.gameType) {
+          const gameType = payload.gameType
+          const pageTitle = getGamePageTitle(gameType)
+          this.setData({ gameType, pageTitle })
+        }
         this.goRoomPage(payload.code, false, fromShareLink)
       } catch (error) {
         const message = isRoomMissingError(error)
@@ -548,9 +561,15 @@ Component({
       }
       this.setActionState('returningToRoom')
       try {
-        await request<{ code: string }>({
+        const roomInfo = await request<{ code: string; gameType?: string }>({
           url: `/api/rooms/${roomCode}`,
         })
+        // Use gameType from server response to ensure correct game type
+        if (roomInfo.gameType) {
+          const gameType = roomInfo.gameType
+          const pageTitle = getGamePageTitle(gameType)
+          this.setData({ gameType, pageTitle })
+        }
         this.goRoomPage(roomCode, false)
       } catch (error) {
         if (error instanceof UnauthorizedError) {
