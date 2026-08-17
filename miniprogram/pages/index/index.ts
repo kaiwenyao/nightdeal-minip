@@ -91,6 +91,10 @@ function getBackendAvatarUrl(avatarUrl: string): string {
   return avatarUrl
 }
 
+function getGamePageTitle(gameType: string): string {
+  return gameType === 'SGS' ? '三国杀房间助手' : '阿瓦隆房间助手'
+}
+
 Component({
   data: {
     userInfo: {
@@ -125,7 +129,7 @@ Component({
     async show() {
       const page = getCurrentPages().pop()
       const gameType = page?.options?.gameType || 'AVALON'
-      const pageTitle = gameType === 'SGS' ? '三国杀房间助手' : '阿瓦隆房间助手'
+      const pageTitle = getGamePageTitle(gameType)
       const currentRoomCode = getLastRoomCode() || ''
       // Only read share params from page options once; clear after consuming
       // to prevent repeated auto-join on subsequent show() calls
@@ -529,7 +533,7 @@ Component({
         // (e.g. when joining via share link with missing/wrong gameType param).
         if (payload.gameType) {
           const gameType = payload.gameType
-          const pageTitle = gameType === 'SGS' ? '三国杀房间助手' : '阿瓦隆房间助手'
+          const pageTitle = getGamePageTitle(gameType)
           this.setData({ gameType, pageTitle })
         }
         this.goRoomPage(payload.code, false, fromShareLink)
@@ -575,7 +579,7 @@ Component({
         // Use gameType from server response to ensure correct game type
         if (roomInfo.gameType) {
           const gameType = roomInfo.gameType
-          const pageTitle = gameType === 'SGS' ? '三国杀房间助手' : '阿瓦隆房间助手'
+          const pageTitle = getGamePageTitle(gameType)
           this.setData({ gameType, pageTitle })
         }
         this.goRoomPage(roomCode, false)

@@ -57,6 +57,16 @@ function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null && !Array.isArray(v)
 }
 
+function titleForGameType(gameType: string): string {
+  if (gameType === 'SGS') {
+    return '三国杀'
+  }
+  if (gameType === 'AVALON') {
+    return '阿瓦隆'
+  }
+  return '房间'
+}
+
 function parsePlayerUser(u: unknown): PlayerUser | null {
   if (!isRecord(u)) {
     return null
@@ -213,7 +223,7 @@ Page({
 
     const isHost = query.isHost === '1'
     const currentUserId = user.id
-    const gameTitle = gameType === 'SGS' ? '三国杀' : gameType === 'AVALON' ? '阿瓦隆' : '房间'
+    const gameTitle = titleForGameType(gameType)
     this.setData({
       roomCode,
       isHost,
@@ -291,7 +301,7 @@ Page({
       const gameType = typeof payload.gameType === 'string' && payload.gameType
         ? payload.gameType
         : this.data.gameType
-      const gameTitle = gameType === 'SGS' ? '三国杀' : gameType === 'AVALON' ? '阿瓦隆' : '房间'
+      const gameTitle = titleForGameType(gameType)
 
       this.setData({
         roomCode: payload.code,
@@ -465,7 +475,7 @@ Page({
       // even if local gameType is stale (e.g. joined via share link with wrong param).
       if (isRecord(data) && typeof data.gameType === 'string' && data.gameType) {
         const gameType = data.gameType
-        const gameTitle = gameType === 'SGS' ? '三国杀' : gameType === 'AVALON' ? '阿瓦隆' : '房间'
+        const gameTitle = titleForGameType(gameType)
         this.setData({ gameType, gameTitle })
       }
       this.navigateToGame()
@@ -715,11 +725,7 @@ Page({
       }
       if (typeof state.room.gameType === 'string' && state.room.gameType) {
         updates.gameType = state.room.gameType
-        updates.gameTitle = state.room.gameType === 'SGS'
-          ? '三国杀'
-          : state.room.gameType === 'AVALON'
-            ? '阿瓦隆'
-            : '房间'
+        updates.gameTitle = titleForGameType(state.room.gameType)
       }
       if (typeof state.room.isRandomSeat === 'boolean') {
         updates.isRandomSeat = state.room.isRandomSeat
