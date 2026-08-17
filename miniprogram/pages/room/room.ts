@@ -1,4 +1,4 @@
-import { requireAuth, handleSessionExpired } from '../../utils/auth-guard'
+import { requireAuth, handleSessionExpired, handleKicked, isKickedRoomError } from '../../utils/auth-guard'
 import { request } from '../../utils/request'
 import { connectSocket, disconnectSocket, isSocketDomainListError, setLastRoomCode, getSkipNextRoomStartedNav, setSkipNextRoomStartedNav, getRoomStartedNavConsumed, setRoomStartedNavConsumed, SocketLike } from '../../utils/socket'
 import { formatRoleSummary, formatSgsRoleSummary, RoleConfig, SgsRoleConfig } from '../../utils/role-config'
@@ -49,9 +49,6 @@ interface RoomStatePayload {
   }
   players?: Player[]
 }
-
-/** 与后端 `room:error` 踢人文案保持一致；优先使用 payload.code === 'KICKED'。 */
-const ROOM_ERROR_KICKED_MESSAGE = '你已被房主踢出房间'
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null && !Array.isArray(v)
@@ -286,6 +283,10 @@ Page({
   },
   onUnload() {
     this.detachRoomSocketListeners()
+    // 房间页销毁后不应把上一局的 skip/consumed 带到下一间房。
+    // 从游戏页被踢时 game onUnload 会先把 skip 置回 true，这里一并清掉。
+    setSkipNextRoomStartedNav(false)
+    setRoomStartedNavConsumed(false)
     // 跳转游戏页或返回首页：均只断开 socket，保留 lastRoomCode
     // 后端会将用户标记为 offline，用户可通过首页"返回房间"重新加入
     disconnectSocket()
@@ -519,17 +520,11 @@ Page({
       if (typeof data.message !== 'string' || !data.message) {
         return
       }
-      wx.showToast({ title: data.message, icon: 'none' })
-      const kicked = data.code === 'KICKED' || data.message === ROOM_ERROR_KICKED_MESSAGE
-      if (kicked) {
-        setLastRoomCode(null)
-        setRoomStartedNavConsumed(false)
-        setTimeout(() => {
-          // 用 reLaunch 清空页面栈：room-settings 等页面可能压在 room 页上，
-          // navigateBack 只弹一层会落回僵尸房间页
-          wx.reLaunch({ url: '/pages/index/index' })
-        }, 1500)
+      if (isKickedRoomError(data)) {
+        handleKicked(data.message)
+        return
       }
+      wx.showToast({ title: data.message, icon: 'none' })
     })
 
     if (socket.connected) {
@@ -616,7 +611,11 @@ Page({
       fail: (error) => {
         this.navigatingToGame = false
         this.setData({ startingGame: false })
-        const message = error.errMsg.includes('already exist webviewId') ? '正在进入游戏' : '进入游戏失败'
+        const alreadyOpen = error.errMsg.includes('already exist webviewId')
+        if (!alreadyOpen) {
+          setRoomStartedNavConsumed(false)
+        }
+        const message = alreadyOpen ? '正在进入游戏' : '进入游戏失败'
         wx.showToast({ title: message, icon: 'none' })
         if (this.data.roomCode && this.data.pageState === 'ready') {
           this.initSocket()

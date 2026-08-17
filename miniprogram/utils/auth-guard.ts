@@ -1,5 +1,8 @@
 import { getToken, getUserProfile, clearToken, clearUserProfile, UserProfile } from './auth'
-import { disconnectSocket, setLastRoomCode } from './socket'
+import { disconnectSocket, setLastRoomCode, setSkipNextRoomStartedNav, setRoomStartedNavConsumed } from './socket'
+
+/** 与后端 `room:error` 踢人文案保持一致；优先使用 payload.code === 'KICKED'。 */
+export const ROOM_ERROR_KICKED_MESSAGE = '你已被房主踢出房间'
 
 interface AuthRedirectParams {
   roomCode?: string
@@ -44,4 +47,29 @@ export async function handleSessionExpired(): Promise<void> {
     isHandlingSessionExpired = false
     wx.reLaunch({ url: '/pages/index/index' })
   }, 800)
+}
+
+export function isKickedRoomError(data: Record<string, unknown>): boolean {
+  return data.code === 'KICKED' || data.message === ROOM_ERROR_KICKED_MESSAGE
+}
+
+let isHandlingKicked = false
+
+/**
+ * 被房主踢出：清房间导航标志、toast、reLaunch 回首页。
+ * 进游戏页后 room 监听已卸掉，游戏页必须自己调用；用标志防止与 room 页重复处理。
+ */
+export function handleKicked(message: string = ROOM_ERROR_KICKED_MESSAGE): void {
+  if (isHandlingKicked) {
+    return
+  }
+  isHandlingKicked = true
+  setLastRoomCode(null)
+  setSkipNextRoomStartedNav(false)
+  setRoomStartedNavConsumed(false)
+  wx.showToast({ title: message, icon: 'none' })
+  setTimeout(() => {
+    isHandlingKicked = false
+    wx.reLaunch({ url: '/pages/index/index' })
+  }, 1500)
 }

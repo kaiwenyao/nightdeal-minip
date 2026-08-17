@@ -3,7 +3,7 @@
  * 支持完整的游戏流程：身份查看、组队、投票、任务执行、刺杀
  */
 
-import { requireAuth, handleSessionExpired } from '../../utils/auth-guard'
+import { requireAuth, handleSessionExpired, handleKicked, isKickedRoomError } from '../../utils/auth-guard'
 import { connectSocket, setSkipNextRoomStartedNav, SocketLike } from '../../utils/socket'
 
 function isRecord(v: unknown): v is Record<string, unknown> {
@@ -304,9 +304,8 @@ Page({
       if (typeof data.message !== 'string' || !data.message) {
         return
       }
-      const kicked = data.code === 'KICKED' || data.message === '你已被房主踢出房间'
-      if (kicked) {
-        // 被踢由底下的 room 页统一 toast + reLaunch，避免与 1500ms 定时器抢导航
+      if (isKickedRoomError(data)) {
+        handleKicked(data.message)
         return
       }
       wx.showToast({ title: data.message, icon: 'none' })

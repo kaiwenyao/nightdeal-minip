@@ -1,4 +1,4 @@
-import { requireAuth, handleSessionExpired } from '../../utils/auth-guard'
+import { requireAuth, handleSessionExpired, handleKicked, isKickedRoomError } from '../../utils/auth-guard'
 import { request } from '../../utils/request'
 import { connectSocket, isSocketDomainListError, setSkipNextRoomStartedNav, SocketLike } from '../../utils/socket'
 
@@ -175,9 +175,8 @@ Page({
       if (typeof data.message !== 'string' || !data.message) {
         return
       }
-      const kicked = data.code === 'KICKED' || data.message === '你已被房主踢出房间'
-      if (kicked) {
-        // 被踢由底下的 room 页统一 toast + reLaunch，避免与 1500ms 定时器抢导航
+      if (isKickedRoomError(data)) {
+        handleKicked(data.message)
         return
       }
       wx.showToast({ title: data.message, icon: 'none' })
