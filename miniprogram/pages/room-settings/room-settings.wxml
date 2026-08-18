@@ -89,9 +89,7 @@
 
     <view class="role-status {{roleMismatch ? 'warning' : 'ok'}}">
       <text>角色总计: {{totalRoles}} / 房间人数: {{maxPlayers}}</text>
-      <text wx:if="{{roleMismatch}}" class="status-hint">
-        {{totalRoles !== maxPlayers ? '角色配置与房间人数不匹配' : '当前玩家 ' + playerCount + ' 人，' + (playerCount < maxPlayers ? '未满员' : '超出房间人数')}}
-      </text>
+      <text wx:if="{{roleMismatch}}" class="status-hint">{{blockReason}}</text>
     </view>
   </ui-card>
 
