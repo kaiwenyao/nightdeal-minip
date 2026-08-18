@@ -60,7 +60,7 @@
       </view>
       <view wx:if="{{showRoleInfo}}" class="role-content">
         <view class="role-name {{myFaction}}">
-          <text>{{myRole}}</text>
+          <text>{{myRoleName || myRole}}</text>
         </view>
         <text class="role-desc">{{myRoleDesc}}</text>
 
