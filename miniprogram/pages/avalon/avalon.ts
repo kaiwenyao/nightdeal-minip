@@ -129,6 +129,9 @@ Page({
     // 投票相关
     myVote: '' as string,
     hasVoted: false,
+    // 实时投票进度（来自后端 avalon:vote-updated，仅为交互反馈，非权威状态）
+    votedCount: 0 as number,
+    votedVoters: [] as string[],
 
     // 任务相关
     myQuestAction: '' as string,
@@ -229,6 +232,8 @@ Page({
           hasPerformedQuest: false,
           myVote: '',
           myQuestAction: '',
+          votedCount: 0,
+          votedVoters: [],
           selectedPlayers: [],
           playersWithState: computePlayersWithState(
             this.data.players,
@@ -250,6 +255,26 @@ Page({
           showCancel: false,
         })
       }
+    })
+
+    this.bindSocketEvent('avalon:vote-updated', (data: unknown) => {
+      // 实时投票进度：仅用于交互反馈（决定结果以 avalon:vote-resolved 为准）。
+      // 公开投票模式后端携带 voterId（去重计数）；匿名模式只带 message，退化为增量计数。
+      if (typeof data !== 'object' || data === null) {
+        return
+      }
+      const { voterId } = data as { voterId?: string }
+      let { votedVoters, votedCount } = this.data
+      if (typeof voterId === 'string' && voterId) {
+        if (votedVoters.includes(voterId)) {
+          return
+        }
+        votedVoters = [...votedVoters, voterId]
+        votedCount = votedVoters.length
+      } else {
+        votedCount += 1
+      }
+      this.setData({ votedCount, votedVoters })
     })
 
     this.bindSocketEvent('avalon:quest-resolved', (data: unknown) => {
@@ -393,6 +418,9 @@ Page({
       : { round: 1, teamSize: 0, requiredFailCount: 1 }
     const phase = typeof state.phase === 'string' ? state.phase : ''
 
+    // 新投票轮开始（含重连恢复）：重置实时投票进度计数，避免跨轮脏数据
+    const voteRoundReset = phase === 'team_voting' ? { votedCount: 0 as number, votedVoters: [] as string[] } : {}
+
     const playersWithState = computePlayersWithState(
       players,
       this.data.selectedPlayers,
@@ -414,8 +442,10 @@ Page({
       ...q,
       resultIcon: q.succeeded ? '✅' : '❌',
     }))
-    const pendingQuests = Array.from({ length: 5 - questHistory.length }, (_, i) => ({
-      round: questHistory.length + i + 1,
+    // 防御：questHistory 不应超过 5 轮，但对异常数据做上界截断，避免 5 - length 为负导致 RangeError
+    const completedRounds = Math.min(questHistory.length, 5)
+    const pendingQuests = Array.from({ length: 5 - completedRounds }, (_, i) => ({
+      round: completedRounds + i + 1,
       resultIcon: '?',
     }))
 
@@ -465,6 +495,7 @@ Page({
       showVotingPanel: !!state.canVote,
       showQuestPanel: !!state.canPerformQuest,
       showAssassinationPanel: !!state.canAssassinate,
+      ...voteRoundReset,
     })
   },
 

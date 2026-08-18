@@ -156,7 +156,10 @@
       </view>
       <view wx:else class="voted-status">
         <text>你已投票：{{myVote === 'approve' ? '同意' : '反对'}}</text>
-        <text class="waiting-text">等待其他玩家投票...</text>
+        <text class="waiting-text">等待其他玩家投票...{{votedCount > 0 ? '（已投 ' + votedCount + ' 票）' : ''}}</text>
+      </view>
+      <view wx:if="{{!hasVoted && votedCount > 0}}" class="voting-progress">
+        <text class="waiting-text">已投 {{votedCount}} 票</text>
       </view>
     </view>
 
