@@ -338,9 +338,18 @@ Page({
         void handleSessionExpired()
         return
       }
-      if (typeof data.message === 'string' && data.message) {
-        wx.showToast({ title: data.message, icon: 'none' })
+      if (typeof data.message !== 'string' || !data.message) {
+        return
       }
+      // 还没拿到过任何游戏状态时，加入失败的错误是终态（房间已结束/状态已
+      // 过期/不在本局），不会有后续 avalon:state 把页面带出 loading——一直转圈
+      // 用户只能杀小程序。切到错误页，给出「返回房间」出口。
+      const terminalJoinErrors = ['游戏尚未开始', '房间不存在', '你不在这个房间中', '你不在本局游戏中', '加入游戏失败，请重试']
+      if (this.data.pageState === 'loading' && terminalJoinErrors.includes(data.message)) {
+        this.setData({ pageState: 'error', pageError: data.message })
+        return
+      }
+      wx.showToast({ title: data.message, icon: 'none' })
     })
 
     // ==================== 房间生命周期事件（与 game.ts 对齐） ====================
