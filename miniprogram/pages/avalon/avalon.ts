@@ -113,6 +113,7 @@ Page({
     // 玩家信息
     myId: '',
     myRole: '',
+    myRoleName: '',
     myFaction: '',
     myRoleDesc: '',
     isHost: false,
@@ -474,6 +475,7 @@ Page({
     this.setData({
       myId: state.myId,
       myRole: state.myRole || '',
+      myRoleName: this.getRoleName(state.myRole || ''),
       myFaction: state.myFaction || '',
       isHost: me ? !!me.isHost : false,
       phase,
@@ -650,6 +652,21 @@ Page({
   },
 
   // ==================== 辅助函数 ====================
+
+  /** 角色枚举值（英文）→ 界面展示名（中文），与全应用其余文案语言一致 */
+  getRoleName(role: string): string {
+    const names: Record<string, string> = {
+      'Merlin': '梅林',
+      'Percival': '派西维尔',
+      'LoyalServant': '忠臣',
+      'Morgana': '莫甘娜',
+      'Assassin': '刺客',
+      'Mordred': '莫德雷德',
+      'Oberon': '奥伯伦',
+      'Minion': '爪牙',
+    }
+    return names[role] || role
+  },
 
   getRoleDesc(role: string): string {
     const descs: Record<string, string> = {
