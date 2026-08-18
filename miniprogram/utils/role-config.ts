@@ -64,6 +64,49 @@ export function getDefaultConfig(playerCount: number): RoleConfig {
   return DEFAULT_ROLE_CONFIGS[playerCount] ?? DEFAULT_ROLE_CONFIGS[AVALON_MIN_PLAYERS]
 }
 
+/** 各人数局的好人/邪恶名额（与后端 avalon/types.ts 的 FACTION_COUNTS 保持一致）。 */
+export const AVALON_FACTION_COUNTS: Record<number, { good: number; evil: number }> = {
+  5: { good: 3, evil: 2 },
+  6: { good: 4, evil: 2 },
+  7: { good: 4, evil: 3 },
+  8: { good: 5, evil: 3 },
+  9: { good: 6, evil: 3 },
+  10: { good: 6, evil: 4 },
+}
+
+/**
+ * 校验阿瓦隆角色配置是否为该人数局真正可开局的配置（镜像后端
+ * validateAvalonRoleConfig）：特殊角色不能超过本阵营名额，忠臣/爪牙必须
+ * 恰好补足阵营剩余名额。只校验总数会让「绿灯」配置被服务端拒绝。
+ *
+ * @returns 错误信息；配置合法时返回 null
+ */
+export function getAvalonRoleConfigError(config: RoleConfig, playerCount: number): string | null {
+  const factionCount = AVALON_FACTION_COUNTS[playerCount]
+  if (!factionCount) {
+    return `不支持 ${playerCount} 人游戏`
+  }
+
+  const goodSpecials = (config.merlin ? 1 : 0) + (config.percival ? 1 : 0)
+  const evilSpecials = (config.mordred ? 1 : 0) + (config.morgana ? 1 : 0)
+    + (config.oberon ? 1 : 0) + (config.assassin ? 1 : 0)
+
+  if (goodSpecials > factionCount.good) {
+    return `好人特殊角色过多（${goodSpecials}/${factionCount.good}），请关闭部分特殊角色`
+  }
+  if (evilSpecials > factionCount.evil) {
+    return `邪恶特殊角色过多（${evilSpecials}/${factionCount.evil}），请关闭部分特殊角色`
+  }
+
+  const expectedLoyalServants = factionCount.good - goodSpecials
+  const expectedMinions = factionCount.evil - evilSpecials
+  if (config.loyalServants !== expectedLoyalServants || config.minions !== expectedMinions) {
+    return `忠臣应为 ${expectedLoyalServants} 人、爪牙应为 ${expectedMinions} 人`
+  }
+
+  return null
+}
+
 export function getSgsDefaultConfig(playerCount: number): SgsRoleConfig {
   const n = Math.min(
     SGS_MAX_PLAYERS,

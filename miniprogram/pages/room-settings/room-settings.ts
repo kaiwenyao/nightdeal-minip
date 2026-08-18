@@ -6,6 +6,7 @@ import {
   getDefaultConfig,
   getSgsDefaultConfig,
   getSgsTotalRoles,
+  getAvalonRoleConfigError,
   ROLE_LABELS,
   SPECIAL_ROLES,
   BASE_ROLES,
@@ -250,14 +251,28 @@ Page({
     // roleConfigMismatch: configured roles don't match the room capacity
     // (Do not treat maxPlayers !== playerCount as mismatch: higher capacity than
     // current headcount is valid and must be saveable.)
-    const roleConfigMismatch = totalRoles !== this.data.maxPlayers
-    const roleMismatch = roleConfigMismatch
+    // 阿瓦隆额外镜像服务端的阵营校验：特殊角色不能超过本阵营名额，忠臣/爪牙
+    // 必须恰好补足阵营剩余名额——否则页面亮绿灯、保存却被服务端拒绝。
+    let mismatchReason = ''
+    if (isSgs) {
+      if (totalRoles !== this.data.maxPlayers) {
+        mismatchReason = '角色配置与房间人数不一致，请调整后保存'
+      }
+    } else {
+      if (totalRoles !== this.data.maxPlayers) {
+        mismatchReason = '角色配置与房间人数不一致，请调整后保存'
+      } else {
+        mismatchReason = getAvalonRoleConfigError(
+          this.data.roleConfig as RoleConfig,
+          this.data.maxPlayers,
+        ) || ''
+      }
+    }
+    const roleMismatch = mismatchReason !== ''
     const saveBlocked = this.data.maxPlayers < this.data.playerCount
     const blockReason = saveBlocked
       ? '房间人数不能少于当前玩家数'
-      : roleMismatch
-        ? '角色配置与房间人数不一致，请调整后保存'
-        : ''
+      : mismatchReason
     this.setData({ totalRoles, roleMismatch, saveBlocked, blockReason })
   },
 
