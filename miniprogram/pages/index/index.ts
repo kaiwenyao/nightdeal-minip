@@ -508,7 +508,8 @@ Component({
         wx.showToast({ title: '请先登录', icon: 'none' })
         return
       }
-      if (this.data.currentRoomCode) {
+      const previousRoomCode = this.data.currentRoomCode
+      if (previousRoomCode) {
         const { confirm } = await wx.showModal({
           title: '确认创建新房间',
           content: '你已在一个房间中，创建新房间将离开之前的房间',
@@ -529,6 +530,9 @@ Component({
             roleConfig: this.data.gameType === 'SGS' ? undefined : getDefaultConfig(defaultMaxPlayers),
           },
         })
+        if (previousRoomCode && previousRoomCode !== payload.code) {
+          this.leavePreviousRoom(previousRoomCode)
+        }
         this.goRoomPage(payload.code, true)
       } catch (error) {
         const message = error instanceof Error ? error.message : '创建房间失败，请稍后再试'
@@ -570,6 +574,12 @@ Component({
         if (payload.gameType) {
           this.applyGameType(payload.gameType)
         }
+        // 加入新房间成功后退出旧房间：等待态房间直接移除成员，进行中的房间
+        // 由后端按规则标记离线。不能先退再进——加入失败（如房间已满）时
+        // 用户会同时失去两个房间。
+        if (this.data.currentRoomCode && this.data.currentRoomCode !== code) {
+          this.leavePreviousRoom(this.data.currentRoomCode)
+        }
         this.goRoomPage(payload.code, false, fromShareLink)
       } catch (error) {
         const message = isRoomMissingError(error)
@@ -578,6 +588,21 @@ Component({
         this.setActionState('idle', message)
         wx.showToast({ title: message, icon: 'none', duration: 3000 })
       }
+    },
+    /**
+     * 换房后退出旧房间（best-effort）：弹窗已向用户承诺「将离开之前的房间」，
+     * 且用户在新房间保持连接时旧房间的离线清理不会触发，不发退出请求会让
+     * 旧房间一直挂着一位「在线」的幽灵成员。失败仅记日志——最坏情况与现状一致，
+     * 由断线后的定时清理兜底。注意不能在这里动 lastRoomCode/currentRoomCode，
+     * 它们属于新房间。
+     */
+    leavePreviousRoom(roomCode: string) {
+      request({
+        url: `/api/rooms/${roomCode}/leave`,
+        method: 'POST',
+      }).catch((error) => {
+        console.warn(`Failed to leave previous room ${roomCode}:`, error)
+      })
     },
     goRoomPage(roomCode: string, isHost: boolean, replace = false) {
       if (this.data.isNavigatingToRoom) {
