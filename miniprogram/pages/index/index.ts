@@ -552,6 +552,11 @@ Component({
         wx.showToast({ title: `请输入${ROOM_CODE_LENGTH}位房间码`, icon: 'none' })
         return
       }
+      // 加入的就是当前房间：不必走 join 接口（服务端会报「你已在房间中」），直接进入
+      if (code === this.data.currentRoomCode) {
+        this.goRoomPage(code, false, fromShareLink)
+        return
+      }
       // 分享链接自动加入与建房路径一致：已在其他房间时需先确认
       if (fromShareLink && this.data.currentRoomCode && this.data.currentRoomCode !== code) {
         const { confirm } = await wx.showModal({
