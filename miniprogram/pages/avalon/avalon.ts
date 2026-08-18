@@ -217,6 +217,12 @@ Page({
       socket.emit('avalon:join', { roomCode: this.data.roomCode })
     })
 
+    // /avalon 命名空间单独连上后需再次发送 avalon:join：
+    // 主 connect 事件在 /room ack 时触发，早于 /avalon ack，此时 avalon emit 尚未就绪。
+    this.bindSocketEvent('avalon:connect', () => {
+      socket.emit('avalon:join', { roomCode: this.data.roomCode })
+    })
+
     this.bindSocketEvent('avalon:state', (data: unknown) => {
       if (typeof data === 'object' && data !== null) {
         this.updateGameState(data as PlayerView)
