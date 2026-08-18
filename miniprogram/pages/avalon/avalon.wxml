@@ -150,15 +150,17 @@
           </text>
         </view>
       </view>
-      <view wx:if="{{!hasVoted}}" class="action-buttons">
+      <view wx:if="{{canVote && !hasVoted}}" class="action-buttons">
         <button class="btn-approve" bindtap="handleTeamVote" data-vote="approve">同意</button>
         <button class="btn-reject" bindtap="handleTeamVote" data-vote="reject">反对</button>
       </view>
       <view wx:else class="voted-status">
-        <text>你已投票：{{myVote === 'approve' ? '同意' : '反对'}}</text>
+        <!-- 重进页面时 hasVoted/myVote 已丢失，但服务端 canVote=false 仍表明已投过票 -->
+        <text wx:if="{{myVote}}">你已投票：{{myVote === 'approve' ? '同意' : '反对'}}</text>
+        <text wx:else>你已投票</text>
         <text class="waiting-text">等待其他玩家投票...{{votedCount > 0 ? '（已投 ' + votedCount + ' 票）' : ''}}</text>
       </view>
-      <view wx:if="{{!hasVoted && votedCount > 0}}" class="voting-progress">
+      <view wx:if="{{canVote && !hasVoted && votedCount > 0}}" class="voting-progress">
         <text class="waiting-text">已投 {{votedCount}} 票</text>
       </view>
     </view>
@@ -170,7 +172,8 @@
         <button class="btn-success" bindtap="handleQuestAction" data-action="success">任务成功</button>
         <button wx:if="{{myFaction === 'evil'}}" class="btn-fail" bindtap="handleQuestAction" data-action="fail">任务失败</button>
       </view>
-      <view wx:elif="{{hasPerformedQuest}}" class="voted-status">
+      <!-- 已提交（含重进页面后本地标志丢失、以 canPerformQuest=false 判断的情况） -->
+      <view wx:elif="{{hasPerformedQuest || amInQuestTeam}}" class="voted-status">
         <text>你已提交任务票</text>
         <text class="waiting-text">等待其他队员提交...</text>
       </view>
