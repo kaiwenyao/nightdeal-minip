@@ -424,8 +424,12 @@ Page({
       : { round: 1, teamSize: 0, requiredFailCount: 1 }
     const phase = typeof state.phase === 'string' ? state.phase : ''
 
-    // 新投票轮开始（含重连恢复）：重置实时投票进度计数，避免跨轮脏数据
-    const voteRoundReset = phase === 'team_voting' ? { votedCount: 0 as number, votedVoters: [] as string[] } : {}
+    // 新投票轮开始：重置实时投票进度计数，避免跨轮脏数据。
+    // 仅在真正“进入”投票轮时清零——若已处于 team_voting（如同一轮中因
+    // 他人重连而广播的 avalon:state），不得清零，否则会把已投出的票数进度
+    // 误清为 0（投票结果仍以 avalon:vote-resolved 为准，这里只是实时计数）。
+    const isNewVoteRound = phase === 'team_voting' && this.data.phase !== 'team_voting'
+    const voteRoundReset = isNewVoteRound ? { votedCount: 0 as number, votedVoters: [] as string[] } : {}
 
     const playersWithState = computePlayersWithState(
       players,
