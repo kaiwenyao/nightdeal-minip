@@ -27,6 +27,10 @@ export interface SocketLike {
 }
 
 const SOCKET_IO_PATH = '/socket.io'
+// Avalon 游戏实时通信所在命名空间（与后端 AvalonGateway 一致）。
+// 客户端通过 Socket.IO 命名空间多路复用，在同一个 Engine.IO 连接上再订阅 /avalon，
+// 否则 avalon:* 事件会被 handleSocketPacket 的命名空间过滤器丢弃，游戏无法进行。
+const AVALON_NAMESPACE = '/avalon'
 const RECONNECT_DELAY_MS = 500
 const RECONNECT_DELAY_MAX_MS = 15000
 const MAX_RECONNECT_ATTEMPTS = 10
@@ -118,6 +122,8 @@ class WeappSocket implements SocketLike {
   private listeners: EventMap = {}
   private namespace = '/'
   private isConnected = false
+  /** /avalon 命名空间是否已连上（CONNECT ack 收到） */
+  private avalonConnected = false
   private manuallyClosed = false
   private reconnectAttempts = 0
   private reconnectTimer: number | null = null
@@ -149,12 +155,26 @@ class WeappSocket implements SocketLike {
   }
 
   emit(event: string, payload?: unknown): boolean {
-    if (!this.task || !this.isConnected) {
+    if (!this.task) {
       return false
     }
 
+    const isAvalonEvent = event.startsWith('avalon:')
+    // avalon:* 事件必须发往 /avalon 命名空间，且需等待该命名空间连上
+    if (isAvalonEvent) {
+      if (!this.isConnected || !this.avalonConnected) {
+        return false
+      }
+      const args = payload === undefined ? [event] : [event, payload]
+      this.sendSocketPacket('2', JSON.stringify(args), AVALON_NAMESPACE)
+      return true
+    }
+
+    if (!this.isConnected) {
+      return false
+    }
     const args = payload === undefined ? [event] : [event, payload]
-    this.sendSocketPacket('2', JSON.stringify(args))
+    this.sendSocketPacket('2', JSON.stringify(args), this.namespace)
     return true
   }
 
@@ -168,6 +188,7 @@ class WeappSocket implements SocketLike {
 
     this.namespace = parsed.namespace
     this.isConnected = false
+    this.avalonConnected = false
     this.manuallyClosed = false
 
     const task = wx.connectSocket({
@@ -228,11 +249,15 @@ class WeappSocket implements SocketLike {
     this.clearPingTimeoutTimer()
 
     if (this.task && this.isConnected) {
-      this.sendSocketPacket('1', '')
+      this.sendSocketPacket('1', '', this.namespace)
+      if (this.avalonConnected) {
+        this.sendSocketPacket('1', '', AVALON_NAMESPACE)
+      }
     }
 
     this.closeTask()
     this.isConnected = false
+    this.avalonConnected = false
   }
 
   private handleEnginePacket(packet: string): void {
@@ -271,14 +296,42 @@ class WeappSocket implements SocketLike {
 
     const token = await getToken()
     const authPayload = token ? JSON.stringify({ token }) : '{}'
-    this.sendSocketPacket('0', authPayload)
+    // 主命名空间（/room）
+    this.sendSocketPacket('0', authPayload, this.namespace)
+    // 同时订阅 /avalon 命名空间（同一 Engine.IO 连接上的 Socket.IO 命名空间多路复用）
+    this.sendSocketPacket('0', authPayload, AVALON_NAMESPACE)
   }
 
   private handleSocketPacket(packet: string): void {
     const packetType = packet.charAt(0)
     const parsed = parseNamespaceAndPayload(packet.slice(1))
 
-    if (parsed.namespace !== this.namespace) {
+    const isAvalon = parsed.namespace === AVALON_NAMESPACE
+    if (parsed.namespace !== this.namespace && !isAvalon) {
+      return
+    }
+
+    // /avalon 命名空间的 ack 不触发主流程 connect，仅为 avalon 事件分发做准备
+    if (isAvalon) {
+      switch (packetType) {
+        case '0':
+          this.avalonConnected = true
+          this.emitLocal('avalon:connect')
+          break
+        case '1':
+          this.avalonConnected = false
+          break
+        case '2':
+          this.handleSocketEvent(parsed.payload)
+          break
+        case '4':
+          // /avalon 连接被拒（如鉴权失败）：保持未连接，avalon emit 会返回 false
+          this.avalonConnected = false
+          this.emitLocal('avalon:connect_error', safeJsonParse(parsed.payload))
+          break
+        default:
+          break
+      }
       return
     }
 
@@ -313,8 +366,8 @@ class WeappSocket implements SocketLike {
     this.emitLocal(args[0], ...args.slice(1))
   }
 
-  private sendSocketPacket(packetType: string, payload: string): void {
-    this.sendRaw(`4${packetType}${namespacePrefix(this.namespace)}${payload}`)
+  private sendSocketPacket(packetType: string, payload: string, namespace: string = this.namespace): void {
+    this.sendRaw(`4${packetType}${namespacePrefix(namespace)}${payload}`)
   }
 
   private sendRaw(data: string): void {
@@ -346,6 +399,7 @@ class WeappSocket implements SocketLike {
   private handleClose(): void {
     const wasConnected = this.isConnected
     this.isConnected = false
+    this.avalonConnected = false
     this.clearConnectTimeoutTimer()
     this.clearPingTimeoutTimer()
     this.task = null
