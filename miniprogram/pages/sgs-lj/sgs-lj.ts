@@ -101,10 +101,14 @@ Page({
     const numA = this.parseWeight(values.partA)
     const numB = this.parseWeight(values.partB)
     const numC = this.parseWeight(values.partC)
-    const currentSum = numA + numB + numC
+    // 浮点加法会有精度尘埃（如 74.57+18.27+7.16 = 99.99999999999999），
+    // 直接 currentSum === 100 会把视觉上加起来正好 100 的合法输入判为无效，
+    // 导致判定按钮被禁用、或显示「还差 1.4e-14%」。输入最多两位小数，
+    // 统一按百分位四舍五入后再比较/展示。
+    const currentSum = round2(numA + numB + numC)
     const isAllFilled = values.partA !== '' && values.partB !== '' && values.partC !== ''
     const isValid = isAllFilled && currentSum === 100
-    const diff = 100 - currentSum
+    const diff = round2(100 - currentSum)
 
     this.setData({
       values,
@@ -124,3 +128,8 @@ Page({
     return Math.min(parsed, 100)
   }
 })
+
+/** 四舍五入到两位小数，消除浮点加法尘埃（输入最多两位小数，结果精确）。 */
+function round2(n: number): number {
+  return Math.round(n * 100) / 100
+}
