@@ -137,6 +137,8 @@ Page({
     // 任务相关
     myQuestAction: '' as string,
     hasPerformedQuest: false,
+    // 我是否在当前任务队伍中（由 proposedTeam 与 myId 预计算，供面板文案判断）
+    amInQuestTeam: false,
 
     // 可见信息（预计算为名称数组）
     merlinSeeNames: [] as string[],
@@ -498,6 +500,7 @@ Page({
       assassinatedPlayerName,
       questHistoryDisplay,
       pendingQuests,
+      amInQuestTeam: proposedTeam.includes(state.myId),
       canProposeTeam: !!state.canProposeTeam,
       canVote: !!state.canVote,
       canPerformQuest: !!state.canPerformQuest,
@@ -573,7 +576,10 @@ Page({
 
   handleTeamVote(e: WechatMiniprogram.TouchEvent) {
     const vote = e.currentTarget.dataset.vote as string
-    if (!vote || this.data.hasVoted) return
+    // canVote 为服务端权威状态（未投过票才为 true）：重进页面时本地的
+    // hasVoted 已丢失，仅靠它会向已投过票的用户展示按钮，投出去必然被
+    // 服务端拒绝并把本地 myVote 写成与实际不符的值。
+    if (!vote || this.data.hasVoted || !this.data.canVote) return
 
     // 先 emit 成功再锁定 UI：断线时不能乐观置位，否则票没发出去 UI 却锁死，该轮卡死
     const sent = this.socket?.emit('avalon:team-vote', {
@@ -593,7 +599,9 @@ Page({
 
   handleQuestAction(e: WechatMiniprogram.TouchEvent) {
     const action = e.currentTarget.dataset.action as string
-    if (!action || this.data.hasPerformedQuest) return
+    // 同 handleTeamVote：以服务端 canPerformQuest 为准，防止重进页面后
+    // 重复提交必然失败的任务票。
+    if (!action || this.data.hasPerformedQuest || !this.data.canPerformQuest) return
 
     // 同 handleTeamVote：emit 失败不置位，避免任务票丢失且 UI 锁死
     const sent = this.socket?.emit('avalon:quest-action', {
