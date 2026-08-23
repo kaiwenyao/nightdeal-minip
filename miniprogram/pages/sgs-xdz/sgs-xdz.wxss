@@ -58,6 +58,90 @@ page {
   gap: var(--space-3);
 }
 
+.remind-card {
+  background: var(--color-danger-bg);
+  border: 2rpx solid rgba(184, 58, 58, 0.3);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  margin-bottom: var(--space-4);
+}
+
+.remind-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.remind-tag {
+  font-size: var(--font-xs);
+  font-weight: var(--font-bold);
+  color: var(--color-danger);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  background: #f8dfdf;
+  border: 2rpx solid rgba(184, 58, 58, 0.3);
+}
+
+.remind-title {
+  font-size: var(--font-base);
+  font-weight: var(--font-bold);
+  color: var(--color-danger);
+}
+
+.remind-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.remind-desc {
+  font-size: var(--font-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.65;
+}
+
+.remind-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.remind-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  background: #fdf6f6;
+  border: 2rpx solid rgba(184, 58, 58, 0.16);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3) var(--space-4);
+}
+
+.remind-key {
+  flex-shrink: 0;
+  font-size: var(--font-xs);
+  font-weight: var(--font-bold);
+  color: var(--color-danger);
+  background: #fbe9e9;
+  border-radius: var(--radius-full);
+  padding: var(--space-1) var(--space-3);
+  margin-top: 2rpx;
+}
+
+.remind-val {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--font-sm);
+  line-height: 1.65;
+  color: var(--color-text-primary);
+}
+
+.remind-note {
+  font-size: var(--font-xs);
+  color: var(--color-text-muted);
+  line-height: 1.6;
+}
+
 .chip-primary {
   font-size: var(--font-xs);
   font-weight: var(--font-semibold);
