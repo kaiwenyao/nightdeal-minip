@@ -32,8 +32,8 @@ Page({
         id: 'mmc',
         name: '谋马超',
         icon: '马',
-        description: '铁骑谋弈博弈决策',
-        brief: '双方各选一策，预判目标应对，直接判定攻城成败与收益。',
+        description: '铁骑谋弈出招与技能说明',
+        brief: '谋马超方选策出招，附谋弈规则的技能提示，对照当场判定成败。',
         tag: '对局中高频',
         route: '/pages/sgs-mmc/sgs-mmc'
       }

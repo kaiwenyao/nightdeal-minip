@@ -4,14 +4,32 @@
     <view class="header-top">
       <view>
         <text class="card-title">谋马超 · 铁骑谋弈</text>
-        <text class="card-desc">使用【杀】指定目标后可与其谋弈：双方先各选一策，明牌公布。出招未被目标恰好化解，即攻城成功。</text>
+        <text class="card-desc">本页只做谋马超一方决策：选出招即可；目标的策应（出阵迎战 / 拱卫中军）由对方当场公布，对照技能须知判定攻城成败。</text>
       </view>
       <button class="clear-btn {{clearBtnDisabled ? 'clear-btn--disabled' : ''}}" bind:tap="handleClear">清空</button>
     </view>
     <view class="status-chips">
       <text class="chip-primary">你的出招：{{selectedAttackLabel}}</text>
-      <text class="chip">目标策应：{{selectedDefenseLabel}}</text>
-      <text class="{{verdictChipClass}}">{{verdictChipText}}</text>
+      <text class="chip">目标策应 · 对方公布</text>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-header">
+      <text class="section-title">技能效果须知</text>
+      <text class="chip">提示词</text>
+    </view>
+    <text class="section-desc">铁骑谋弈的触发、成败规则与收益，出招前先看一遍。</text>
+    <view class="rules-list">
+      <view wx:for="{{skillRules}}" wx:key="title" class="rule-item">
+        <view class="rule-icon">
+          <text class="rule-icon-text">{{item.icon}}</text>
+        </view>
+        <view class="rule-body">
+          <text class="rule-title">{{item.title}}</text>
+          <text class="rule-text">{{item.text}}</text>
+        </view>
+      </view>
     </view>
   </view>
 
@@ -20,7 +38,7 @@
       <text class="section-title">你的出招</text>
       <text class="chip">谋马超方</text>
     </view>
-    <text class="section-desc">选择你打算执行的谋弈选项。</text>
+    <text class="section-desc">从两策中挑一项；胜负等对方公布策应后再对表。</text>
     <view class="attack-grid">
       <view
         wx:for="{{attackOptions}}"
@@ -39,89 +57,36 @@
     </view>
   </view>
 
-  <view class="section">
-    <view class="section-header">
-      <text class="section-title">目标的策应</text>
-      <text class="chip">目标方</text>
-    </view>
-    <text class="section-desc">猜测目标会如何应对，是谋弈的关键。</text>
-    <view class="option-grid">
-      <view
-        wx:for="{{defenseOptions}}"
-        wx:key="id"
-        class="option-btn {{selectedDefense === item.id ? 'option-btn--active' : ''}}"
-        data-id="{{item.id}}"
-        bind:tap="handleSelectDefense"
-      >
-        <text class="option-name">{{item.name}}</text>
-        <text class="option-desc">{{item.heroDesc}}</text>
-      </view>
-    </view>
-  </view>
-
-  <view wx:if="{{resultVisible}}" class="verdict-card verdict-card--{{resultVerdict}}">
-    <view class="verdict-header">
-      <text class="verdict-title">{{resultTitle}}</text>
-      <text wx:if="{{resultVerdict === 'success'}}" class="verdict-badge">✓</text>
-      <text wx:else class="verdict-badge">✗</text>
-    </view>
-    <text wx:if="{{resultVerdict === 'success'}}" class="verdict-reward">收益：{{resultReward}}</text>
-    <text class="verdict-reason">{{resultReason}}</text>
+  <view wx:if="{{selectedAttack !== null}}" class="hint-card">
+    <text class="hint-title">出招对照（对方公布后判定）</text>
+    <text class="hint-line hint-line--win">{{attackHintWin}}</text>
+    <text class="hint-line hint-line--lose">{{attackHintLose}}</text>
   </view>
 
   <view class="section">
-    <view class="section-header">
-      <text class="section-title">谋弈矩阵</text>
-      <text class="chip">4 种组合</text>
-    </view>
-    <text class="section-desc">横向为你的出招，纵向为目标策应。亮色单元格为当前判定。</text>
-    <view class="matrix">
-      <view class="matrix-row matrix-row--head">
-        <view class="matrix-corner"></view>
-        <view wx:for="{{defenseOptions}}" wx:key="id" class="matrix-col">
-          <text class="matrix-col-name">{{item.name}}</text>
-        </view>
-      </view>
-      <view wx:for="{{matrixRows}}" wx:key="attackId" class="matrix-row">
-        <view class="matrix-corner matrix-corner--attack">
-          <text class="matrix-corner-text">{{item.attackName}}</text>
-        </view>
-        <view
-          wx:for="{{item.cells}}"
-          wx:key="defenseId"
-          class="matrix-cell matrix-cell--{{item.outcome}} {{item.isActive ? 'matrix-cell--active' : ''}}"
-        >
-          <text class="matrix-verdict">{{item.outcome === 'success' ? '成功' : '失败'}}</text>
-          <text class="matrix-reward">{{item.reward}}</text>
-        </view>
-      </view>
-    </view>
-  </view>
-
-  <view class="section">
-    <text class="section-title">战术提示</text>
+    <text class="section-title">博弈要点</text>
     <view class="tips-list">
-      <view wx:for="{{tips}}" wx:key="icon" class="tip-item">
-        <view class="tip-icon">
-          <text class="tip-icon-text">{{item.icon}}</text>
-        </view>
-        <text class="tip-text">{{item.text}}</text>
+      <view class="tip-item">
+        <text class="tip-text">目标手牌或装备越关键，越可能拱卫中军防夺牌，此时出「扰阵疲敌」反而稳定摸两张。</text>
+      </view>
+      <view class="tip-item">
+        <text class="tip-text">对方若好斗、习惯出阵正面硬拼，则「直取敌营」更容易得手——前提是你预判得准。</text>
+      </view>
+      <view class="tip-item">
+        <text class="tip-text">谋弈没有必胜解：胜负全在预判对方当下的防守偏好，随机出招等于把收益交给运气。</text>
       </view>
     </view>
   </view>
 
   <view class="summary-card">
-    <text wx:if="{{selectedAttack !== null && selectedDefense === null}}" class="summary-text">
-      已选你的出招「{{selectedAttackLabel}}」，等待选择目标的策应。
+    <text wx:if="{{selectedAttack === 'strike'}}" class="summary-text">
+      已选「直取敌营」：对方公布出阵迎战 → 攻城成功，获得其一张牌；公布拱卫中军 → 攻城失败。
     </text>
-    <text wx:elif="{{selectedAttack === null && selectedDefense !== null}}" class="summary-text">
-      目标倾向「{{selectedDefenseLabel}}」，请选择你的出招进行谋弈。
-    </text>
-    <text wx:elif="{{selectedAttack !== null && selectedDefense !== null}}" class="summary-text">
-      「{{selectedAttackLabel}}」对上「{{selectedDefenseLabel}}」——{{resultTitle}}，收益结算完毕。
+    <text wx:elif="{{selectedAttack === 'harass'}}" class="summary-text">
+      已选「扰阵疲敌」：对方公布拱卫中军 → 攻城成功，你摸两张牌；公布出阵迎战 → 攻城失败。
     </text>
     <text wx:else class="summary-text">
-      尚未出招。先想好这一刀想拿到什么，再猜对手怎么防。
+      尚未出招。先想好这一刀要拿牌（直取敌营）还是补牌（扰阵疲敌），再猜目标会怎么防。
     </text>
   </view>
 </scroll-view>
