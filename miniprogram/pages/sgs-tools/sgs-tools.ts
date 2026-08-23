@@ -27,6 +27,15 @@ Page({
         brief: '记录未使用而进入弃牌堆的牌花色，集齐四种自动清空。',
         tag: '状态追踪',
         route: '/pages/sgs-xdz/sgs-xdz'
+      },
+      {
+        id: 'mmc',
+        name: '谋马超',
+        icon: '马',
+        description: '铁骑谋弈出招与技能说明',
+        brief: '谋马超方选策出招，附谋弈规则的技能提示，对照当场判定成败。',
+        tag: '对局中高频',
+        route: '/pages/sgs-mmc/sgs-mmc'
       }
     ]
   },
