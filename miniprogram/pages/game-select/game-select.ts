@@ -38,4 +38,14 @@ Page({
       },
     })
   },
+  handleOpenSgsConcepts() {
+    if (this.data.isNavigating) return
+    this.setData({ isNavigating: true })
+    wx.navigateTo({
+      url: '/pages/sgs-concepts/sgs-concepts',
+      fail: () => {
+        this.setData({ isNavigating: false })
+      },
+    })
+  },
 })
