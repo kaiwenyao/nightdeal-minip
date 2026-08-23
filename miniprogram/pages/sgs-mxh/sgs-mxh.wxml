@@ -1,0 +1,92 @@
+<navigation-bar title="谋徐晃博弈" back="{{true}}" color="black" background="#FFF"></navigation-bar>
+<scroll-view class="page-shell" scroll-y type="list">
+  <view class="header-card">
+    <view class="header-top">
+      <view>
+        <text class="card-title">谋徐晃 · 断粮谋弈</text>
+        <text class="card-desc">本页做谋徐晃一方决策：选出策即可；对方选「全军突击」或「闭门守城」后当场对照成败表。</text>
+      </view>
+      <button class="clear-btn {{clearBtnDisabled ? 'clear-btn--disabled' : ''}}" bind:tap="handleClear">清空</button>
+    </view>
+    <view class="status-chips">
+      <text class="chip-primary">你的出策：{{selectedGambitLabel}}</text>
+      <text class="chip">对方守策 · 对方公布</text>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-header">
+      <text class="section-title">技能效果须知</text>
+      <text class="chip">提示词</text>
+    </view>
+    <text class="section-desc">断粮谋弈的触发、成败规则与收益。</text>
+    <view class="rules-list">
+      <view wx:for="{{skillRules}}" wx:key="title" class="rule-item">
+        <view class="rule-icon">
+          <text class="rule-icon-text">{{item.icon}}</text>
+        </view>
+        <view class="rule-body">
+          <text class="rule-title">{{item.title}}</text>
+          <text class="rule-text">{{item.text}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-header">
+      <text class="section-title">你的出策</text>
+      <text class="chip">谋徐晃方</text>
+    </view>
+    <text class="section-desc">从两策中挑一项；胜负等对方公布守策后再对表。</text>
+    <view class="gambit-grid">
+      <view
+        wx:for="{{gambitOptions}}"
+        wx:key="id"
+        class="gambit-btn gambit-btn--{{item.tone}} {{selectedGambit === item.id ? 'gambit-btn--selected' : ''}}"
+        data-id="{{item.id}}"
+        bind:tap="handleSelectGambit"
+      >
+        <view class="gambit-btn-head">
+          <text class="gambit-name">{{item.name}}</text>
+          <text class="gambit-tone">{{item.toneLabel}}</text>
+        </view>
+        <text class="gambit-reward">{{item.reward}}</text>
+        <text class="gambit-desc">{{item.desc}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{selectedGambit !== null}}" class="hint-card">
+    <text class="hint-title">发策对照（对方公布后判定）</text>
+    <text class="hint-line hint-line--win">{{gambitHintWin}}</text>
+    <text class="hint-line hint-line--lose">{{gambitHintLose}}</text>
+  </view>
+
+  <view class="section">
+    <text class="section-title">博弈要点</text>
+    <view class="tips-list">
+      <view class="tip-item">
+        <text class="tip-text">目标判定区已有【兵粮寸断】时，「围城断粮」成功改为夺牌，收益稳定，值得优先；准备让出刀的牌时，也常选这手。</text>
+      </view>
+      <view class="tip-item">
+        <text class="tip-text">对方手牌多、怕决斗时，多会选「全军突击」对拼；若你判断对方会硬接，则「擂鼓进军」大概率得手。</text>
+      </view>
+      <view class="tip-item">
+        <text class="tip-text">谋弈没有必胜解，成败全在预判对方的防守偏好——把随机的博奕，变成读懂对手的选择。</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="summary-card">
+    <text wx:if="{{selectedGambit === 'siege'}}" class="summary-text">
+      已选「围城断粮」：对方公布闭门守城 → 谋弈成功，贴无距离【兵粮寸断】（已有兵则改夺牌）；公布全军突击 → 谋弈失败。
+    </text>
+    <text wx:elif="{{selectedGambit === 'charge'}}" class="summary-text">
+      已选「擂鼓进军」：对方公布全军突击 → 谋弈成功，视为对其使用【决斗】；公布闭门守城 → 谋弈失败。
+    </text>
+    <text wx:else class="summary-text">
+      尚未出策。先判断对方要死守手牌（闭门守城）还是对拼正面（全军突击），再决定贴粮还是进军。
+    </text>
+  </view>
+</scroll-view>

@@ -36,6 +36,33 @@ Page({
         brief: '谋马超方选策出招，附谋弈规则的技能提示，对照当场判定成败。',
         tag: '对局中高频',
         route: '/pages/sgs-mmc/sgs-mmc'
+      },
+      {
+        id: 'mxh',
+        name: '谋徐晃',
+        icon: '徐',
+        description: '断根谋弈出策与技能说明',
+        brief: '谋徐晃方选策（围城断粮 / 擂鼓进军），附成败对照与博弈要点。',
+        tag: '对局中高频',
+        route: '/pages/sgs-mxh/sgs-mxh'
+      },
+      {
+        id: 'jzn',
+        name: '界张嶷',
+        icon: '嶷',
+        description: '怛戎谋弈四阵法结算',
+        brief: '界张棻方选镇压/安抚，对方公布反抗/归顺后，四种组合逐一结算。',
+        tag: '对局中高频',
+        route: '/pages/sgs-jzn/sgs-jzn'
+      },
+      {
+        id: 'sp',
+        name: '审配',
+        icon: '审',
+        description: '守邘对策出策与技能说明',
+        brief: '审配方选守策（开城诱敌 / 奇袭粮道），附对策成败对照。',
+        tag: '对局中高频',
+        route: '/pages/sgs-sp/sgs-sp'
       }
     ]
   },
