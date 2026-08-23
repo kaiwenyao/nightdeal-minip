@@ -16,6 +16,27 @@
     </view>
   </view>
 
+  <view class="remind-card">
+    <view class="remind-head">
+      <text class="remind-tag">死亡提醒</text>
+      <text class="remind-title">有人死亡后可印牌（暴袭）</text>
+    </view>
+    <view class="remind-body">
+      <text class="remind-desc">角色死亡时，其手牌、装备区、判定区的牌会一次性全部进入弃牌堆，可触发【暴袭】（每轮各限一次）：</text>
+      <view class="remind-list">
+        <view class="remind-item">
+          <text class="remind-key">≥2张基本牌</text>
+          <text class="remind-val">减1点体力上限，将一张手牌当【决斗】使用</text>
+        </view>
+        <view class="remind-item">
+          <text class="remind-key">≥2张非基本牌</text>
+          <text class="remind-val">减1点体力上限，将一张手牌当不计入次数且无次数限制的【杀】使用</text>
+        </view>
+      </view>
+      <text class="remind-note">死亡入堆的牌同样计入镇边花色，别忘了同步点选记录。</text>
+    </view>
+  </view>
+
   <view class="section">
     <text class="section-title">花色记录</text>
     <text class="section-desc">点击切换花色的记录状态。集齐四种后自动清空。</text>
