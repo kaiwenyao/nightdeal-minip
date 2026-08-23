@@ -1,0 +1,92 @@
+<navigation-bar title="界张嶷博弈" back="{{true}}" color="black" background="#FFF"></navigation-bar>
+<scroll-view class="page-shell" scroll-y type="list">
+  <view class="header-card">
+    <view class="header-top">
+      <view>
+        <text class="card-title">界张嶷 · 怃戎谋弈</text>
+        <text class="card-desc">本页做界张嶷一方决策：选「镇压」或「安抚」；对方公布「反抗」或「归顺」后，四种组合各有对应结算。</text>
+      </view>
+      <button class="clear-btn {{clearBtnDisabled ? 'clear-btn--disabled' : ''}}" bind:tap="handleClear">清空</button>
+    </view>
+    <view class="status-chips">
+      <text class="chip-primary">你的出策：{{selectedPostureLabel}}</text>
+      <text class="chip">对方出招 · 对方公布</text>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-header">
+      <text class="section-title">技能效果须知</text>
+      <text class="chip">提示词</text>
+    </view>
+    <text class="section-desc">怃戎谋弈的触发、四种胜负组合与收益。</text>
+    <view class="rules-list">
+      <view wx:for="{{skillRules}}" wx:key="title" class="rule-item">
+        <view class="rule-icon">
+          <text class="rule-icon-text">{{item.icon}}</text>
+        </view>
+        <view class="rule-body">
+          <text class="rule-title">{{item.title}}</text>
+          <text class="rule-text">{{item.text}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-header">
+      <text class="section-title">你的出策</text>
+      <text class="chip">界张嶷方</text>
+    </view>
+    <text class="section-desc">选「镇压」还是「安抚」，取决于你想逼对方反抗挨打，还是诱对方归顺献牌。</text>
+    <view class="posture-grid">
+      <view
+        wx:for="{{postureOptions}}"
+        wx:key="id"
+        class="posture-btn posture-btn--{{item.tone}} {{selectedPosture === item.id ? 'posture-btn--selected' : ''}}"
+        data-id="{{item.id}}"
+        bind:tap="handleSelectPosture"
+      >
+        <view class="posture-btn-head">
+          <text class="posture-name">{{item.name}}</text>
+          <text class="posture-tone">{{item.toneLabel}}</text>
+        </view>
+        <text class="posture-reward">{{item.reward}}</text>
+        <text class="posture-desc">{{item.desc}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{selectedPosture !== null}}" class="hint-card">
+    <text class="hint-title">双方公布后的结算</text>
+    <text class="hint-line hint-line--win">{{postureHintWin}}</text>
+    <text class="hint-line hint-line--lose">{{postureHintLose}}</text>
+  </view>
+
+  <view class="section">
+    <text class="section-title">博弈要点</text>
+    <view class="tips-list">
+      <view class="tip-item">
+        <text class="tip-text">怃戎不是简单输赢：无论对方选哪边，你都有保底收益。真正要算的是哪条路对你更「赚」。</text>
+      </view>
+      <view class="tip-item">
+        <text class="tip-text">对方若想反打你或留牌，多半选「反抗」保手牌/换伤害；你此刻用「镇压」可白赚一伤一牌，用「安抚」则要挨打。</text>
+      </view>
+      <view class="tip-item">
+        <text class="tip-text">对方血线低、不敢反抗时，多会选「归顺」；想稳定榨牌就用「安抚」吃两张，想爆牌换技就「镇压」摸一。</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="summary-card">
+    <text wx:if="{{selectedPosture === 'suppress'}}" class="summary-text">
+      已选「镇压」：对方反抗 → 你对其造成 1 点伤害并摸一张牌；对方归顺 → 你获得其一张牌且交给其两张牌。
+    </text>
+    <text wx:elif="{{selectedPosture === 'appease'}}" class="summary-text">
+      已选「安抚」：对方归顺 → 其交给你两张牌（不足两张则改为其跳过下个摸牌阶段）；对方反抗 → 你受到 1 点伤害并摸一张牌。
+    </text>
+    <text wx:else class="summary-text">
+      尚未出策。先判断对方想接招硬碰（反抗）还是止损交牌（归顺），再决定镇压逼打还是安抚收牌。
+    </text>
+  </view>
+</scroll-view>

@@ -1,0 +1,92 @@
+<navigation-bar title="审配博弈" back="{{true}}" color="black" background="#FFF"></navigation-bar>
+<scroll-view class="page-shell" scroll-y type="list">
+  <view class="header-card">
+    <view class="header-top">
+      <view>
+        <text class="card-title">审配 · 守邺对策</text>
+        <text class="card-desc">本页只做审配方决策：成为其他角色使用牌的唯一目标后选守策即可；对方的攻策（全力攻城 / 分兵围城）当场公布，对照技能须知判定对策成败。</text>
+      </view>
+      <button class="clear-btn {{clearBtnDisabled ? 'clear-btn--disabled' : ''}}" bind:tap="handleClear">清空</button>
+    </view>
+    <view class="status-chips">
+      <text class="chip-primary">你的守策：{{selectedSchemeLabel}}</text>
+      <text class="chip">对方攻策 · 对方公布</text>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-header">
+      <text class="section-title">技能效果须知</text>
+      <text class="chip">提示词</text>
+    </view>
+    <text class="section-desc">守邺「对策」的触发、成败规则与收益，出策前先看一遍。</text>
+    <view class="rules-list">
+      <view wx:for="{{skillRules}}" wx:key="title" class="rule-item">
+        <view class="rule-icon">
+          <text class="rule-icon-text">{{item.icon}}</text>
+        </view>
+        <view class="rule-body">
+          <text class="rule-title">{{item.title}}</text>
+          <text class="rule-text">{{item.text}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-header">
+      <text class="section-title">你的守策</text>
+      <text class="chip">审配方 · 1/回合</text>
+    </view>
+    <text class="section-desc">从两策中挑一项；对方公布攻策后再对表判定，对策成功可白收对方动身打来的牌。</text>
+    <view class="scheme-grid">
+      <view
+        wx:for="{{schemeOptions}}"
+        wx:key="id"
+        class="scheme-btn scheme-btn--{{item.tone}} {{selectedScheme === item.id ? 'scheme-btn--selected' : ''}}"
+        data-id="{{item.id}}"
+        bind:tap="handleSelectScheme"
+      >
+        <view class="scheme-btn-head">
+          <text class="scheme-name">{{item.name}}</text>
+          <text class="scheme-tone">{{item.toneLabel}}</text>
+        </view>
+        <text class="scheme-reward">{{item.reward}}</text>
+        <text class="scheme-desc">{{item.desc}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{selectedScheme !== null}}" class="hint-card">
+    <text class="hint-title">对策判定（对方公布攻策后对照）</text>
+    <text class="hint-line hint-line--win">{{schemeHintWin}}</text>
+    <text class="hint-line hint-line--lose">{{schemeHintLose}}</text>
+  </view>
+
+  <view class="section">
+    <text class="section-title">对策要点</text>
+    <view class="tips-list">
+      <view class="tip-item">
+        <text class="tip-text">守邺一回合只有一次、只拦「唯一目标」，别廉价浪费在低价值锦囊上——用它赌关键的杀、顺、乐。</text>
+      </view>
+      <view class="tip-item">
+        <text class="tip-text">对面想秒你时多半选「全力攻城」正面压血，此刻奇袭粮道反而最容易算对；对方想细水长流控牌时才更可能分兵围城。</text>
+      </view>
+      <view class="tip-item">
+        <text class="tip-text">对策没有必胜解：全在预判对方这一次用牌时想强压还是想稳控，随机出策等于把收益交给硬币。</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="summary-card">
+    <text wx:if="{{selectedScheme === 'lure'}}" class="summary-text">
+      已选「开城诱敌」：对方公布分兵围城 → 对策成功，此牌对你无效并归你所有；公布全力攻城 → 对策失败。
+    </text>
+    <text wx:elif="{{selectedScheme === 'raid'}}" class="summary-text">
+      已选「奇袭粮道」：对方公布全力攻城 → 对策成功，此牌对你无效并归你所有；公布分兵围城 → 对策失败。
+    </text>
+    <text wx:else class="summary-text">
+      尚未出策。想通吃对方这张牌，就得先猜对方此刻是想正面强攻（全力攻城）还是蚕食围困（分兵围城）。
+    </text>
+  </view>
+</scroll-view>

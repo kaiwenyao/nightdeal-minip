@@ -11,7 +11,10 @@
     "pages/sgs-sxy/sgs-sxy",
     "pages/sgs-lj/sgs-lj",
     "pages/sgs-xdz/sgs-xdz",
-    "pages/sgs-mmc/sgs-mmc"
+    "pages/sgs-mmc/sgs-mmc",
+    "pages/sgs-sp/sgs-sp",
+    "pages/sgs-mxh/sgs-mxh",
+    "pages/sgs-jzn/sgs-jzn"
   ],
   "window": {
     "navigationBarTextStyle": "black",
