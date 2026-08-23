@@ -22,12 +22,18 @@
 
   <view class="tools-section">
     <text class="section-title">工具集</text>
-    <text class="section-desc">三国杀对局辅助工具</text>
+    <text class="section-desc">三国杀对局辅助与机制速查</text>
     <view class="tools-grid">
       <view class="tool-card" hover-class="tool-card--pressed" bind:tap="handleOpenSgsTools">
         <view class="tool-icon">荀</view>
         <text class="tool-name">三国杀工具</text>
         <text class="tool-desc">神荀彧、谋马超等判定工具</text>
+      </view>
+
+      <view class="tool-card" hover-class="tool-card--pressed" bind:tap="handleOpenSgsConcepts">
+        <view class="tool-icon concept-icon">概</view>
+        <text class="tool-name">三国杀概念</text>
+        <text class="tool-desc">协力、整肃等通用机制速查</text>
       </view>
     </view>
   </view>

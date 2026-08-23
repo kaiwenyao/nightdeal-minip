@@ -1,0 +1,65 @@
+<navigation-bar title="三国杀概念" back="{{true}}" color="black" background="#FFF"></navigation-bar>
+<scroll-view class="page-shell" scroll-y type="list">
+  <view class="header-card">
+    <view class="header-top">
+      <text class="badge">SGS CONCEPTS</text>
+      <text class="chip">机制速查</text>
+    </view>
+    <text class="header-title">三国杀通用概念</text>
+    <text class="header-desc">协力、整肃等跨武将通用的机制名词，点击卡片展开详情。</text>
+  </view>
+
+  <view class="concepts-list">
+    <block wx:for="{{concepts}}" wx:key="id">
+      <view
+        class="concept-card {{expandedId === item.id ? 'concept-card--expanded' : ''}}"
+        hover-class="concept-card--pressed"
+        data-id="{{item.id}}"
+        bind:tap="handleConceptTap"
+      >
+        <view class="concept-main">
+          <view class="concept-icon">
+            <text class="concept-icon-text">{{item.icon}}</text>
+          </view>
+          <view class="concept-info">
+            <text class="concept-name">{{item.name}}</text>
+            <text class="concept-summary">{{item.summary}}</text>
+          </view>
+          <text class="arrow-icon {{expandedId === item.id ? 'arrow-icon--open' : ''}}">›</text>
+        </view>
+
+        <view class="concept-detail" wx:if="{{expandedId === item.id}}">
+          <view class="detail-tag-row">
+            <text class="detail-tag">{{item.tag}}</text>
+            <text class="detail-hint">点击收起</text>
+          </view>
+
+          <view class="rule-list">
+            <view
+              class="rule-item"
+              wx:for="{{item.rules}}"
+              wx:for-item="rule"
+              wx:for-index="ruleIdx"
+              wx:key="title"
+            >
+              <text class="rule-index">{{ruleIdx + 1}}</text>
+              <view class="rule-body">
+                <text class="rule-title">{{rule.title}}</text>
+                <text class="rule-desc">{{rule.desc}}</text>
+              </view>
+            </view>
+          </view>
+
+          <view class="detail-note">
+            <text class="note-label">备注</text>
+            <text class="note-text">{{item.note}}</text>
+          </view>
+        </view>
+      </view>
+    </block>
+  </view>
+
+  <view class="footer-note">
+    <text class="footer-text">内容整理自各版本规则与社区资料，请以游戏内实际文本为准。</text>
+  </view>
+</scroll-view>
